@@ -28,15 +28,6 @@ module MAuth
       [verb, request_url, post_data, app_uuid, time].join("\n")
     end
 
-    #TODO:  steal secure compare
-    
-    private
-    # Generates an HMAC for +data+
-    def generate_digest(data)
-      require 'openssl' unless defined?(OpenSSL)
-      OpenSSL::HMAC.hexdigest(OpenSSL::Digest.const_get(digest).new, secret, data)
-    end
-
     # constant-time comparison algorithm to prevent timing attacks
     def secure_compare(a, b)
       return false unless a.bytesize == b.bytesize
@@ -48,8 +39,12 @@ module MAuth
       res == 0
     end
 
+    private
+    # Generates an HMAC for +data+
+    def generate_digest(data)
+      require 'openssl' unless defined?(OpenSSL)
+      OpenSSL::HMAC.hexdigest(OpenSSL::Digest.const_get(digest).new, secret, data)
+    end
+
   end
 end
-
-#signer = MAuth::Signer.new('secret')
-#signer.signed_header('my_app_uuid', 'PUT', 'https://...', '...')
