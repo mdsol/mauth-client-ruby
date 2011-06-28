@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth_signer}
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.authors = ["Matthew Szenher", 'Aaron Suggs']
   s.description = %q{TODO: longer description of your gem}
