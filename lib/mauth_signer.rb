@@ -9,7 +9,6 @@ module MAuth
       @digest = 'SHA1'
     end
 
-
     # Returns a header to include in authenticated requests
     def signed_headers(app_uuid, verb, request_url, post_data=nil)
       time = Time.now.to_i
