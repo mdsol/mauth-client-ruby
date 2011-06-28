@@ -24,11 +24,13 @@ module MAuth
       generate_digest format_string_to_sign(app_uuid, verb, request_url, time, post_data)
     end
 
-    private
     def format_string_to_sign(app_uuid, verb, request_url, time, post_data)
       [verb, request_url, post_data, app_uuid, time].join("\n")
     end
 
+    #TODO:  steal secure compare
+    
+    private
     # Generates an HMAC for +data+
     def generate_digest(data)
       require 'openssl' unless defined?(OpenSSL)
