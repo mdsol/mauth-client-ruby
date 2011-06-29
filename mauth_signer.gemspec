@@ -3,16 +3,16 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth_signer}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.authors = ["Matthew Szenher", 'Aaron Suggs']
-  s.description = %q{TODO: longer description of your gem}
+  s.summary = %q{Create HMAC signatures for mAuth.}
+  s.description = %q{Create signatures (and header content containing such signatures) for use with mAuth.  Signatures are created from HMAC-SHA1'd request data. }
   s.email = %q{iwong@mdsol.com}
   s.extra_rdoc_files = %w(LICENSE.txt README.rdoc)
   s.files = `git ls-files`.split("\n")
 
   s.homepage = %q{http://github.com/mdsol/mauth_signer}
-  s.summary = %q{Create canonical strings and signatures for shared-secret-style authentication for apps associated with Medidata Solutions.}
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
   s.add_development_dependency('shoulda', [">= 0"])
