@@ -9,24 +9,6 @@ rescue Bundler::BundlerError => e
 end
 require 'rake'
 
-require 'jeweler'
-Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "mauth_signer"
-  gem.homepage = "http://github.com/mszenher/mauth_signer"
-  gem.license = "MIT"
-  gem.summary = %Q{Create canonical strings and signatures for shared-secret-style authentication for apps associated with Medidata Solutions.}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "mszenher@mdsol.com"
-  gem.authors = ["Matthew Szenher"]
-  gem.files = FileList['lib/**/*.rb', 'tasks/*.rake', 'config/*', '[A-Z]*', 'spec/**/*', 'generators/**/*.rb'].to_a
-  # Include your dependencies below. Runtime dependencies are required when using your gem,
-  # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
-  #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
-  #  gem.add_development_dependency 'rspec', '> 1.2.3'
-end
-Jeweler::RubygemsDotOrgTasks.new
-
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
   test.libs << 'lib' << 'test'
