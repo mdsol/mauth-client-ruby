@@ -27,6 +27,17 @@ module MAuth
       [verb, request_url, post_data, app_uuid, time].join("\n")
     end
 
+    def verify(digest, app_uuid, verb, request_url, time, post_data=nil)
+      valid_times = ((Time.now - 15.minutes).to_i..(Time.now.to_i))
+      unless valid_times.include?(time.to_i)
+        Rails.logger.info "Verfication failed: time outside valid range: #{time}" if defined?(Rails)
+        return false
+      end
+
+      secure_compare(digest, generate_signature(app_uuid, verb, request_url, time, post_data))
+    end
+
+    private
     # constant-time comparison algorithm to prevent timing attacks
     def secure_compare(a, b)
       return false unless a.bytesize == b.bytesize
@@ -38,7 +49,6 @@ module MAuth
       res == 0
     end
 
-    private
     # Generates an HMAC for +data+
     def generate_digest(data)
       require 'openssl' unless defined?(OpenSSL)
