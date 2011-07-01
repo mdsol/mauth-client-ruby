@@ -1,11 +1,11 @@
+PATH
+  remote: .
+  specs:
+    mauth_signer (0.5.0)
+
 GEM
   remote: http://rubygems.org/
   specs:
-    git (1.2.5)
-    jeweler (1.5.2)
-      bundler (~> 1.0.0)
-      git (>= 1.2.5)
-      rake
     rake (0.9.2)
     rcov (0.9.9)
     shoulda (2.11.3)
@@ -15,6 +15,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.0.0)
-  jeweler (~> 1.5.2)
+  mauth_signer!
+  rake
   rcov
   shoulda
