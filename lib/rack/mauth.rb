@@ -55,7 +55,7 @@ module Medidata
 
       def refresh_cache
         synchronize { @last_refresh = Time.now }
-        headers = @mauth_signer.signed_headers(@app_uuid, 'GET', security_tokens_path)
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
 
         response = Net::HTTP.start(security_tokens_url.host, security_tokens_url.port) {|http|
           http.get(security_tokens_url.path, headers)
@@ -90,13 +90,14 @@ module Medidata
 
         params = {
           :app_uuid    => app_uuid,
+          :digest      => digest,
           :verb        => env['REQUEST_METHOD'],
           :request_url => env['REQUEST_URI'],
           :time        => env['HTTP_X_MWS_TIME'],
           :post_data   => ''
         }
         if %w(POST PUT).include? env['REQUEST_METHOD']
-          params[:post_data] = Base64.encode64(env['rack.input'].read)
+          params[:post_data] = env['rack.input'].read
           env['rack.input'].rewind
         end
 
@@ -108,7 +109,7 @@ module Medidata
       end
       def authenticate_locally(digest, params)
         begin
-          secret = secret_for_app(app_uuid)
+          secret = secret_for_app(params[:app_uuid])
           if MAuth::Signer.new(secret).verify(digest, params)
            return true
           else
