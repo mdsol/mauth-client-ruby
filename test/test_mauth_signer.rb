@@ -30,15 +30,18 @@ class TestMauthSigner < Test::Unit::TestCase
     end
 
     should "generate signed headers" do
-      app_uuid = 'app_uuid_123'
-      verb = 'POST'
-      request_url = 'https://example.com/resource'
-      post_data = 'my_post_data'
+      params = {
+        :app_uuid => 'app_uuid_123',
+        :verb => 'POST',
+        :request_url => 'https://example.com/resource',
+        :post_data => 'my_post_data'
+      }
 
-      headers = @signer.signed_headers(app_uuid, verb, request_url, post_data)
+      headers = @signer.signed_headers(params)
+      now = Time.now
 
-      expected_headers = {'Authorization' => "MWS #{app_uuid}:#{@signer.generate_signature(app_uuid, verb, request_url, Time.now.to_i, post_data)}",
-        'x-mws-time' => Time.now.to_i.to_s
+      expected_headers = {'Authorization' => "MWS #{params[:app_uuid]}:#{@signer.generate_signature(params.merge(:time => now.to_i))}",
+        'x-mws-time' => now.to_i.to_s
       }
 
       assert_equal expected_headers, headers, "Headers don't match. It may be a race condition."

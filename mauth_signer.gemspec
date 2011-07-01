@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth_signer}
-  s.version = "0.4.1"
+  s.version = "0.5.0"
 
   s.authors = ["Matthew Szenher", 'Aaron Suggs']
   s.summary = %q{Create HMAC signatures for mAuth.}
@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency('shoulda', [">= 0"])
   s.add_development_dependency('bundler', ["~> 1.0.0"])
-  s.add_development_dependency('rcov', [">= 0"])
+  s.add_development_dependency('rcov')
+  s.add_development_dependency('rake')
 end
 
