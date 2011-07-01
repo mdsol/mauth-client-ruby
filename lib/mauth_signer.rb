@@ -34,7 +34,7 @@ module MAuth
       # Validate that params[:time] is within the last 15 minutes
       valid_times = ((Time.now - 900).to_i..(Time.now.to_i))
       unless valid_times.include?(params[:time].to_i)
-        Rails.logger.info "Verfication failed: time outside valid range: #{time}" if defined?(Rails)
+        Rails.logger.info "Verfication failed: time outside valid range: #{params[:time]}" if defined?(Rails)
         return false
       end
 
