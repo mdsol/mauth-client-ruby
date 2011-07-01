@@ -30,7 +30,7 @@ module MAuth
       [:verb, :request_url, :post_data, :app_uuid, :time].map {|key| params[key]}.join("\n")
     end
 
-    def verify(digest, app_uuid, verb, request_url, time, post_data=nil)
+    def verify(digest, params)
       # Validate that params[:time] is within the last 15 minutes
       valid_times = ((Time.now - 900).to_i..(Time.now.to_i))
       unless valid_times.include?(params[:time].to_i)
