@@ -88,25 +88,28 @@ module Medidata
 
         return false unless app_uuid && digest && mws_token == 'MWS'
 
-        verb = env['REQUEST_METHOD']
-        request_url = env['REQUEST_URI']
-        time = env['HTTP_X_MWS_TIME']
-        post_data = ''
+        params = {
+          :app_uuid    => app_uuid,
+          :verb        => env['REQUEST_METHOD'],
+          :request_url => env['REQUEST_URI'],
+          :time        => env['HTTP_X_MWS_TIME'],
+          :post_data   => ''
+        }
         if %w(POST PUT).include? env['REQUEST_METHOD']
-          post_data = Base64.encode64(env['rack.input'].read)
+          params[:post_data] = Base64.encode64(env['rack.input'].read)
           env['rack.input'].rewind
         end
 
         if can_authenticate_locally?
-          authenticate_locally(digest, app_uuid, verb, request_url, time, post_data)
+          authenticate_locally(digest, params)
        else
-          authenticate_remotely(digest, app_uuid, verb, request_url, time, post_data)
+          authenticate_remotely(digest, params)
         end
       end
-      def authenticate_locally(digest, app_uuid, verb, request_url, time, post_data)
+      def authenticate_locally(digest, params)
         begin
           secret = secret_for_app(app_uuid)
-          if MAuth::Signer.new(secret).verify(digest, app_uuid, verb, request_url, time, post_data)
+          if MAuth::Signer.new(secret).verify(digest, params)
            return true
           else
             raise VerficationFailed
@@ -122,15 +125,16 @@ module Medidata
         end
       end
 
-      def authenticate_remotely(digest, app_uuid, verb, request_url, time, post_data)
+      def authenticate_remotely(digest, params)
 
+        # TODO: refactor data keys to more closely match params
         data = {
-          'verb' => verb,
-          'app_uuid' => app_uuid,
-          'client_signature' => digest,
-          'request_url' => request_url,
-          'request_time' => time,
-          'b64encoded_post_data' => Base64.encode64(post_data)
+          'verb' => params[:verb],
+          'app_uuid' => params[:app_uuid],
+          'client_signature' => params[:digest],
+          'request_url' => params[:request_url],
+          'request_time' => params[:time],
+          'b64encoded_post_data' => Base64.encode64(params[:post_data])
         }
 
         # Post to endpoint
