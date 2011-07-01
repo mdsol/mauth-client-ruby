@@ -44,7 +44,6 @@ module Medidata
 
       def cache_expired?
         last_refresh = synchronize { @last_refresh }
-        puts last_refresh.inspect
         last_refresh.nil? || last_refresh < (Time.now - 30)
       end
 
