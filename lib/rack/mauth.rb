@@ -55,7 +55,7 @@ module Medidata
 
       def refresh_cache
         if defined?(Rails) && Rails.respond_to(:logger)
-          Rail.logger.info("MAuthMiddleware: Refreshing private_key cache")
+          Rails.logger.info("MAuthMiddleware: Refreshing private_key cache")
         end
 
         synchronize { @last_refresh = Time.now }
