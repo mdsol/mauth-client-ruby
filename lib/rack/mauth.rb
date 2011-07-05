@@ -42,33 +42,36 @@ module Medidata
         @cached_secrets_mutex.synchronize { yield }
       end
 
+      # Cache expires every minute
       def cache_expired?
         last_refresh = synchronize { @last_refresh }
-        last_refresh.nil? || last_refresh < (Time.now - 30)
+        last_refresh.nil? || last_refresh < (Time.now - 60)
       end
 
       def secret_for_app(app_uuid)
-        secret = synchronize { @cached_secrets[app_uuid] }
-        raise MissingCacheKey if secret.nil?
-        secret
+        refresh_cache if cache_expired?
+        synchronize { @cached_secrets[app_uuid] }
       end
 
       def refresh_cache
+        if defined?(Rails) && Rails.respond_to(:logger)
+          Rail.logger.info("MAuthMiddleware: Refreshing private_key cache")
+        end
+
         synchronize { @last_refresh = Time.now }
         headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
 
         response = Net::HTTP.start(security_tokens_url.host, security_tokens_url.port) {|http|
           http.get(security_tokens_url.path, headers)
         }
-        synchronize do
+        new_cache = JSON.parse(response.body).inject({}){|h, token|
+          key = token['security_token']['app_uuid']
+          val = token['security_token']['private_key']
+          h[key] = val
+          h
+        }
 
-          @cached_secrets = JSON.parse(response.body).inject({}){|h, token|
-            key = token['security_token']['app_uuid']
-            val = token['security_token']['private_key']
-            h[key] = val
-            h
-          }
-        end
+        synchronize { @cached_secrets = new_cache }
       end
 
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
@@ -107,23 +110,10 @@ module Medidata
           authenticate_remotely(digest, params)
         end
       end
-      def authenticate_locally(digest, params)
-        begin
-          secret = secret_for_app(params[:app_uuid])
-          if MAuth::Signer.new(secret).verify(digest, params)
-           return true
-          else
-            raise VerficationFailed
-          end
 
-        rescue MissingCacheKey, VerficationFailed
-          if cache_expired?
-            refresh_cache
-            retry
-          else
-            return false
-          end
-        end
+      def authenticate_locally(digest, params)
+        secret = secret_for_app(params[:app_uuid])
+        secret && MAuth::Signer.new(secret).verify(digest, params)
       end
 
       def authenticate_remotely(digest, params)
