@@ -31,8 +31,8 @@ module MAuth
     end
 
     def verify(digest, params)
-      # Validate that params[:time] is within the last 15 minutes
-      valid_times = ((Time.now - 900).to_i..(Time.now.to_i))
+      # Validate that params[:time] is within the last 15 minutes, or 1 minute in the future
+      valid_times = ((Time.now - 900).to_i..(Time.now.to_i + 60))
       unless valid_times.include?(params[:time].to_i)
         Rails.logger.info "Verfication failed: time outside valid range: #{params[:time]}" if defined?(Rails)
         return false
