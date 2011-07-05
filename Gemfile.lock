@@ -1,0 +1,35 @@
+GIT
+  remote: git@github.com:mdsol/mauth_signer.git
+  revision: f86d537e313f4066736ec120e42e9e58d6a0e4d4
+  specs:
+    mauth_signer (0.5.2)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    columnize (0.3.3)
+    diff-lcs (1.1.2)
+    linecache (0.46)
+      rbx-require-relative (> 0.0.4)
+    rbx-require-relative (0.0.5)
+    rspec (2.6.0)
+      rspec-core (~> 2.6.0)
+      rspec-expectations (~> 2.6.0)
+      rspec-mocks (~> 2.6.0)
+    rspec-core (2.6.4)
+    rspec-expectations (2.6.0)
+      diff-lcs (~> 1.1.2)
+    rspec-mocks (2.6.0)
+    ruby-debug (0.10.3)
+      columnize (>= 0.1)
+      ruby-debug-base (~> 0.10.3.0)
+    ruby-debug-base (0.10.3)
+      linecache (>= 0.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  mauth_signer (= 0.5.2)!
+  rspec
+  ruby-debug (= 0.10.3)
