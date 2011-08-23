@@ -12,6 +12,7 @@ module Medidata
 
     def initialize(app, config)
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
+      @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
@@ -76,9 +77,13 @@ module Medidata
 
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
       def should_authenticate?(env)
-        # Something like
-        #env['PATH_INFO'] =~ /^\/api/
-        true
+        return true unless @path_whitelist
+        
+        path_info = env['PATH_INFO']
+        any_matches = @path_whitelist.any?{|re| path_info =~ re}
+        any_exceptions = @whitelist_exceptions ? @whitelist_exceptions.any?{|re| path_info =~ re} : false
+        
+        any_matches && !any_exceptions        
       end
 
       def can_authenticate_locally?

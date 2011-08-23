@@ -13,14 +13,61 @@ describe "Medidata::MAuthMiddleware" do
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
   end
   
-  #TODO:  Expand this set of tests when should_authenticate? is more sophisticated
   describe "should_authenticate?" do
-    before(:each) do
-      @env = {'HTTP_AUTHORIZATION' => "MWS app_uuid:digest", 'REQUEST_METHOD' => 'GET', 'REQUEST_URI' => 'example.com', 'HTTP_X_MWS_TIME' => 123}
+    context "no whitelist" do
+      it "should return true if no url_whitelist is defined" do
+        @mauthIncomingMiddleware.send(:should_authenticate?, @env).should == true
+      end
     end
     
-    it "should return true" do
-      @mauthIncomingMiddleware.send(:should_authenticate?, @env).should == true
+    context "whitelist defined" do
+      before(:each) do
+        @base_config = {
+          :mauth_baseurl => "http://localhost", 
+          :app_uuid => "app_uuid", 
+          :private_key => "secret" 
+        }
+        
+        @base_env = {
+          'HTTP_AUTHORIZATION' => "MWS app_uuid:digest", 
+          'REQUEST_METHOD' => 'GET', 
+          'REQUEST_URI' => 'example.com', 
+          'HTTP_X_MWS_TIME' => 123
+        }
+      end
+      
+      it "should return true if path info matches regex in whitelist" do
+        config = @base_config.merge(:path_whitelist => [/^\/v2\/api/, /^\/api\/v2/])
+        env = @base_env.merge('PATH_INFO' => '/api/v2/studies.json')
+        
+        mauthIncomingMiddleware2 = Medidata::MAuthMiddleware.new(@app, config)
+        mauthIncomingMiddleware2.send(:should_authenticate?, env).should == true
+      end
+      
+      it "should return false if path info does not match any regex in whitelist" do
+        config = @base_config.merge(:path_whitelist => [/^\/v2\/api/, /^\/api\/v2/])
+        env = @base_env.merge('PATH_INFO' => '/api/v1/studies.json')
+        
+        mauthIncomingMiddleware2 = Medidata::MAuthMiddleware.new(@app, config)
+        mauthIncomingMiddleware2.send(:should_authenticate?, env).should == false        
+      end
+      
+      it "should return false if path info matches regex in whitelist but path info also matches exception" do
+        config = @base_config.merge(:path_whitelist => [/^\/v2\/api/, /^\/api\/v2/], :whitelist_exceptions => [/^\/v2\/api\/request_tokens\.json/, /^\/api\/v2\/request_tokens\.json/])
+        env = @base_env.merge('PATH_INFO' => '/api/v2/request_tokens.json')
+        
+        mauthIncomingMiddleware2 = Medidata::MAuthMiddleware.new(@app, config)
+        mauthIncomingMiddleware2.send(:should_authenticate?, env).should == false
+      end
+      
+      it "should return true if path info matches regex in whitelist and path info does not match any exception" do
+        config = @base_config.merge(:path_whitelist => [/^\/v2\/api/, /^\/api\/v2/], :whitelist_exceptions => [/^\/v2\/api\/request_tokens\.json/, /^\/api\/v2\/request_tokens\.json/])
+        env = @base_env.merge('PATH_INFO' => '/api/v2/sites.json')
+        
+        mauthIncomingMiddleware2 = Medidata::MAuthMiddleware.new(@app, config)
+        mauthIncomingMiddleware2.send(:should_authenticate?, env).should == true
+      end
+      
     end
   end
   
