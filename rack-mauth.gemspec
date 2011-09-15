@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
   
   s.add_dependency "bundler", ">= 1.0.0"
   s.add_dependency 'rack'
-  #s.add_dependency('mauth_signer', '0.5.3')
   
   s.add_development_dependency('ruby-debug', '0.10.3')
   s.add_development_dependency('rspec', '2.6.0')
