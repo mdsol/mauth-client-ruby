@@ -1,1 +1,28 @@
-Placeholder for now
+= rack-mauth
+
+This gem is a wrapper around the middleware called rack-mauth which rack applications can use to authenticate incoming requests signed with the mAuth HMAC protocol.
+
+== Installation
+
+Use the bundler gem (sudo gem install bundler).  Add the following to your Gemfile:
+
+  gem 'rack-mauth', '0.0.1', :git => "git@github.com:mdsol/rack-mauth.git", :require => 'rack/mauth'
+  gem 'mauth_signer'
+
+== Usage
+
+If adding to a Rails application, update your environment.rb file as follows:
+
+Rails::Initializer.run do |config|
+...
+  conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "your app's uuid from mAuth",
+    :private_key => "your app's shared secret from mAuth"
+  }
+  
+  config.middleware.use "Medidata::MAuthMiddleware", conf
+...
+end
+
+The mauth_baseurl is required in the conf hash.  The private_key and app_uuid enable local authentication.  They'll only work if the app_uuid has permission to request private keys in MAuth.  Authentication won't work if they're provided and the app doesn't have permission in MAuth to request private keys.  If app_uuid and/or private_key is not provided, rack-mauth will make a call to MAuth in order to authenticate remotely.  
