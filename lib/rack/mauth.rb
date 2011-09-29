@@ -60,11 +60,13 @@ module Medidata
         end
 
         synchronize { @last_refresh = Time.now }
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
 
-        response = Net::HTTP.start(security_tokens_url.host, security_tokens_url.port) {|http|
-          http.get(security_tokens_url.path, headers)
-        }
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
+        http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
+        http.use_ssl = true
+        request = Net::HTTP::Get.new(security_tokens_url.path, headers)
+        response = http.start {|h| h.request(request) }
+        
         new_cache = JSON.parse(response.body).inject({}){|h, token|
           key = token['security_token']['app_uuid']
           val = token['security_token']['private_key']
