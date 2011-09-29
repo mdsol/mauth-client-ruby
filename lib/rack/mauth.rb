@@ -55,7 +55,7 @@ module Medidata
       end
 
       def refresh_cache
-        if defined?(Rails) && Rails.respond_to(:logger)
+        if defined?(Rails) && Rails.respond_to?(:logger)
           Rails.logger.info("MAuthMiddleware: Refreshing private_key cache")
         end
 
