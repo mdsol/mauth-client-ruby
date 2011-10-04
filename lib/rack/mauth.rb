@@ -68,23 +68,30 @@ module Medidata
         end
 
         synchronize { @last_refresh = Time.now }
+        new_cache = parse_secrets(get_remote_secrets.body)
+        synchronize { @cached_secrets = new_cache }
+      end
 
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
-        http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
-        http.use_ssl = true
-        request = Net::HTTP::Get.new(security_tokens_url.path, headers)
-        response = http.start {|h| h.request(request) }
-        
-        new_cache = JSON.parse(response.body).inject({}){|h, token|
+      # Parse secrets from mAuth
+      def parse_secrets(secrets_from_mauth)
+        new_cache = JSON.parse(secrets_from_mauth).inject({}){|h, token|
           key = token['security_token']['app_uuid']
           val = token['security_token']['private_key']
           h[key] = val
           h
         }
-
-        synchronize { @cached_secrets = new_cache }
       end
-
+      
+      # Get secrets from mAuth
+      def get_remote_secrets
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
+        http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
+        http.use_ssl = true
+        http.read_timeout = 20 #seconds
+        request = Net::HTTP::Get.new(security_tokens_url.path, headers)
+        response = http.start {|h| h.request(request) }
+      end
+      
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
       def should_authenticate?(env)
         return true unless @path_whitelist

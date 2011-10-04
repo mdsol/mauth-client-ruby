@@ -11,6 +11,8 @@ describe "Medidata::MAuthMiddleware" do
       :private_key => "secret" 
     }
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
+    @secrets_from_mauth = [{"security_token" => {"private_key" => "shhhhhhh", "app_uuid" => "5ff4257e-9c16-11e0-b048-0026bbfffe5e"}}, 
+                           {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}].to_json      
   end
   
   describe "should_authenticate?" do
@@ -216,12 +218,48 @@ describe "Medidata::MAuthMiddleware" do
   
   describe "refresh_cache" do
     before(:each) do
+      @body_value = []
+      retval = []
+      retval.stub(:body).and_return(@body_value)
+      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(retval)
+      @mauthIncomingMiddleware.stub(:parse_secrets)
+    end
+    
+    after(:each) do
+      @mauthIncomingMiddleware.send(:refresh_cache)
+    end
+    
+    it "should get_remote_secrets" do
+      @mauthIncomingMiddleware.should_receive(:get_remote_secrets)
+    end
+    
+    it "should parse the fetched secrets" do
+      @mauthIncomingMiddleware.should_receive(:parse_secrets).with(@body_value)
+    end
+  
+  end
+
+  describe "parse_secrets" do
+    it "should call JSON.parse" do
+      JSON.stub(:parse).and_return([])
+      JSON.should_receive(:parse).with(@secrets_from_mauth)
+      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+    end
+    
+    it "should return parsed data in hash" do
+      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>"shhh2", "5ff4257e-9c16-11e0-b048-0026bbfffe5e"=>"shhhhhhh"}
+    end
+  end
+  
+  describe "get_remote_secrets" do
+    before(:each) do
       @request = mock(Net::HTTPRequest)
       @response = mock(Net::HTTPResponse)
       @response.stub(:code).and_return("200")
-      @response.stub(:body).and_return('[{"security_token":{"private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXgIBAAKBgQCgQVbcBY2pcb8+T6E7QIdvzT9rXYAOqaz33WbPaKxWIhi3YOV+\nsRSxQamP5ATkbffGuZhuE1UQgBJB5ExNYtWwi7OI2TylYgE1m4jdgXVmkEuD/V5i\nCXnHE5TD4WV9cQLdGIDksDijJknHoVhm0mH/tU68BOatbLIXKur1kMbT7wIDAQAB\nAoGAUHYd72CWbPIgjF+c20wd9EOASR7r8fC9WMIAIbkzdheugzwSXhb5BbqrMQTS\ndALGui9rWjE4r40uHYlLyjsKgMtdDOsPX1lv2sViJPvsXwPfCTRJ9EcM1D2jghwM\n+mu9iAi+GCuqI7i2GugHhPjdYipKY+RQo1TDoX43sO29StkCQQDP6u5Uv1N+KMxB\nCgWqB4aA2ZmNK8LIrpQzUdXDYMAHLhxLR9L5dPNt71CUlhp0T0bbjcRomcpKAMgI\n2YvJvXE9AkEAxVC2Ro8GH1JYbiH+e+8X4TdLCCmnt7mxCEyUSwpgb+hYSIrSYwax\nOwjxEeP0V4UGc1l2B5UAqEpkxTZt3cyUmwJBAKrLxnR/psqgIQncfcKq4+a82dKJ\n/Dx2jO+LbhpNQ/GiA0QkAD9DvySzznIAzEJ3TTHWR13V18Lq2WfLrXVP1dECQQCl\n9Vb6Tb2mhooeR7VV5Cm/odQYD4EjhKmkA1UPMLEgLtpiWXDPHYff0YuBsquHGTnt\ntycRBYBCDCBpx3fs/+9VAkEAzytji96QArwJVg2pNQNAh3FHFhJs5p7woJUTMaWS\nERqRPZCFjDPGXwnPWIt16iSeuD8AI7YknsZgLddhLS6hfw==\n-----END RSA PRIVATE KEY-----\n","app_uuid":"5ff4257e-9c16-11e0-b048-0026bbfffe5e"}},{"security_token":{"private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXAIBAAKBgQDGS0ViRQviqd9ZkNam4Wgft552YQ2jlMdNyO9gdXrPRFog/TLU\nB4uD4GNtJyVr8QdUr2k8cqfHlrC9ZPZDObSA1NrrMTvEs7xgISdhC7/dX0jb5r9b\n3M3w/AlcAyZ6zVfwNsd2cQleio0lkWHjxssyQmT6dT6aGV9D5mjO12L0IwIDAQAB\nAoGAUQlr5pgvHker9m+BuZt+sQ+aW+iX6VUhCkHmyfXY5aGab8bqIcqfkpp+J5qK\n6Y0MIOi6yjBVLvT/b7c2CQ0pHY/ayaFLLZqp9HaEa3BEFook9TunwGpFE0E0xw6b\n9ofXUiOD/uVPjguOhSVLcBKRenscL5PPqpK/vpJKgstcKuECQQD+cWI8v+Mk0X4N\nLu7q9tgJLcO8c5bCjYnWCxE32ayr1LO7rUII88FytN57IJUaXXtZSm7vYCiWfc5L\n1kb8lD0RAkEAx4HsUoUzj3niN4TZHyymHUR1iM8BNumINTgqSFxTmGjnQEUM91Ii\nJzf/UzF5qq8GoXenyW8pd2N6WCkXnOEt8wJAYwGBhTvxSZlOoBicFMd6JpAtMr4T\ncp6afLQPvhiwLKh2S1fOcydOJbElROnXusuXPJZO9kwHXw+S30WAl7Wi0QJAZWe9\nVchMh8281NlafsTz/gZQ82O8S0vyJpLQswzylJIlkH5Ic+E0aNjGl2ObYs0pwqKO\nDw3Idt2CTxM75Ep0TwJBAJDQdHxOfal5Wux4ZAFr3pi7AQsImpv9KEOMC9x3NRSz\nY5UTY1i47AbSMU44oA3l9vfVLzLTxXnQvWV3PmygW4E=\n-----END RSA PRIVATE KEY-----\n","app_uuid":"6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}]')
+      @response.stub(:body).and_return(@secrets_from_mauth)      
       @http = mock(Net::HTTP)
       @http.stub(:use_ssl=)
+      @http.stub(:read_timeout=)
       Net::HTTP.stub(:new).and_return(@http)
       Net::HTTP::Get.stub(:new).and_return(@request)      
       @http.stub(:start).and_return(@response)
@@ -229,7 +267,7 @@ describe "Medidata::MAuthMiddleware" do
     end
     
     after(:each) do
-      @mauthIncomingMiddleware.send(:refresh_cache)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
     
     it "should create an http object with appropriate parameters" do
@@ -238,6 +276,10 @@ describe "Medidata::MAuthMiddleware" do
 
     it "should set ssl to true" do
       @http.should_receive(:use_ssl=).with(true)
+    end
+
+    it "should set read_timeout" do
+      @http.should_receive(:read_timeout=)
     end
     
     it "should formulate the request" do
@@ -253,9 +295,10 @@ describe "Medidata::MAuthMiddleware" do
     before(:each) do
       @response = mock(Net::HTTPResponse)
       @response.stub(:code).and_return("200")
-      @response.stub(:body).and_return('[{"security_token":{"private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXgIBAAKBgQCgQVbcBY2pcb8+T6E7QIdvzT9rXYAOqaz33WbPaKxWIhi3YOV+\nsRSxQamP5ATkbffGuZhuE1UQgBJB5ExNYtWwi7OI2TylYgE1m4jdgXVmkEuD/V5i\nCXnHE5TD4WV9cQLdGIDksDijJknHoVhm0mH/tU68BOatbLIXKur1kMbT7wIDAQAB\nAoGAUHYd72CWbPIgjF+c20wd9EOASR7r8fC9WMIAIbkzdheugzwSXhb5BbqrMQTS\ndALGui9rWjE4r40uHYlLyjsKgMtdDOsPX1lv2sViJPvsXwPfCTRJ9EcM1D2jghwM\n+mu9iAi+GCuqI7i2GugHhPjdYipKY+RQo1TDoX43sO29StkCQQDP6u5Uv1N+KMxB\nCgWqB4aA2ZmNK8LIrpQzUdXDYMAHLhxLR9L5dPNt71CUlhp0T0bbjcRomcpKAMgI\n2YvJvXE9AkEAxVC2Ro8GH1JYbiH+e+8X4TdLCCmnt7mxCEyUSwpgb+hYSIrSYwax\nOwjxEeP0V4UGc1l2B5UAqEpkxTZt3cyUmwJBAKrLxnR/psqgIQncfcKq4+a82dKJ\n/Dx2jO+LbhpNQ/GiA0QkAD9DvySzznIAzEJ3TTHWR13V18Lq2WfLrXVP1dECQQCl\n9Vb6Tb2mhooeR7VV5Cm/odQYD4EjhKmkA1UPMLEgLtpiWXDPHYff0YuBsquHGTnt\ntycRBYBCDCBpx3fs/+9VAkEAzytji96QArwJVg2pNQNAh3FHFhJs5p7woJUTMaWS\nERqRPZCFjDPGXwnPWIt16iSeuD8AI7YknsZgLddhLS6hfw==\n-----END RSA PRIVATE KEY-----\n","app_uuid":"5ff4257e-9c16-11e0-b048-0026bbfffe5e"}},{"security_token":{"private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXAIBAAKBgQDGS0ViRQviqd9ZkNam4Wgft552YQ2jlMdNyO9gdXrPRFog/TLU\nB4uD4GNtJyVr8QdUr2k8cqfHlrC9ZPZDObSA1NrrMTvEs7xgISdhC7/dX0jb5r9b\n3M3w/AlcAyZ6zVfwNsd2cQleio0lkWHjxssyQmT6dT6aGV9D5mjO12L0IwIDAQAB\nAoGAUQlr5pgvHker9m+BuZt+sQ+aW+iX6VUhCkHmyfXY5aGab8bqIcqfkpp+J5qK\n6Y0MIOi6yjBVLvT/b7c2CQ0pHY/ayaFLLZqp9HaEa3BEFook9TunwGpFE0E0xw6b\n9ofXUiOD/uVPjguOhSVLcBKRenscL5PPqpK/vpJKgstcKuECQQD+cWI8v+Mk0X4N\nLu7q9tgJLcO8c5bCjYnWCxE32ayr1LO7rUII88FytN57IJUaXXtZSm7vYCiWfc5L\n1kb8lD0RAkEAx4HsUoUzj3niN4TZHyymHUR1iM8BNumINTgqSFxTmGjnQEUM91Ii\nJzf/UzF5qq8GoXenyW8pd2N6WCkXnOEt8wJAYwGBhTvxSZlOoBicFMd6JpAtMr4T\ncp6afLQPvhiwLKh2S1fOcydOJbElROnXusuXPJZO9kwHXw+S30WAl7Wi0QJAZWe9\nVchMh8281NlafsTz/gZQ82O8S0vyJpLQswzylJIlkH5Ic+E0aNjGl2ObYs0pwqKO\nDw3Idt2CTxM75Ep0TwJBAJDQdHxOfal5Wux4ZAFr3pi7AQsImpv9KEOMC9x3NRSz\nY5UTY1i47AbSMU44oA3l9vfVLzLTxXnQvWV3PmygW4E=\n-----END RSA PRIVATE KEY-----\n","app_uuid":"6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}]')
+      @response.stub(:body).and_return(@secrets_from_mauth)
       @http = mock(Net::HTTP)
       @http.stub(:use_ssl=)
+      @http.stub(:read_timeout=)
       Net::HTTP.stub(:new).and_return(@http)
       Net::HTTP::Get.stub(:new).and_return(@request)      
       @http.stub(:start).and_return(@response)   
