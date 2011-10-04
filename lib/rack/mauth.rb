@@ -62,24 +62,26 @@ module Medidata
       end
 
       # Get new shared secrets from mAuth
-      def refresh_cache
-        if defined?(Rails) && Rails.respond_to?(:logger)
-          Rails.logger.info("MAuthMiddleware: Refreshing private_key cache")
-        end
+      def refresh_cache        
+        log "MAuthMiddleware: Refreshing private_key cache"
 
         synchronize { @last_refresh = Time.now }
         new_cache = parse_secrets(get_remote_secrets.body)
-        synchronize { @cached_secrets = new_cache }
+        synchronize { @cached_secrets = new_cache if new_cache}
       end
 
       # Parse secrets from mAuth
       def parse_secrets(secrets_from_mauth)
-        new_cache = JSON.parse(secrets_from_mauth).inject({}){|h, token|
-          key = token['security_token']['app_uuid']
-          val = token['security_token']['private_key']
-          h[key] = val
-          h
-        }
+        begin
+          new_cache = JSON.parse(secrets_from_mauth).inject({}){|h, token|
+            key = token['security_token']['app_uuid']
+            val = token['security_token']['private_key']
+            h[key] = val
+            h
+          }
+        rescue JSON::ParserError, TypeError
+          log "MAuthMiddleware: Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
+        end
       end
       
       # Get secrets from mAuth
@@ -165,5 +167,15 @@ module Medidata
         [401, {'Content-Type' => 'text/plain'}, 'Unauthorized']
       end
 
+      # Can we write to the Rails log
+      def can_log?
+        defined?(Rails) && Rails.respond_to?(:logger)
+      end
+      
+      # Write to log
+      def log(str_to_log)
+        Rails.logger.info str_to_log if can_log?
+      end
+      
     end
 end

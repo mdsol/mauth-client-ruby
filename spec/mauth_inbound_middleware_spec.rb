@@ -12,7 +12,8 @@ describe "Medidata::MAuthMiddleware" do
     }
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
     @secrets_from_mauth = [{"security_token" => {"private_key" => "shhhhhhh", "app_uuid" => "5ff4257e-9c16-11e0-b048-0026bbfffe5e"}}, 
-                           {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}].to_json      
+                           {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}].to_json
+    @parsed_secrets_from_mauth = {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>"shhh2", "5ff4257e-9c16-11e0-b048-0026bbfffe5e"=>"shhhhhhh"}   
   end
   
   describe "should_authenticate?" do
@@ -247,8 +248,19 @@ describe "Medidata::MAuthMiddleware" do
     end
     
     it "should return parsed data in hash" do
-      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>"shhh2", "5ff4257e-9c16-11e0-b048-0026bbfffe5e"=>"shhhhhhh"}
+      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == @parsed_secrets_from_mauth
     end
+
+    it "should if possible write to log if JSON parse throws exception" do
+      @mauthIncomingMiddleware.stub(:can_log?).and_return(true)
+      @mauthIncomingMiddleware.stub(:log)
+      [JSON::ParserError, TypeError].each do |exc|
+        JSON.stub(:parse).and_raise(exc)
+        @mauthIncomingMiddleware.should_receive(:log)
+        @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+      end
+    end
+    
   end
   
   describe "get_remote_secrets" do
@@ -293,15 +305,11 @@ describe "Medidata::MAuthMiddleware" do
   
   describe "cache_expired?" do
     before(:each) do
-      @response = mock(Net::HTTPResponse)
-      @response.stub(:code).and_return("200")
-      @response.stub(:body).and_return(@secrets_from_mauth)
-      @http = mock(Net::HTTP)
-      @http.stub(:use_ssl=)
-      @http.stub(:read_timeout=)
-      Net::HTTP.stub(:new).and_return(@http)
-      Net::HTTP::Get.stub(:new).and_return(@request)      
-      @http.stub(:start).and_return(@response)   
+      @body_value = []
+      retval = []
+      retval.stub(:body).and_return(@body_value)
+      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(retval)
+      @mauthIncomingMiddleware.stub(:parse_secrets)
     end
     
     it "should return true first time it is called (cache has never been refreshed)" do
