@@ -10,6 +10,7 @@ module Medidata
     class MissingCacheKey   < Exception; end
     class VerficationFailed < Exception; end
 
+    # Middleware initializer
     def initialize(app, config)
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
@@ -18,6 +19,7 @@ module Medidata
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
     end
 
+    # Method called by app using middleware
     def call(env)
       if should_authenticate?(env)
         authenticated?(env) ? @app.call(env) : unauthenticated_response
@@ -27,18 +29,22 @@ module Medidata
     end
 
     protected
+      # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
       def authentication_url
         URI.parse(@mauth_baseurl + "/authentication_tickets.json")
       end
 
+      # Path to security tokens in mAuth
       def security_tokens_path
         "/security_tokens.json"
       end
 
+      # URL for security tokens
       def security_tokens_url
         URI.parse(@mauth_baseurl + security_tokens_path)
       end
 
+      # Synchronize cached secrets
       def synchronize
         @cached_secrets_mutex.synchronize { yield }
       end
@@ -49,11 +55,13 @@ module Medidata
         last_refresh.nil? || last_refresh < (Time.now - 60)
       end
 
+      # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
         refresh_cache if cache_expired?
         synchronize { @cached_secrets[app_uuid] }
       end
 
+      # Get new shared secrets from mAuth
       def refresh_cache
         if defined?(Rails) && Rails.respond_to?(:logger)
           Rails.logger.info("MAuthMiddleware: Refreshing private_key cache")
@@ -88,10 +96,12 @@ module Medidata
         any_matches && !any_exceptions        
       end
 
+      # Rack-mauth can authenticate locally if the middleware user provided an app_uuid and private_key
       def can_authenticate_locally?
         @app_uuid && @private_key
       end
 
+      # Is the request authentic?
       def authenticated?(env)
         mws_token, auth_info =  env['HTTP_AUTHORIZATION'].to_s.split(' ')
         app_uuid, digest = auth_info.split(':') if auth_info
@@ -118,11 +128,13 @@ module Medidata
         end
       end
 
+      # Rack-mauth does its own authentication
       def authenticate_locally(digest, params)
         secret = secret_for_app(params[:app_uuid])
         secret && MAuth::Signer.new(secret).verify(digest, params)
       end
 
+      # Ask mAuth to authenticate
       def authenticate_remotely(digest, params)
 
         # TODO: refactor data keys to more closely match params
@@ -141,6 +153,7 @@ module Medidata
         response.code.to_i == 204
       end
 
+      # Response returned to requesting app when request is inauthentic
       def unauthenticated_response
         [401, {'Content-Type' => 'text/plain'}, 'Unauthorized']
       end
