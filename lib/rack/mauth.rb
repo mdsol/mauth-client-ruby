@@ -182,7 +182,7 @@ module Medidata
 
       # Can we write to the Rails log
       def can_log?
-        defined?(Rails) && Rails.respond_to?(:logger)
+        @can_log ||= (defined?(Rails) && Rails.respond_to?(:logger))
       end
       
       # Write to log
