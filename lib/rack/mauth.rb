@@ -66,7 +66,8 @@ module Medidata
         log "MAuthMiddleware: Refreshing private_key cache"
 
         synchronize { @last_refresh = Time.now }
-        new_cache = parse_secrets(get_remote_secrets)
+        remote_secrets = get_remote_secrets
+        new_cache = parse_secrets(remote_secrets) if remote_secrets
         synchronize { @cached_secrets = new_cache if new_cache}
       end
 
