@@ -310,8 +310,9 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
     
-    it "should return nil if response code is not 200" do
+    it "should return nil and write to log if response code is not 200" do
       @response.stub(:code).and_return("404")
+      @mauthIncomingMiddleware.should_receive(:log)
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
     end
     

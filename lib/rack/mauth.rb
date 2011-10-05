@@ -93,7 +93,13 @@ module Medidata
           http.read_timeout = 20 #seconds
           request = Net::HTTP::Get.new(security_tokens_url.path, headers)
           response = http.start {|h| h.request(request) }
-          response.code == "200" ? response.body : nil
+          
+          if response.code.to_i == 200
+            return response.body
+          else
+            log "MAuthMiddleware: Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
+            return nil
+          end
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
           log "MAuthMiddleware: Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
