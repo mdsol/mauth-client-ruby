@@ -31,3 +31,7 @@ The path_whitelist is an optional configuration parameter specifying an array of
 When doing local authentication, rack-mauth will periodically fetch shared secrets from mAuth.  Currently, the fetch occurs every 60 seconds beginning on startup.
 
 When rack-mauth determines that a request is inauthentic, it will return a 401 status code to the requesting application along with the plain text message "Unauthorized".  Authenticated requests will be passed to the application using rack-mauth as middleware, as will requests which do not match any regular expression in the path_whitelist (if the path_whitelist is specified).
+
+== Warning
+
+During development, classes are typically not cached in Rails applications.  If this is the case, be aware that the rack-mauth middleware object will be instantiated anew for each request; this will cause applications performing local authentication to fetch security tokens before each request is authenticated.
