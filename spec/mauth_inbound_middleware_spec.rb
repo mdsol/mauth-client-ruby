@@ -319,6 +319,16 @@ describe "Medidata::MAuthMiddleware" do
       @response.stub(:code).and_return("200")
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == @response.body
     end
+    
+    it "should write to log and return nil if exception is thrown" do
+      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+       Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
+        @http.stub(:start).and_raise(exc)
+        @mauthIncomingMiddleware.should_receive(:log)
+        @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
+      end
+    end
+    
   end
   
   describe "cache_expired?" do

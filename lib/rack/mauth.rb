@@ -86,13 +86,18 @@ module Medidata
       
       # Get secrets from mAuth
       def get_remote_secrets
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
-        http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
-        http.use_ssl = true
-        http.read_timeout = 20 #seconds
-        request = Net::HTTP::Get.new(security_tokens_url.path, headers)
-        response = http.start {|h| h.request(request) }
-        response.code == "200" ? response.body : nil
+        begin
+          headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
+          http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
+          http.use_ssl = true
+          http.read_timeout = 20 #seconds
+          request = Net::HTTP::Get.new(security_tokens_url.path, headers)
+          response = http.start {|h| h.request(request) }
+          response.code == "200" ? response.body : nil
+        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+               Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+          log "MAuthMiddleware: Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
+        end
       end
       
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
