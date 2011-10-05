@@ -251,16 +251,25 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == @parsed_secrets_from_mauth
     end
 
-    it "should if possible write to log if JSON parse throws exception" do
-      @mauthIncomingMiddleware.stub(:can_log?).and_return(true)
-      @mauthIncomingMiddleware.stub(:log)
-      [JSON::ParserError, TypeError].each do |exc|
-        JSON.stub(:parse).and_raise(exc)
-        @mauthIncomingMiddleware.should_receive(:log)
-        @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+    context "JSON parse throws exception" do
+      before(:each) do
+        @mauthIncomingMiddleware.stub(:can_log?).and_return(true)
+        @mauthIncomingMiddleware.stub(:log)
+      end
+      
+      it "should if possible write to log" do
+        [JSON::ParserError, TypeError].each do |exc|
+          JSON.stub(:parse).and_raise(exc)
+          @mauthIncomingMiddleware.should_receive(:log)
+          @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+        end
+      end
+    
+      it "should return nil" do
+        JSON.stub(:parse).and_raise(JSON::ParserError)
+        @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == nil
       end
     end
-    
   end
   
   describe "get_remote_secrets" do
