@@ -66,7 +66,7 @@ module Medidata
         log "MAuthMiddleware: Refreshing private_key cache"
 
         synchronize { @last_refresh = Time.now }
-        new_cache = parse_secrets(get_remote_secrets.body)
+        new_cache = parse_secrets(get_remote_secrets)
         synchronize { @cached_secrets = new_cache if new_cache}
       end
 
@@ -92,6 +92,7 @@ module Medidata
         http.read_timeout = 20 #seconds
         request = Net::HTTP::Get.new(security_tokens_url.path, headers)
         response = http.start {|h| h.request(request) }
+        response.code == "200" ? response.body : nil
       end
       
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']

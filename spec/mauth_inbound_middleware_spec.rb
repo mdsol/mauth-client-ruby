@@ -219,10 +219,8 @@ describe "Medidata::MAuthMiddleware" do
   
   describe "refresh_cache" do
     before(:each) do
-      @body_value = []
-      retval = []
-      retval.stub(:body).and_return(@body_value)
-      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(retval)
+      @body_value = "body"
+      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(@body_value)
       @mauthIncomingMiddleware.stub(:parse_secrets)
     end
     
@@ -286,29 +284,40 @@ describe "Medidata::MAuthMiddleware" do
       @http.stub(:start).and_return(@response)
       @sec_tok_url = @mauthIncomingMiddleware.send(:security_tokens_url)
     end
-    
-    after(:each) do
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-    
+        
     it "should create an http object with appropriate parameters" do
       Net::HTTP.should_receive(:new).with(@sec_tok_url.host, @sec_tok_url.port).and_return(@http)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
 
     it "should set ssl to true" do
       @http.should_receive(:use_ssl=).with(true)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
 
     it "should set read_timeout" do
       @http.should_receive(:read_timeout=)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
     
     it "should formulate the request" do
        Net::HTTP::Get.should_receive(:new).and_return(@request)
+       @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
     
     it "should ask MAuth for updated private keys" do
       @http.should_receive(:start)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
+    end
+    
+    it "should return nil if response code is not 200" do
+      @response.stub(:code).and_return("404")
+      @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
+    end
+    
+    it "should return response body if response code is 200" do
+      @response.stub(:code).and_return("200")
+      @mauthIncomingMiddleware.send(:get_remote_secrets).should == @response.body
     end
   end
   
