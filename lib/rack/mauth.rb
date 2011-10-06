@@ -58,7 +58,9 @@ module Medidata
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
         refresh_cache if cache_expired?
-        synchronize { @cached_secrets[app_uuid] }
+        sec = synchronize { @cached_secrets[app_uuid] }
+        log "MAuthMiddleware: Cannot find secret for app with uuid #{app_uuid}" unless sec
+        sec
       end
 
       # Get new shared secrets from mAuth
