@@ -59,13 +59,13 @@ module Medidata
       def secret_for_app(app_uuid)
         refresh_cache if cache_expired?
         sec = synchronize { @cached_secrets[app_uuid] }
-        log "MAuthMiddleware: Cannot find secret for app with uuid #{app_uuid}" unless sec
+        log "Cannot find secret for app with uuid #{app_uuid}" unless sec
         sec
       end
 
       # Get new shared secrets from mAuth
       def refresh_cache        
-        log "MAuthMiddleware: Refreshing private_key cache"
+        log "Refreshing private_key cache"
 
         synchronize { @last_refresh = Time.now }
         remote_secrets = get_remote_secrets
@@ -83,7 +83,7 @@ module Medidata
             h
           }
         rescue JSON::ParserError, TypeError
-          log "MAuthMiddleware: Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
+          log "Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
         end
       end
       
@@ -100,12 +100,12 @@ module Medidata
           if response.code.to_i == 200
             return response.body
           else
-            log "MAuthMiddleware: Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
+            log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
             return nil
           end
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
-          log "MAuthMiddleware: Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
+          log "Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
         end
       end
       
@@ -189,7 +189,7 @@ module Medidata
       
       # Write to log
       def log(str_to_log)
-        Rails.logger.info str_to_log if can_log?
+        Rails.logger.info("rack-mauth: " + str_to_log) if can_log?
       end
       
     end
