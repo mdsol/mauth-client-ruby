@@ -220,6 +220,11 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params)
     end
     
+    it "should return false if post response is nil" do
+      @mauthIncomingMiddleware.stub(:post).and_return(nil)
+      @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should == false
+    end
+    
     it "should return true if post response is 204" do
       @mauthIncomingMiddleware.stub(:post).and_return(@response)
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should == true
@@ -231,7 +236,7 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should == false
     end
     
-    it "should return log if post response not 204" do
+    it "should log if post response not 204" do
       @response.stub(:code).and_return("412")
       @mauthIncomingMiddleware.stub(:post).and_return(@response)
       @mauthIncomingMiddleware.should_receive(:log)
@@ -374,14 +379,14 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == @response.body
     end
 
-    it "should call log when get returns response other than 200 " do
+    it "should call log when get returns response other than 200" do
       @response.stub(:code).and_return("404")
       @mauthIncomingMiddleware.stub(:get).and_return(@response)
       @mauthIncomingMiddleware.should_receive(:log)
       @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
 
-    it "should return nil when get returns response other than 200 " do
+    it "should return nil when get returns response other than 200" do
       @response.stub(:code).and_return("404")
       @mauthIncomingMiddleware.stub(:get).and_return(@response)
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil

@@ -168,13 +168,12 @@ module Medidata
         # Post to endpoint
         response = post(authentication_url, 'data' => data.to_json)
         
-        if response
-          if response.code.to_i == 204
-            return true
-          else
-            log "Attempt to authenticate remotely failed with status code #{response.code}"
-            return false
-          end
+        return false unless response
+        if response.code.to_i == 204
+          return true
+        else
+          log "Attempt to authenticate remotely failed with status code #{response.code}"
+          return false
         end
       end
 
