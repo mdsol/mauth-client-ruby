@@ -105,7 +105,7 @@ module Medidata
             log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
             return nil
           end
-        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
                Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
           log "Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
         end
@@ -174,9 +174,16 @@ module Medidata
         }
 
         # Post to endpoint
-        response = Net::HTTP.post_form(authentication_url, 'data' => data.to_json)
-
-        response.code.to_i == 204
+        response = post(authentication_url, 'data' => data.to_json)
+        
+        if response
+          if response.code.to_i == 204
+            return true
+          else
+            log "Attempt to authenticate remotely failed with status code #{response.code}"
+            return false
+          end
+        end
       end
 
       # Response returned to requesting app when request is inauthentic
@@ -192,6 +199,22 @@ module Medidata
       # Write to log
       def log(str_to_log)
         Rails.logger.info("rack-mauth: " + str_to_log) if can_log?
+      end
+      
+      # Generic post
+      def post(to_url, post_data)
+        begin
+          http = Net::HTTP.new(to_url.host, to_url.port)
+          http.use_ssl = (to_url.scheme == 'https')
+          request = Net::HTTP::Post.new(to_url.path)
+          request.set_form_data(post_data)
+          response = http.start {|h| h.request(request) }
+          return response
+        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
+               Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+          log "Attempt to post to #{to_url.path} threw exception:  #{e.message}"
+          return nil
+        end
       end
       
     end

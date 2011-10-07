@@ -184,6 +184,8 @@ describe "Medidata::MAuthMiddleware" do
 
   describe "authenticate_remotely" do
     before(:each) do
+      @authentication_url = @mauthIncomingMiddleware.send(:authentication_url)
+      
       @digest = "6327c1af329ba52478ad9ade1276d9b5b45962fb"
       @params = {
         :app_uuid    => "originator_app_uuid",
@@ -201,17 +203,79 @@ describe "Medidata::MAuthMiddleware" do
         'request_time' => @params[:time],
         'b64encoded_post_data' => Base64.encode64(@params[:post_data])
       }
-      @response = mock
-      @response.stub(:code).and_return("201")
-      Net::HTTP.stub(:post_form).and_return(@response)
+      
+      @request = mock(Net::HTTPRequest)
+      @request.stub(:set_form_data)
+      @response = mock(Net::HTTPResponse)
+      @response.stub(:code).and_return("204")
+      @http = mock(Net::HTTP)
+      @http.stub(:use_ssl=)
+      Net::HTTP.stub(:new).and_return(@http)
+      Net::HTTP::Post.stub(:new).and_return(@request)      
+      @http.stub(:start).and_return(@response)
     end
     
-    after(:each) do
+    it "should call generic post" do
+      @mauthIncomingMiddleware.should_receive(:post).with(@authentication_url, 'data' => @data.to_json)
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params)
     end
     
-    it "should make a post request to MAuth's authenication url with correct post data" do
-      Net::HTTP.should_receive(:post_form).with(@mauthIncomingMiddleware.send(:authentication_url), "data" => @data.to_json)
+    it "should return true if post response is 204" do
+      @mauthIncomingMiddleware.stub(:post).and_return(@response)
+      @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should == true
+    end
+
+    it "should return false if post response not 204" do
+      @response.stub(:code).and_return("412")
+      @mauthIncomingMiddleware.stub(:post).and_return(@response)
+      @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should == false
+    end
+    
+    it "should return log if post response not 204" do
+      @response.stub(:code).and_return("412")
+      @mauthIncomingMiddleware.stub(:post).and_return(@response)
+      @mauthIncomingMiddleware.should_receive(:log)
+      @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params).should
+    end
+    
+    describe "post" do
+      it "should create http object with authentication_ticket url" do
+        Net::HTTP.should_receive(:new).with(@authentication_url.host, @authentication_url.port).and_return(@http)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      end
+    
+      it "should set use ssl based on url scheme" do
+        @http.should_receive(:use_ssl=).with(@authentication_url.scheme == 'https')
+        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      end
+    
+      it "should make a post object" do
+        Net::HTTP::Post.should_receive(:new).with(@authentication_url.path).and_return(@request)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      end
+    
+      it "should set the form data of the request" do
+        @request.should_receive(:set_form_data).with("data" => @data.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      end
+
+      context "exception thrown" do
+        it "should call log when exception is rescued" do
+          [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
+            @mauthIncomingMiddleware.should_receive(:log)
+            @http.stub(:start).and_raise(exc)
+            @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+          end
+        end
+      
+        it "should return nil when exception is rescued" do
+          [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
+            @mauthIncomingMiddleware.should_receive(:log)
+            @http.stub(:start).and_raise(exc)
+            @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json).should == nil
+          end
+        end
+      end
     end
   end
   
