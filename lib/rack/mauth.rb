@@ -8,7 +8,7 @@ require 'mauth_signer'
 module Medidata
   class MAuthMiddleware
     
-    class MissingBaseURL < Exception; end
+    class MissingBaseURL < StandardError; end
 
     # Middleware initializer
     def initialize(app, config)
