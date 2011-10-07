@@ -91,23 +91,15 @@ module Medidata
       
       # Get secrets from mAuth
       def get_remote_secrets
-        begin
-          headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
-          http = Net::HTTP.new(security_tokens_url.host, security_tokens_url.port)
-          http.use_ssl = true
-          http.read_timeout = 20 #seconds
-          request = Net::HTTP::Get.new(security_tokens_url.path, headers)
-          response = http.start {|h| h.request(request) }
-          
-          if response.code.to_i == 200
-            return response.body
-          else
-            log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
-            return nil
-          end
-        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
-               Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
-          log "Attempt to refresh cache with secrets from mAuth threw exception:  #{e.message}"
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
+        response = get(security_tokens_url, {:headers => headers})
+        
+        return nil unless response
+        if response.code.to_i == 200
+          return response.body
+        else
+          log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
+          return nil
         end
       end
       
@@ -201,6 +193,22 @@ module Medidata
         Rails.logger.info("rack-mauth: " + str_to_log) if can_log?
       end
       
+      # Generic get
+      def get(from_url, options = {})
+        begin
+          http = Net::HTTP.new(from_url.host, from_url.port)
+          http.use_ssl = (from_url.scheme == 'https')
+          http.read_timeout = 20 #seconds
+          request = options[:headers] ? Net::HTTP::Get.new(from_url.path, options[:headers]) : Net::HTTP::Get.new(from_url.path)
+          response = http.start {|h| h.request(request) }
+          return response
+        rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
+               Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+          log "Attempt to GET from #{from_url.path} threw exception:  #{e.message}"
+          return nil
+        end
+      end
+      
       # Generic post
       def post(to_url, post_data)
         begin
@@ -212,7 +220,7 @@ module Medidata
           return response
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
                Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
-          log "Attempt to post to #{to_url.path} threw exception:  #{e.message}"
+          log "Attempt to POST to #{to_url.path} threw exception:  #{e.message}"
           return nil
         end
       end

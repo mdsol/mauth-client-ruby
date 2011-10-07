@@ -358,49 +358,72 @@ describe "Medidata::MAuthMiddleware" do
       @http.stub(:start).and_return(@response)
       @sec_tok_url = @mauthIncomingMiddleware.send(:security_tokens_url)
     end
-        
-    it "should create an http object with appropriate parameters" do
-      Net::HTTP.should_receive(:new).with(@sec_tok_url.host, @sec_tok_url.port).and_return(@http)
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-
-    it "should set ssl to true" do
-      @http.should_receive(:use_ssl=).with(true)
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-
-    it "should set read_timeout" do
-      @http.should_receive(:read_timeout=)
+    
+    it "should call get" do
+      @mauthIncomingMiddleware.should_receive(:get)
       @mauthIncomingMiddleware.send(:get_remote_secrets)
     end
     
-    it "should formulate the request" do
-       Net::HTTP::Get.should_receive(:new).and_return(@request)
-       @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-    
-    it "should ask MAuth for updated private keys" do
-      @http.should_receive(:start)
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-    
-    it "should return nil and write to log if response code is not 200" do
-      @response.stub(:code).and_return("404")
-      @mauthIncomingMiddleware.should_receive(:log)
+    it "should return nil when get returns nil" do
+      @mauthIncomingMiddleware.stub(:get).and_return(nil)
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
     end
-    
-    it "should return response body if response code is 200" do
-      @response.stub(:code).and_return("200")
+
+    it "should return response body when get returns response with 200 code" do
+      @mauthIncomingMiddleware.stub(:get).and_return(@response)
       @mauthIncomingMiddleware.send(:get_remote_secrets).should == @response.body
     end
+
+    it "should call log when get returns response other than 200 " do
+      @response.stub(:code).and_return("404")
+      @mauthIncomingMiddleware.stub(:get).and_return(@response)
+      @mauthIncomingMiddleware.should_receive(:log)
+      @mauthIncomingMiddleware.send(:get_remote_secrets)
+    end
+
+    it "should return nil when get returns response other than 200 " do
+      @response.stub(:code).and_return("404")
+      @mauthIncomingMiddleware.stub(:get).and_return(@response)
+      @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
+    end
+
+    describe "get" do
+      it "should create an http object with appropriate parameters" do
+        Net::HTTP.should_receive(:new).with(@sec_tok_url.host, @sec_tok_url.port).and_return(@http)
+        @mauthIncomingMiddleware.send(:get, @sec_tok_url)
+      end
+
+      it "should set ssl to true" do
+        @http.should_receive(:use_ssl=).with(@sec_tok_url.scheme == 'https')
+        @mauthIncomingMiddleware.send(:get, @sec_tok_url)
+      end
+
+      it "should set read_timeout" do
+        @http.should_receive(:read_timeout=)
+        @mauthIncomingMiddleware.send(:get, @sec_tok_url)
+      end
     
-    it "should write to log and return nil if exception is thrown" do
-      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-       Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
-        @http.stub(:start).and_raise(exc)
-        @mauthIncomingMiddleware.should_receive(:log)
-        @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
+      it "should formulate the request" do
+         Net::HTTP::Get.should_receive(:new).and_return(@request)
+         @mauthIncomingMiddleware.send(:get, @sec_tok_url)
+      end
+    
+      it "should ask MAuth for updated private keys" do
+        @http.should_receive(:start)
+        @mauthIncomingMiddleware.send(:get, @sec_tok_url)
+      end
+        
+      it "should return response" do
+        @response.stub(:code).and_return("200")
+        @mauthIncomingMiddleware.send(:get, @sec_tok_url).should == @response
+      end
+    
+      it "should write to log and return nil if exception is thrown" do
+        [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
+          @http.stub(:start).and_raise(exc)
+          @mauthIncomingMiddleware.should_receive(:log)
+          @mauthIncomingMiddleware.send(:get, @sec_tok_url).should == nil
+        end
       end
     end
     
