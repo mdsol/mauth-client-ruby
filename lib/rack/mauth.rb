@@ -46,7 +46,7 @@ module Medidata
         URI.parse(@mauth_baseurl + security_tokens_path)
       end
 
-      # Synchronize cached secrets
+      # Synchronize ivars
       def synchronize
         @cached_secrets_mutex.synchronize { yield }
       end
