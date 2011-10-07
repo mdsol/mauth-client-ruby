@@ -16,6 +16,16 @@ describe "Medidata::MAuthMiddleware" do
     @parsed_secrets_from_mauth = {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>"shhh2", "5ff4257e-9c16-11e0-b048-0026bbfffe5e"=>"shhhhhhh"}   
   end
   
+  describe "initialize" do
+    it "should raise exception if no config given" do
+      lambda { Medidata::MAuthMiddleware.new(@app, nil) }.should raise_error Medidata::MAuthMiddleware::MissingBaseURL
+    end
+    
+    it "should raise exception if no mauth baseurl given in config" do
+      lambda { Medidata::MAuthMiddleware.new(@app, {}) }.should raise_error Medidata::MAuthMiddleware::MissingBaseURL
+    end
+  end
+  
   describe "should_authenticate?" do
     context "no whitelist" do
       it "should return true if no url_whitelist is defined" do

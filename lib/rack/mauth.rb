@@ -7,11 +7,13 @@ require 'mauth_signer'
 
 module Medidata
   class MAuthMiddleware
-    class MissingCacheKey   < Exception; end
-    class VerficationFailed < Exception; end
+    
+    class MissingBaseURL < Exception; end
 
     # Middleware initializer
     def initialize(app, config)
+      raise MissingBaseURL unless config && config[:mauth_baseurl]
+      
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
       @cached_secrets_mutex = Mutex.new
