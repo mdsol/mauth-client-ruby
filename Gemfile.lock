@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mauth_signer (0.5.3)
+    mauth_signer (0.6.0)
 
 GEM
   remote: http://rubygems.org/

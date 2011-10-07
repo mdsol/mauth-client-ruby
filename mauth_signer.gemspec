@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth_signer}
-  s.version = "0.5.3"
+  s.version = "0.6.0"
 
   s.authors = ["Matthew Szenher", 'Aaron Suggs']
   s.summary = %q{Create HMAC signatures for mAuth.}
