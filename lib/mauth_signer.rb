@@ -1,12 +1,15 @@
 module MAuth
   class Signer
 
+    ALLOWED_SHA = %w(SHA1 SHA256 SHA512)
+    
     attr_reader :secret, :digest
-    def initialize(secret)
+    def initialize(secret, digest = 'SHA512')
+      raise ArgumentError.new("secret cannot be empty") if secret.empty?
+      raise ArgumentError.new("digest must be one of #{ALLOWED_SHA.to_sentence}") unless ALLOWED_SHA.include?(digest)
+      
       @secret = secret.to_s
-      raise ArgumentError.new("secret cannot be empty") if @secret.empty?
-
-      @digest = 'SHA1'
+      @digest = digest
     end
 
     # Returns a header to include in authenticated requests
