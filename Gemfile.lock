@@ -1,14 +1,14 @@
 GIT
   remote: git@github.com:mdsol/mauth_signer.git
-  revision: 9348a0ecebb249690b8dd4048a7ecb71c7023b5b
+  revision: 64217e7f1340723a089705bcb9da4db2b03ca248
+  tag: v0.6.0
   specs:
-    mauth_signer (0.5.3)
+    mauth_signer (0.6.0)
 
 PATH
   remote: .
   specs:
-    rack-mauth (0.0.1)
-      bundler (>= 1.0.0)
+    rack-mauth (0.1.0)
       rack
 
 GEM
@@ -18,7 +18,7 @@ GEM
     diff-lcs (1.1.2)
     linecache (0.46)
       rbx-require-relative (> 0.0.4)
-    rack (1.3.2)
+    rack (1.3.4)
     rbx-require-relative (0.0.5)
     rspec (2.6.0)
       rspec-core (~> 2.6.0)
@@ -39,9 +39,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (>= 1.0.0)
-  mauth_signer (= 0.5.3)!
-  rack
+  mauth_signer!
   rack-mauth!
   rspec (= 2.6.0)
   ruby-debug (= 0.10.3)
