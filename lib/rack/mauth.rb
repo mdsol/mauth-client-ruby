@@ -179,7 +179,7 @@ module Medidata
 
       # Response returned to requesting app when request is inauthentic
       def unauthenticated_response
-        [401, {'Content-Type' => 'text/plain'}, 'Unauthorized']
+        [401, {'Content-Type' => 'text/plain'}, ['Unauthorized']]
       end
 
       # Can we write to the Rails log
