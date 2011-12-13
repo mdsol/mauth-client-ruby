@@ -37,13 +37,13 @@ module Medidata
       end
 
       # Path to security tokens in mAuth
-      def security_tokens_path
-        "/security_tokens.json"
+      def security_token_path(app_uuid)
+        "/security_tokens/#{app_uuid}.json"
       end
 
       # URL for security tokens
-      def security_tokens_url
-        URI.parse(@mauth_baseurl + security_tokens_path)
+      def security_token_url(app_uuid)
+        URI.parse(@mauth_baseurl + security_token_path(app_uuid))
       end
 
       # Synchronize ivars
@@ -51,63 +51,38 @@ module Medidata
         @cached_secrets_mutex.synchronize { yield }
       end
 
-      # Cache expires every minute
-      def cache_expired?
-        last_refresh = synchronize { @last_refresh }
-        last_refresh.nil? || last_refresh < (Time.now - 60)
-      end
-
+      # Cache for a given token expires every minute
       def token_expired?(token)
-        token[:last_refresh].nil? || token[:last_refresh] < (Time.now - 60)
+        token.nil? || token[:last_refresh] < (Time.now - 60)
       end
 
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
-        sec = synchronize { @cached_secrets[app_uuid] }
-        refresh_token(app_uuid) if token_expired?(sec)
+        sec = synchronize do
+          token = @cached_secrets[app_uuid]
+          refresh_token(app_uuid) if token_expired?(token)
+          @cached_secrets[app_uuid]
+        end
         log "Cannot find secret for app with uuid #{app_uuid}" unless sec
         sec
       end
 
-      # Get new shared secrets from mAuth
-      def refresh_cache
-        log "Refreshing private_key cache"
-
-        synchronize { @last_refresh = Time.now }
-        remote_secrets = get_remote_secrets
-        new_cache = parse_secrets(remote_secrets) if remote_secrets
-        synchronize { @cached_secrets = new_cache if new_cache}
-      end
-
+      # Refresh information for a token from mAuth
       def refresh_token(app_uuid)
         remote_secret = get_remote_secret(app_uuid)
         remote_key_pair = parse_secret(remote_secret) if remote_secret
         synch_cache(remote_key_pair, app_uuid)
-        synchronize { @cached_secrets[app_uuid][:last_refresh] = Time.now unless @cached_secrets[app_uuid].nil?}
       end
 
       def synch_cache(remote_key_pair, app_uuid)
         synchronize do
-          remote_app_uuid, remote_key = remote_key_pair[:app_uuid], remote_key_pair[:app_uuid][:private_key]
-          if remote_app_uuid.nil?
-            @cache_secrets.delete(app_uuid)
-          elsif
-            @cache_secrets[remote_app_uuid] = remote_key
+          if remote_key_pair.nil?
+            @cached_secrets.delete(app_uuid)
+          else
+            remote_app_uuid = remote_key_pair[:app_uuid]
+            @cached_secrets[remote_app_uuid][:private_key] = remote_app_uuid[:private_key]
+            @cached_secrets[remote_app_uuid][:last_refresh] = Time.now
           end
-        end
-      end
-
-      # Parse secrets from mAuth
-      def parse_secrets(secrets_from_mauth)
-        begin
-          new_cache = JSON.parse(secrets_from_mauth).inject({}){|h, token|
-            key = token['security_token']['app_uuid']
-            val = token['security_token']['private_key']
-            h[key] = val
-            h
-          }
-        rescue JSON::ParserError, TypeError
-          log "Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
         end
       end
 
@@ -117,52 +92,37 @@ module Medidata
           remote_token = JSON.parse(secret_from_mauth)
           key = remote_token['security_token']['app_uuid']
           val = remote_token['security_token']['private_key']
-          return {key => {:private_key => val, :last_updated => Time.now}}
+          return {key => {:private_key => val}}
         rescue JSON::ParserError, TypeError
-          log "Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
-        end
-      end
-
-      # Get secrets from mAuth
-      def get_remote_secrets
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_token_path)
-        response = get(security_tokens_url, {:headers => headers})
-
-        return nil unless response
-        if response.code.to_i == 200
-          return response.body
-        else
-          log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
-          return nil
+          log "Cannot parse JSON response for shared secret request from mAuth:  #{secret_from_mauth}"
         end
       end
 
       def get_remote_secret(app_uuid)
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_token_path)
-        response = get(security_tokens_url, {:headers => headers})
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_token_path(app_uuid))
+        response = get(security_token_url(app_uuid), {:headers => headers})
 
         return according_to(response, app_uuid)
       end
 
+      # Returns nil when a token should be removed or anything else to add to the cache
       def according_to(response, app_uuid)
-        return nil unless response
-        if response.code.to_i == 200
-          return response.body
-        elsif response.code.to_i == 500
-          return remote_500(app_uuid)
-        elsif response.code.to_i == 404
-          return nil
+        return mauth_server_error(app_uuid) if response.nil?
+        case response.code.to_i
+        when 200 then return response.body
+        when 404 then return nil
+        when 500 then return mauth_server_error(app_uuid)
         else
-          log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
+          log "Attempt to refresh cache with secret from mAuth responded with #{response.code.to_i} #{response.body} for #{app_uuid}"
           return nil
         end
       end
 
       #return the value inside the cache if remote mAuth responds 500
-      def remote_500(app_uuid)
-        private_key = synchronize {@cached_secret[app_uuid]}
+      def mauth_server_error(app_uuid)
+        private_key = synchronize {@cached_secrets[app_uuid]}
         if private_key.nil?
-          log "Couldn't find app_uuid #{app_uuid} either in local cache or on mAuth"
+          log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth returned 500"
           return nil
         end
         return {'security_token' => {app_uuid => {'private_key' => private_key[:private_key]}}}

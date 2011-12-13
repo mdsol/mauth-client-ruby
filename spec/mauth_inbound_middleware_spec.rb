@@ -11,9 +11,8 @@ describe "Medidata::MAuthMiddleware" do
       :private_key => "secret"
     }
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
-    @secrets_from_mauth = [{"security_token" => {"private_key" => "shhhhhhh", "app_uuid" => "5ff4257e-9c16-11e0-b048-0026bbfffe5e"}},
-                           {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}].to_json
-    @parsed_secrets_from_mauth = {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>"shhh2", "5ff4257e-9c16-11e0-b048-0026bbfffe5e"=>"shhhhhhh"}
+    @secret_from_mauth = {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}.to_json
+    @parsed_secret_from_mauth = {"6ff4257e-9c16-11e0-b048-0026bbfffe5f"=>{:private_key => "shhh2"}}
   end
 
   describe "#initialize" do
@@ -23,6 +22,89 @@ describe "Medidata::MAuthMiddleware" do
 
     it "raises exception if no mauth baseurl given in config" do
       lambda { Medidata::MAuthMiddleware.new(@app, {}) }.should raise_error Medidata::MAuthMiddleware::MissingBaseURL
+    end
+  end
+
+  describe "#according_to" do
+    context "remote mAuth is having problems" do
+      before(:each) do
+        @response = mock(Net::HTTPResponse)
+      end
+
+      after(:each) do
+        @mauthIncomingMiddleware.should_receive(:mauth_server_error)
+        @mauthIncomingMiddleware.send(:according_to, @response, 'dummy_app')
+      end
+
+      it "calls mauth_server_error when response was 500" do
+        @response.stub_chain(:code, :to_i).and_return(500)
+      end
+
+      it "calls mauth_server_error when response was nil" do
+        @response.stub(:nil?).and_return(true)
+      end
+    end
+
+    context "remote mAuth responds with specific code" do
+      before(:each) do
+        @response = mock(Net::HTTPResponse)
+      end
+
+      it "receives a 200 response" do
+        @response.stub_chain(:code, :to_i).and_return(200)
+        @response.stub(:body).and_return('a body')
+        @mauthIncomingMiddleware.send(:according_to, @response, 'dummy_app').should == 'a body'
+      end
+
+      it "receives a 404 response" do
+        @response.stub_chain(:code, :to_i).and_return(404)
+        @mauthIncomingMiddleware.send(:according_to, @response, 'dummy_app').should be_nil
+      end
+
+      it "receives an unexpected response code" do
+        r_code = rand(199)+201
+        app_uuid = 'dummy_app'
+        @response.stub(:body).and_return("a body")
+        @response.stub_chain(:code, :to_i).and_return(r_code)
+        @mauthIncomingMiddleware.should_receive(:log).with("Attempt to refresh cache with secret from mAuth responded with #{r_code} #{@response.body} for #{app_uuid}")
+        @mauthIncomingMiddleware.send(:according_to, @response, app_uuid).should be_nil
+      end
+    end
+
+  end
+
+  describe "#security_token_path" do
+    it "returns a path with the app_uuid it received" do
+      app_uuid = 'dummy_app'
+      @mauthIncomingMiddleware.send(:security_token_path, app_uuid).should == "/security_tokens/dummy_app.json"
+    end
+  end
+
+  describe "#security_token_url" do
+    it "returns a parsed URI with the app_uuid it received" do
+      app_uuid = 'dummy_app'
+      uri = @mauthIncomingMiddleware.send(:security_token_url, app_uuid)
+      uri.to_s.should == "http://localhost/security_tokens/dummy_app.json"
+      uri.class.should == URI::HTTP
+    end
+  end
+
+  describe "#token_expired?" do
+    context "with a token that was never set in cache" do
+      it "returns true" do
+        token = nil
+        @mauthIncomingMiddleware.send(:token_expired?, token).should be
+      end
+    end
+
+    context "with a token that was set more than a minute ago" do
+      it "return true" do
+        token = Hash.new
+        token[:last_refresh] = Time.now
+        Timecop.travel(Time.now + 61)
+        @mauthIncomingMiddleware.send(:token_expired?, token).should be
+        Timecop.return
+      end
     end
   end
 
@@ -83,6 +165,23 @@ describe "Medidata::MAuthMiddleware" do
 
     end
   end
+
+  describe "#synch_cache" do
+    context "when receiving nil for remote_key_pair" do
+      it "deletes the app_uuid from the cached_secrets" do
+        @cached_secrets = {'dummy_app' => 'dummy_value'}
+        @mauthIncomingMiddleware.send(:synch_cache, nil, 'dummy_app')
+        #TODO Check that the instance has deleted key
+      end
+    end
+
+    context "when receiving a key for an app" do
+      xit "adds the key-value pair to the @cached_secrets" do
+        # TODO Add key to @cached_secret
+      end
+    end
+  end
+
 
   describe "#call" do
     before(:each) do
@@ -290,42 +389,21 @@ describe "Medidata::MAuthMiddleware" do
     end
 
     it "refreshes cache if cached expired" do
-      @mauthIncomingMiddleware.stub(:cache_expired?).and_return(true)
-      @mauthIncomingMiddleware.should_receive(:refresh_cache)
+      @mauthIncomingMiddleware.stub(:token_expired?).and_return(true)
+      @mauthIncomingMiddleware.should_receive(:refresh_token)
       @mauthIncomingMiddleware.send(:secret_for_app, @app_uuid)
     end
   end
 
-  describe "#refresh_cache" do
-    before(:each) do
-      @body_value = "body"
-      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(@body_value)
-      @mauthIncomingMiddleware.stub(:parse_secrets)
-    end
-
-    after(:each) do
-      @mauthIncomingMiddleware.send(:refresh_cache)
-    end
-
-    it "calls get_remote_secrets" do
-      @mauthIncomingMiddleware.should_receive(:get_remote_secrets)
-    end
-
-    it "parses the fetched secrets" do
-      @mauthIncomingMiddleware.should_receive(:parse_secrets).with(@body_value)
-    end
-
-  end
-
-  describe "#parse_secrets" do
+  describe "#parse_secret" do
     it "calls JSON.parse" do
       JSON.stub(:parse).and_return([])
-      JSON.should_receive(:parse).with(@secrets_from_mauth)
-      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+      JSON.should_receive(:parse).with(@secret_from_mauth)
+      @mauthIncomingMiddleware.send(:parse_secret, @secret_from_mauth)
     end
 
     it "returns parsed data in hash" do
-      @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == @parsed_secrets_from_mauth
+      @mauthIncomingMiddleware.send(:parse_secret, @secret_from_mauth).should == @parsed_secret_from_mauth
     end
 
     context "JSON parse throws exception" do
@@ -338,58 +416,35 @@ describe "Medidata::MAuthMiddleware" do
         [JSON::ParserError, TypeError].each do |exc|
           JSON.stub(:parse).and_raise(exc)
           @mauthIncomingMiddleware.should_receive(:log)
-          @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth)
+          @mauthIncomingMiddleware.send(:parse_secret, @secret_from_mauth)
         end
       end
 
       it "returns nil" do
         JSON.stub(:parse).and_raise(JSON::ParserError)
-        @mauthIncomingMiddleware.send(:parse_secrets, @secrets_from_mauth).should == nil
+        @mauthIncomingMiddleware.send(:parse_secret, @secret_from_mauth).should == nil
       end
     end
   end
 
-  describe "#get_remote_secrets" do
+  describe "#get_remote_secret" do
     before(:each) do
       @request = mock(Net::HTTPRequest)
       @response = mock(Net::HTTPResponse)
       @response.stub(:code).and_return("200")
-      @response.stub(:body).and_return(@secrets_from_mauth)
+      @response.stub(:body).and_return(@secret_from_mauth)
       @http = mock(Net::HTTP)
       @http.stub(:use_ssl=)
       @http.stub(:read_timeout=)
       Net::HTTP.stub(:new).and_return(@http)
       Net::HTTP::Get.stub(:new).and_return(@request)
       @http.stub(:start).and_return(@response)
-      @sec_tok_url = @mauthIncomingMiddleware.send(:security_tokens_url)
+      @sec_tok_url = @mauthIncomingMiddleware.send(:security_token_url, 'dummy_app')
     end
 
     it "calls get" do
       @mauthIncomingMiddleware.should_receive(:get)
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-
-    it "returns nil when get returns nil" do
-      @mauthIncomingMiddleware.stub(:get).and_return(nil)
-      @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
-    end
-
-    it "returns the response body when get returns response with 200 code" do
-      @mauthIncomingMiddleware.stub(:get).and_return(@response)
-      @mauthIncomingMiddleware.send(:get_remote_secrets).should == @response.body
-    end
-
-    it "calls log when get returns response other than 200" do
-      @response.stub(:code).and_return("404")
-      @mauthIncomingMiddleware.stub(:get).and_return(@response)
-      @mauthIncomingMiddleware.should_receive(:log)
-      @mauthIncomingMiddleware.send(:get_remote_secrets)
-    end
-
-    it "returns nil when get returns response other than 200" do
-      @response.stub(:code).and_return("404")
-      @mauthIncomingMiddleware.stub(:get).and_return(@response)
-      @mauthIncomingMiddleware.send(:get_remote_secrets).should == nil
+      @mauthIncomingMiddleware.send(:get_remote_secret, 'dummy_app')
     end
 
     describe "get" do
@@ -430,33 +485,6 @@ describe "Medidata::MAuthMiddleware" do
           @mauthIncomingMiddleware.send(:get, @sec_tok_url).should == nil
         end
       end
-    end
-
-  end
-
-  describe "#cache_expired?" do
-    before(:each) do
-      @body_value = []
-      retval = []
-      retval.stub(:body).and_return(@body_value)
-      @mauthIncomingMiddleware.stub(:get_remote_secrets).and_return(retval)
-      @mauthIncomingMiddleware.stub(:parse_secrets)
-    end
-
-    it "returns true first time it is called (cache has never been refreshed)" do
-      @mauthIncomingMiddleware.send(:cache_expired?).should == true
-    end
-
-    it "returns false immedidately after a cache reset" do
-      @mauthIncomingMiddleware.send(:refresh_cache)
-      @mauthIncomingMiddleware.send(:cache_expired?).should == false
-    end
-
-    it "returns true 61 seconds immediately after a cache reset" do
-      @mauthIncomingMiddleware.send(:refresh_cache)
-      Timecop.travel(Time.now + 61)
-      @mauthIncomingMiddleware.send(:cache_expired?).should == true
-      Timecop.return # "turn off" Timecop
     end
 
   end
