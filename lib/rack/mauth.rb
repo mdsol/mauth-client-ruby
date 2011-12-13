@@ -7,13 +7,13 @@ require 'mauth_signer'
 
 module Medidata
   class MAuthMiddleware
-    
+
     class MissingBaseURL < StandardError; end
 
     # Middleware initializer
     def initialize(app, config)
       raise MissingBaseURL unless config && config[:mauth_baseurl]
-      
+
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
       @cached_secrets_mutex = Mutex.new
@@ -57,22 +57,44 @@ module Medidata
         last_refresh.nil? || last_refresh < (Time.now - 60)
       end
 
+      def token_expired?(token)
+        token[:last_refresh].nil? || token[:last_refresh] < (Time.now - 60)
+      end
+
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
-        refresh_cache if cache_expired?
         sec = synchronize { @cached_secrets[app_uuid] }
+        refresh_token(app_uuid) if token_expired?(sec)
         log "Cannot find secret for app with uuid #{app_uuid}" unless sec
         sec
       end
 
       # Get new shared secrets from mAuth
-      def refresh_cache        
+      def refresh_cache
         log "Refreshing private_key cache"
 
         synchronize { @last_refresh = Time.now }
         remote_secrets = get_remote_secrets
         new_cache = parse_secrets(remote_secrets) if remote_secrets
         synchronize { @cached_secrets = new_cache if new_cache}
+      end
+
+      def refresh_token(app_uuid)
+        remote_secret = get_remote_secret(app_uuid)
+        remote_key_pair = parse_secret(remote_secret) if remote_secret
+        synch_cache(remote_key_pair, app_uuid)
+        synchronize { @cached_secrets[app_uuid][:last_refresh] = Time.now unless @cached_secrets[app_uuid].nil?}
+      end
+
+      def synch_cache(remote_key_pair, app_uuid)
+        synchronize do
+          remote_app_uuid, remote_key = remote_key_pair[:app_uuid], remote_key_pair[:app_uuid][:private_key]
+          if remote_app_uuid.nil?
+            @cache_secrets.delete(app_uuid)
+          elsif
+            @cache_secrets[remote_app_uuid] = remote_key
+          end
+        end
       end
 
       # Parse secrets from mAuth
@@ -88,12 +110,24 @@ module Medidata
           log "Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
         end
       end
-      
+
+      # Parse secret from mAuth
+      def parse_secret(secret_from_mauth)
+        begin
+          remote_token = JSON.parse(secret_from_mauth)
+          key = remote_token['security_token']['app_uuid']
+          val = remote_token['security_token']['private_key']
+          return {key => {:private_key => val, :last_updated => Time.now}}
+        rescue JSON::ParserError, TypeError
+          log "Cannot parse JSON response for shared secret request from mAuth:  #{secrets_from_mauth}"
+        end
+      end
+
       # Get secrets from mAuth
       def get_remote_secrets
-        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_tokens_path)
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_token_path)
         response = get(security_tokens_url, {:headers => headers})
-        
+
         return nil unless response
         if response.code.to_i == 200
           return response.body
@@ -102,16 +136,47 @@ module Medidata
           return nil
         end
       end
-      
+
+      def get_remote_secret(app_uuid)
+        headers = @mauth_signer.signed_headers(:app_uuid => @app_uuid, :verb => 'GET', :request_url => security_token_path)
+        response = get(security_tokens_url, {:headers => headers})
+
+        return according_to(response, app_uuid)
+      end
+
+      def according_to(response, app_uuid)
+        return nil unless response
+        if response.code.to_i == 200
+          return response.body
+        elsif response.code.to_i == 500
+          return remote_500(app_uuid)
+        elsif response.code.to_i == 404
+          return nil
+        else
+          log "Attempt to refresh cache with secrets from mAuth responded with #{response.code} #{response.body}"
+          return nil
+        end
+      end
+
+      #return the value inside the cache if remote mAuth responds 500
+      def remote_500(app_uuid)
+        private_key = synchronize {@cached_secret[app_uuid]}
+        if private_key.nil?
+          log "Couldn't find app_uuid #{app_uuid} either in local cache or on mAuth"
+          return nil
+        end
+        return {'security_token' => {app_uuid => {'private_key' => private_key[:private_key]}}}
+      end
+
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
       def should_authenticate?(env)
         return true unless @path_whitelist
-        
+
         path_info = env['PATH_INFO']
         any_matches = @path_whitelist.any?{|re| path_info =~ re}
         any_exceptions = @whitelist_exceptions ? @whitelist_exceptions.any?{|re| path_info =~ re} : false
-        
-        any_matches && !any_exceptions        
+
+        any_matches && !any_exceptions
       end
 
       # Rack-mauth can authenticate locally if the middleware user provided an app_uuid and private_key
@@ -167,7 +232,7 @@ module Medidata
 
         # Post to endpoint
         response = post(authentication_url, 'data' => data.to_json)
-        
+
         return false unless response
         if response.code.to_i == 204
           return true
@@ -186,12 +251,12 @@ module Medidata
       def can_log?
         @can_log ||= (defined?(Rails) && Rails.respond_to?(:logger))
       end
-      
+
       # Write to log
       def log(str_to_log)
         Rails.logger.info("rack-mauth: " + str_to_log) if can_log?
       end
-      
+
       # Generic get
       def get(from_url, options = {})
         begin
@@ -207,7 +272,7 @@ module Medidata
           return nil
         end
       end
-      
+
       # Generic post
       def post(to_url, post_data)
         begin
@@ -223,6 +288,6 @@ module Medidata
           return nil
         end
       end
-      
+
     end
 end

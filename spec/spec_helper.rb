@@ -1,2 +1,2 @@
-require 'lib/rack/mauth.rb'
+require './lib/rack/mauth.rb'
 require 'timecop'
