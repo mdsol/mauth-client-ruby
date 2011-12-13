@@ -63,9 +63,12 @@ module MAuth
       OpenSSL::HMAC.hexdigest(OpenSSL::Digest.const_get(digest).new, secret, data)
     end
 
+    # Raise unless all param requirements are met
+    # Note:  post_data should not be included in keys
     def require_param(params, *keys)
       keys.each do |key|
         raise ArgumentError.new("Missing parameter #{key.inspect}") unless params.key?(key)
+        raise ArgumentError.new("Missing value for #{key.inspect}") unless params[key].nil? || (params[key].respond_to?(:empty) && params[key].empty?)
       end
     end
 
