@@ -68,7 +68,7 @@ module MAuth
     def require_param(params, *keys)
       keys.each do |key|
         raise ArgumentError.new("Missing parameter #{key.inspect}") unless params.key?(key)
-        raise ArgumentError.new("Missing value for #{key.inspect}") unless params[key].nil? || (params[key].respond_to?(:empty?) && params[key].empty?)
+        raise ArgumentError.new("Missing value for #{key.inspect}") if params[key].nil? || (params[key].respond_to?(:empty?) && params[key].empty?)
       end
     end
 
