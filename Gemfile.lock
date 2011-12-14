@@ -1,9 +1,9 @@
 GIT
   remote: git@github.com:mdsol/mauth_signer.git
-  revision: 64217e7f1340723a089705bcb9da4db2b03ca248
-  tag: v0.6.0
+  revision: f957eebe2cc43b706b832a2b0c5705c4a481dafb
+  tag: v0.6.3
   specs:
-    mauth_signer (0.6.0)
+    mauth_signer (0.6.3)
 
 PATH
   remote: .

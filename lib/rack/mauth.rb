@@ -106,6 +106,7 @@ module Medidata
       end
 
       # Returns nil when a token should be removed or anything else to add to the cache
+      #TODO Call synch_cache directly with an action (ie remove or update) and value(s)
       def according_to(response, app_uuid)
         return mauth_server_error(app_uuid) if response.nil?
         case response.code.to_i
