@@ -3,6 +3,7 @@ require 'base64'
 require 'uri'
 require 'net/https'
 require 'thread'
+require 'bundler/setup'
 require 'mauth_signer'
 
 module Medidata
@@ -79,9 +80,10 @@ module Medidata
           if remote_key_pair.nil?
             @cached_secrets.delete(app_uuid)
           else
-            remote_app_uuid = remote_key_pair[:app_uuid]
-            @cached_secrets[remote_app_uuid][:private_key] = remote_app_uuid[:private_key]
-            @cached_secrets[remote_app_uuid][:last_refresh] = Time.now
+            remote_app_uuid = remote_key_pair[app_uuid]
+            @cached_secrets[app_uuid] = {}
+            @cached_secrets[app_uuid][:private_key] = remote_app_uuid[:private_key]
+            @cached_secrets[app_uuid][:last_refresh] = Time.now
           end
         end
       end
@@ -224,7 +226,9 @@ module Medidata
           http = Net::HTTP.new(from_url.host, from_url.port)
           http.use_ssl = (from_url.scheme == 'https')
           http.read_timeout = 20 #seconds
-          request = options[:headers] ? Net::HTTP::Get.new(from_url.path, options[:headers]) : Net::HTTP::Get.new(from_url.path)
+          headers = {"Content-Type" => "application/json"}
+          headers = options[:headers].nil? ? headers : headers.merge(options[:headers])
+          request = Net::HTTP::Get.new(from_url.path, headers)
           response = http.start {|h| h.request(request) }
           return response
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,

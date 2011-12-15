@@ -167,19 +167,45 @@ describe "Medidata::MAuthMiddleware" do
   end
 
   describe "#synch_cache" do
-    context "when receiving nil for remote_key_pair" do
+    context "deleting or adding a app_uuid" do
+      before(:each) do
+        @cached_secrets = {}
+        @new_token = nil
+        class << @mauthIncomingMiddleware
+          def cached
+            @cached_secrets
+          end
+        end
+      end
+
+      after(:each) do
+        @mauthIncomingMiddleware.send(:synch_cache, @new_token, 'dummy_app')
+      end
+
       it "deletes the app_uuid from the cached_secrets" do
         @cached_secrets = {'dummy_app' => 'dummy_value'}
-        @mauthIncomingMiddleware.send(:synch_cache, nil, 'dummy_app')
-        #TODO Check that the instance has deleted key
+        @mauthIncomingMiddleware.cached.should be_empty
+      end
+
+      it "adds the key-value pair to the @cached_secrets" do
+        @new_token = {'dummy_app' => {:private_key => '123'} }
+        @mauthIncomingMiddleware.cached.has_key?('dummy_app')
       end
     end
 
-    context "when receiving a key for an app" do
-      xit "adds the key-value pair to the @cached_secrets" do
-        # TODO Add key to @cached_secret
+    [:private_key, :last_refresh].each do |key|
+      it "adds a #{key} to the @cached_secrets" do
+        class << @mauthIncomingMiddleware
+          def cached
+            @cached_secrets
+          end
+        end
+        @new_token = {'dummy_app' => {:private_key => '123'} }
+        @mauthIncomingMiddleware.send(:synch_cache, @new_token, 'dummy_app')
+        @mauthIncomingMiddleware.cached['dummy_app'].should have_key(key)
       end
     end
+
   end
 
 
