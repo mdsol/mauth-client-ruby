@@ -4,10 +4,10 @@ This gem is a wrapper around the middleware called rack-mauth which rack applica
 
 == Installation
 
-Use the bundler gem (sudo gem install bundler).  Add the following to your Gemfile:
+Use the bundler gem (sudo gem install bundler).  Add the following to your Gemfile in your global environment:
 
-  gem 'rack-mauth', :git => "git@github.com:mdsol/rack-mauth.git", :tag => "v0.1.0", :require => 'rack/mauth'
-  gem 'mauth_signer', :git => 'git@github.com:mdsol/mauth_signer.git', :tag => 'v0.6.0'
+  gem 'rack-mauth', :git => "git@github.com:mdsol/rack-mauth.git", :tag => "v0.1.1", :require => 'rack/mauth'
+  gem 'mauth_signer', :git => 'git@github.com:mdsol/mauth_signer.git', :tag => 'v0.6.3'
 
 == Usage
 
@@ -28,7 +28,8 @@ The mauth_baseurl is required in the conf hash.  The private_key and app_uuid en
 
 The path_whitelist is an optional configuration parameter specifying an array of one or more regular expressions which define the application URLs which rack-mauth should authenticate.  If a request URL matches one or more regular expressions in the path_whitelist, the request will be authenticated by rack-mauth.  If no path_whitelist is defined, all incoming requests will be authenticated by rack-mauth.  The whitelist_exceptions parameter is also optional and specifies those URLs which, though they might match a regular expression in the path_whitelist, should NOT be authenticated by rack-mauth.
 
-When doing local authentication, rack-mauth will periodically fetch shared secrets from mAuth.  Currently, the fetch occurs every 60 seconds beginning on startup.
+When doing local authentication, rack-mauth will periodically fetch shared secrets from mAuth.  Each token has it's own refresh timer for 60 seconds. Applications which connects to frequently will benefit the most from this cache strategy. If mAuth is unable to respond, or if its response is a 500 status code, the local cache will get a freshness extension for another 60 seconds. When the response is a 200 status code, rack-mauth will parse the security token from mAuth and add it to the local cache. If mAuth responds with 404, it is an indication that the app_uuid no longer is authenticated (or was never there to begin with) and that token is removed from the cache.
+
 
 When rack-mauth determines that a request is inauthentic, it will return a 401 status code to the requesting application along with the plain text message "Unauthorized".  Authenticated requests will be passed to the application using rack-mauth as middleware, as will requests which do not match any regular expression in the path_whitelist (if the path_whitelist is specified).
 
