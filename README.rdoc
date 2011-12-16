@@ -35,3 +35,7 @@ When rack-mauth determines that a request is inauthentic, it will return a 401 s
 == Warning
 
 During development, classes are typically not cached in Rails applications.  If this is the case, be aware that the rack-mauth middleware object will be instantiated anew for each request; this will cause applications performing local authentication to fetch security tokens before each request is authenticated.
+
+== Knowledge Base
+
+More information regarding rack-mauth is available at: https://sites.google.com/a/mdsol.com/knowledgebase/home/departments/engineering/on-demand-portfolio/services/core-services/mauth/rack-mauth
