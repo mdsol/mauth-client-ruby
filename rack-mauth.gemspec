@@ -18,8 +18,10 @@ Gem::Specification.new do |s|
 
   if RUBY_VERSION['1.9']
     s.add_development_dependency('ruby-debug19', '0.11.6')
-  else
+  elsif RUBY_VERSION['1.8']
     s.add_development_dependency('ruby-debug', '0.10.3')
+  else
+    raise "Unknown RUBY_VERSION"
   end
   s.add_development_dependency('rspec', '2.6.0')
   s.add_development_dependency('timecop', '0.3.5')

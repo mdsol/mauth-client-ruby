@@ -330,7 +330,7 @@ describe "Medidata::MAuthMiddleware" do
       }
 
       @request = mock(Net::HTTPRequest)
-      @request.stub(:set_form_data)
+      @request.stub(:body)
       @response = mock(Net::HTTPResponse)
       @response.stub(:code).and_return("204")
       @http = mock(Net::HTTP)
@@ -341,7 +341,7 @@ describe "Medidata::MAuthMiddleware" do
     end
 
     it "calls generic post" do
-      @mauthIncomingMiddleware.should_receive(:post).with(@authentication_url, 'data' => @data.to_json)
+      @mauthIncomingMiddleware.should_receive(:post).with(@authentication_url, {"authentication_ticket" => @data})
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params)
     end
 
@@ -369,24 +369,27 @@ describe "Medidata::MAuthMiddleware" do
     end
 
     describe "post" do
+      before(:each) do
+         @request.stub(:body=)
+      end
       it "creates http object with authentication_ticket url" do
         Net::HTTP.should_receive(:new).with(@authentication_url.host, @authentication_url.port).and_return(@http)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       it "sets use of ssl based on url scheme" do
         @http.should_receive(:use_ssl=).with(@authentication_url.scheme == 'https')
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       it "makes a post object" do
-        Net::HTTP::Post.should_receive(:new).with(@authentication_url.path).and_return(@request)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        Net::HTTP::Post.should_receive(:new).with(@authentication_url.path, { 'Content-Length' => '205','Content-Type' => 'application/json'}).and_return(@request)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
-      it "sets the form data of the request" do
-        @request.should_receive(:set_form_data).with("data" => @data.to_json)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      it "sets the body of the request" do
+        @request.should_receive(:body=).with({"authentication_ticket" => @data}.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       context "exception thrown" do
@@ -394,7 +397,7 @@ describe "Medidata::MAuthMiddleware" do
           [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
             @mauthIncomingMiddleware.should_receive(:log)
             @http.stub(:start).and_raise(exc)
-            @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+            @mauthIncomingMiddleware.send(:post, @authentication_url, {:authentication_ticket => @data})
           end
         end
 

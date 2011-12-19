@@ -194,7 +194,7 @@ module Medidata
         }
 
         # Post to endpoint
-        response = post(authentication_url, 'data' => data.to_json)
+        response = post(authentication_url, {"authentication_ticket" => data})
 
         return false unless response
         if response.code.to_i == 204
@@ -226,8 +226,7 @@ module Medidata
           http = Net::HTTP.new(from_url.host, from_url.port)
           http.use_ssl = (from_url.scheme == 'https')
           http.read_timeout = 20 #seconds
-          headers = {"Content-Type" => "application/json"}
-          headers = options[:headers].nil? ? headers : headers.merge(options[:headers])
+          headers = options[:headers].nil? ? {} : options[:headers]
           request = Net::HTTP::Get.new(from_url.path, headers)
           response = http.start {|h| h.request(request) }
           return response
@@ -243,8 +242,12 @@ module Medidata
         begin
           http = Net::HTTP.new(to_url.host, to_url.port)
           http.use_ssl = (to_url.scheme == 'https')
-          request = Net::HTTP::Post.new(to_url.path)
-          request.set_form_data(post_data)
+          json_post_data = post_data.to_json
+          headers = {}
+          headers["Content-Length"] = json_post_data.length.to_s
+          headers["Content-Type"]   = 'application/json'
+          request = Net::HTTP::Post.new(to_url.path, headers)
+          request.body= json_post_data
           response = http.start {|h| h.request(request) }
           return response
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
