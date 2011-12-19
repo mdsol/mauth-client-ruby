@@ -34,7 +34,7 @@ module Medidata
     protected
       # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
       def authentication_url
-        URI.parse(@mauth_baseurl + "/authentication_tickets.json")
+        URI.parse(@mauth_baseurl + "/mauth/v1/authentication_tickets.json")
       end
 
       # Path to security tokens in mAuth
