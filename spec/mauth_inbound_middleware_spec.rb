@@ -73,22 +73,6 @@ describe "Medidata::MAuthMiddleware" do
 
   end
 
-  describe "#security_token_path" do
-    it "returns a path with the app_uuid it received" do
-      app_uuid = 'dummy_app'
-      @mauthIncomingMiddleware.send(:security_token_path, app_uuid).should == "/security_tokens/dummy_app.json"
-    end
-  end
-
-  describe "#security_token_url" do
-    it "returns a parsed URI with the app_uuid it received" do
-      app_uuid = 'dummy_app'
-      uri = @mauthIncomingMiddleware.send(:security_token_url, app_uuid)
-      uri.to_s.should == "http://localhost/security_tokens/dummy_app.json"
-      uri.class.should == URI::HTTP
-    end
-  end
-
   describe "#token_expired?" do
     context "with a token that was never set in cache" do
       it "returns true" do
@@ -516,6 +500,23 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
 
+  end
+  describe "protected methods" do
+    it "returns the authentication url" do
+      @mauthIncomingMiddleware.send(:authentication_url).path.should == "/mauth/v1/authentication_tickets.json"
+      @mauthIncomingMiddleware.send(:authentication_url).host.should == "localhost"
+      @mauthIncomingMiddleware.send(:authentication_url).scheme.should == "http"
+    end
+
+    it "returns the security token path" do
+      @mauthIncomingMiddleware.send(:security_token_path, "dummy_app").should == "/mauth/v1/security_tokens/dummy_app.json"
+    end
+
+    it "returns the security token url" do
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").path.should == "/mauth/v1/security_tokens/dummy_app.json"
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").host.should == "localhost"
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").scheme.should == "http"
+    end
   end
 
 end

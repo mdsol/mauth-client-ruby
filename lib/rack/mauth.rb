@@ -39,7 +39,7 @@ module Medidata
 
       # Path to security tokens in mAuth
       def security_token_path(app_uuid)
-        "/security_tokens/#{app_uuid}.json"
+        "/mauth/v1/security_tokens/#{app_uuid}.json"
       end
 
       # URL for security tokens
