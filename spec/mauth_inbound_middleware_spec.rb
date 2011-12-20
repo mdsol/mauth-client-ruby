@@ -8,7 +8,8 @@ describe "Medidata::MAuthMiddleware" do
     config = {
       :mauth_baseurl => "http://localhost",
       :app_uuid => "app_uuid",
-      :private_key => "secret"
+      :private_key => "secret",
+      :version => "v1"
     }
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
     @secret_from_mauth = {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}.to_json
@@ -22,6 +23,15 @@ describe "Medidata::MAuthMiddleware" do
 
     it "raises exception if no mauth baseurl given in config" do
       lambda { Medidata::MAuthMiddleware.new(@app, {}) }.should raise_error Medidata::MAuthMiddleware::MissingBaseURL
+    end
+
+    it "raises an exception if config doesn't include :version" do
+      config = {
+        :mauth_baseurl => "http://localhost",
+        :app_uuid => "app_uuid",
+        :private_key => "secret"
+      }
+      lambda { Medidata::MAuthMiddleware.new(@app, config) }.should raise_error ArgumentError
     end
   end
 
@@ -104,7 +114,8 @@ describe "Medidata::MAuthMiddleware" do
         @base_config = {
           :mauth_baseurl => "http://localhost",
           :app_uuid => "app_uuid",
-          :private_key => "secret"
+          :private_key => "secret",
+          :version => "v1"
         }
 
         @base_env = {

@@ -17,7 +17,7 @@ module Medidata
 
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
-      @version = config[:version] || "v1"
+      @version = config[:version] || missing_version
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
@@ -33,6 +33,11 @@ module Medidata
     end
 
     protected
+      # Need to pass in a version of mAuth api to use
+      def missing_version
+        raise ArgumentError, 'missing api version'
+      end
+
       # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
       def authentication_url
         URI.parse(@mauth_baseurl + "/mauth/#{@version}/authentication_tickets.json")
