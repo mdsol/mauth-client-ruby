@@ -17,6 +17,7 @@ module Medidata
 
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
+      @version = config[:version] || "v1"
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
@@ -34,12 +35,12 @@ module Medidata
     protected
       # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
       def authentication_url
-        URI.parse(@mauth_baseurl + "/mauth/v1/authentication_tickets.json")
+        URI.parse(@mauth_baseurl + "/mauth/#{@version}/authentication_tickets.json")
       end
 
       # Path to security tokens in mAuth
       def security_token_path(app_uuid)
-        "/mauth/v1/security_tokens/#{app_uuid}.json"
+        "/mauth/#{@version}/security_tokens/#{app_uuid}.json"
       end
 
       # URL for security tokens
