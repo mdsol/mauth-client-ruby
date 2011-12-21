@@ -419,6 +419,33 @@ describe "Medidata::MAuthMiddleware" do
     end
   end
 
+  describe "#refresh_token" do
+    it "gets the remote secret" do
+      @mauthIncomingMiddleware.should_receive(:get_remote_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "parses the secret if there is one" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return('dummy_app')
+      @mauthIncomingMiddleware.should_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "gets does not parse the secret if there is none" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return(nil)
+      @mauthIncomingMiddleware.should_not_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "returns a key pair it found on the remote server" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return('dummy_app')
+      @mauthIncomingMiddleware.stub(:parse_secret).and_return('parsed_app')
+      @mauthIncomingMiddleware.stub(:synch_cache)
+      @mauthIncomingMiddleware.should_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid).should == 'parsed_app'
+    end
+  end
+
   describe "#fetch_cached_token" do
     it 'fetches a hash based on a the key passed in' do
       dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
@@ -446,7 +473,7 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil
     end
 
-    it " returns nil when an app does not have a private key" do
+    it "returns nil when an app does not have a private key" do
       dummy_pair = {'dummy_app' => {:last_refresh => Time.now}}
       @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
       @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil

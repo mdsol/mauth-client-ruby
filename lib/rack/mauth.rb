@@ -66,10 +66,14 @@ module Medidata
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
         sec = fetch_cached_token(app_uuid)
-        refresh_token(app_uuid) if token_expired?(sec)
+        key = refresh_token(app_uuid) if token_expired?(sec)
 
-        key = fetch_private_key(app_uuid)
-        key.nil? ? log("Cannot find secret for app with uuid #{app_uuid}") : key
+        if key.nil?
+          log("Cannot find secret for app with uuid #{app_uuid}")
+          return nil
+        else
+          return key
+        end
       end
 
       def fetch_cached_token(app_uuid)
@@ -86,6 +90,7 @@ module Medidata
         remote_secret = get_remote_secret(app_uuid)
         remote_key_pair = parse_secret(remote_secret) if remote_secret
         synch_cache(remote_key_pair, app_uuid)
+        remote_key_pair
       end
 
       def synch_cache(remote_key_pair, app_uuid)
