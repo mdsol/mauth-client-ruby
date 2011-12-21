@@ -65,19 +65,19 @@ module Medidata
 
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
-        sec = fetch_app_uuid(app_uuid)
+        sec = fetch_cached_token(app_uuid)
         refresh_token(app_uuid) if token_expired?(sec)
 
         key = fetch_private_key(app_uuid)
         key.nil? ? log("Cannot find secret for app with uuid #{app_uuid}") : key
       end
 
-      def fetch_app_uuid(app_uuid)
+      def fetch_cached_token(app_uuid)
         synchronize { @cached_secrets[app_uuid] }
       end
 
       def fetch_private_key(app_uuid)
-        sec = fetch_app_uuid(app_uuid)
+        sec = fetch_cached_token(app_uuid)
         synchronize { sec.nil? ? nil : sec[:private_key]}
       end
 
@@ -136,7 +136,7 @@ module Medidata
 
       #return the value inside the cache if remote mAuth responds 500
       def mauth_server_error(app_uuid)
-        app_token = fetch_app_uuid(app_uuid)
+        app_token = fetch_cached_token(app_uuid)
         if app_token.nil?
           log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth returned 500"
           return nil

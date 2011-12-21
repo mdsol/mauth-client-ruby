@@ -419,17 +419,17 @@ describe "Medidata::MAuthMiddleware" do
     end
   end
 
-  describe "#fetch_app_uuid" do
+  describe "#fetch_cached_token" do
     it 'fetches a hash based on a the key passed in' do
       dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
       @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
-      @mauthIncomingMiddleware.send(:fetch_app_uuid, 'dummy_app').should include(:private_key)
+      @mauthIncomingMiddleware.send(:fetch_cached_token, 'dummy_app').should include(:private_key)
     end
 
     it 'returns nil when no key for an app uuid can be found' do
       dummy_pair = nil
       @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
-      @mauthIncomingMiddleware.send(:fetch_app_uuid, 'dummy_app').should be_nil
+      @mauthIncomingMiddleware.send(:fetch_cached_token, 'dummy_app').should be_nil
     end
   end
 
