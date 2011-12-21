@@ -419,6 +419,40 @@ describe "Medidata::MAuthMiddleware" do
     end
   end
 
+  describe "#fetch_app_uuid" do
+    it 'fetches a hash based on a the key passed in' do
+      dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_app_uuid, 'dummy_app').should include(:private_key)
+    end
+
+    it 'returns nil when no key for an app uuid can be found' do
+      dummy_pair = nil
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_app_uuid, 'dummy_app').should be_nil
+    end
+  end
+
+  describe "#fetch_private_key" do
+    it "fetches the value of an app's private key" do
+      dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should include('key')
+    end
+
+    it "returns nil when no app can be found" do
+      dummy_pair = nil
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil
+    end
+
+    it " returns nil when an app does not have a private key" do
+      dummy_pair = {'dummy_app' => {:last_refresh => Time.now}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil
+    end
+  end
+
   describe "#parse_secret" do
     it "calls JSON.parse" do
       JSON.stub(:parse).and_return([])

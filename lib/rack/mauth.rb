@@ -65,13 +65,19 @@ module Medidata
 
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
-        sec = synchronize do
-          token = @cached_secrets[app_uuid]
-          refresh_token(app_uuid) if token_expired?(token)
-          @cached_secrets[app_uuid]
-        end
-        log "Cannot find secret for app with uuid #{app_uuid}" unless sec
-        sec
+        sec = fetch_app_uuid(app_uuid)
+        refresh_token(app_uuid) if token_expired?(sec)
+
+        fetch_private_key(app_uuid).nil? ? log("Cannot find secret for app with uuid #{app_uuid}") : key
+      end
+
+      def fetch_app_uuid(app_uuid)
+        synchronize { @cached_secrets[app_uuid] }
+      end
+
+      def fetch_private_key(app_uuid)
+        sec = fetch_app_uuid(app_uuid)
+        synchronize { sec.nil? ? nil : sec[:private_key]}
       end
 
       # Refresh information for a token from mAuth
@@ -129,12 +135,12 @@ module Medidata
 
       #return the value inside the cache if remote mAuth responds 500
       def mauth_server_error(app_uuid)
-        private_key = synchronize {@cached_secrets[app_uuid]}
-        if private_key.nil?
+        app_token = fetch_app_uuid(app_uuid)
+        if app_token.nil?
           log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth returned 500"
           return nil
         end
-        return {'security_token' => {app_uuid => {'private_key' => private_key[:private_key]}}}
+        return {'security_token' => {app_uuid => {'private_key' => fetch_private_key(app_uuid)}}}
       end
 
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
