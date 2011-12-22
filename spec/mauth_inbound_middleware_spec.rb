@@ -8,7 +8,8 @@ describe "Medidata::MAuthMiddleware" do
     config = {
       :mauth_baseurl => "http://localhost",
       :app_uuid => "app_uuid",
-      :private_key => "secret"
+      :private_key => "secret",
+      :version => "v1"
     }
     @mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, config)
     @secret_from_mauth = {"security_token" => {"private_key" => "shhh2", "app_uuid" => "6ff4257e-9c16-11e0-b048-0026bbfffe5f"}}.to_json
@@ -22,6 +23,15 @@ describe "Medidata::MAuthMiddleware" do
 
     it "raises exception if no mauth baseurl given in config" do
       lambda { Medidata::MAuthMiddleware.new(@app, {}) }.should raise_error Medidata::MAuthMiddleware::MissingBaseURL
+    end
+
+    it "raises an exception if config doesn't include :version" do
+      config = {
+        :mauth_baseurl => "http://localhost",
+        :app_uuid => "app_uuid",
+        :private_key => "secret"
+      }
+      lambda { Medidata::MAuthMiddleware.new(@app, config) }.should raise_error ArgumentError
     end
   end
 
@@ -73,22 +83,6 @@ describe "Medidata::MAuthMiddleware" do
 
   end
 
-  describe "#security_token_path" do
-    it "returns a path with the app_uuid it received" do
-      app_uuid = 'dummy_app'
-      @mauthIncomingMiddleware.send(:security_token_path, app_uuid).should == "/security_tokens/dummy_app.json"
-    end
-  end
-
-  describe "#security_token_url" do
-    it "returns a parsed URI with the app_uuid it received" do
-      app_uuid = 'dummy_app'
-      uri = @mauthIncomingMiddleware.send(:security_token_url, app_uuid)
-      uri.to_s.should == "http://localhost/security_tokens/dummy_app.json"
-      uri.class.should == URI::HTTP
-    end
-  end
-
   describe "#token_expired?" do
     context "with a token that was never set in cache" do
       it "returns true" do
@@ -120,7 +114,8 @@ describe "Medidata::MAuthMiddleware" do
         @base_config = {
           :mauth_baseurl => "http://localhost",
           :app_uuid => "app_uuid",
-          :private_key => "secret"
+          :private_key => "secret",
+          :version => "v1"
         }
 
         @base_env = {
@@ -330,7 +325,7 @@ describe "Medidata::MAuthMiddleware" do
       }
 
       @request = mock(Net::HTTPRequest)
-      @request.stub(:set_form_data)
+      @request.stub(:body)
       @response = mock(Net::HTTPResponse)
       @response.stub(:code).and_return("204")
       @http = mock(Net::HTTP)
@@ -341,7 +336,7 @@ describe "Medidata::MAuthMiddleware" do
     end
 
     it "calls generic post" do
-      @mauthIncomingMiddleware.should_receive(:post).with(@authentication_url, 'data' => @data.to_json)
+      @mauthIncomingMiddleware.should_receive(:post).with(@authentication_url, {"authentication_ticket" => @data})
       @mauthIncomingMiddleware.send(:authenticate_remotely, @digest, @params)
     end
 
@@ -369,24 +364,27 @@ describe "Medidata::MAuthMiddleware" do
     end
 
     describe "post" do
+      before(:each) do
+         @request.stub(:body=)
+      end
       it "creates http object with authentication_ticket url" do
         Net::HTTP.should_receive(:new).with(@authentication_url.host, @authentication_url.port).and_return(@http)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       it "sets use of ssl based on url scheme" do
         @http.should_receive(:use_ssl=).with(@authentication_url.scheme == 'https')
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       it "makes a post object" do
-        Net::HTTP::Post.should_receive(:new).with(@authentication_url.path).and_return(@request)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+        Net::HTTP::Post.should_receive(:new).with(@authentication_url.path, { 'Content-Length' => '205','Content-Type' => 'application/json'}).and_return(@request)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
-      it "sets the form data of the request" do
-        @request.should_receive(:set_form_data).with("data" => @data.to_json)
-        @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+      it "sets the body of the request" do
+        @request.should_receive(:body=).with({"authentication_ticket" => @data}.to_json)
+        @mauthIncomingMiddleware.send(:post, @authentication_url, {"authentication_ticket" => @data})
       end
 
       context "exception thrown" do
@@ -394,7 +392,7 @@ describe "Medidata::MAuthMiddleware" do
           [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exc|
             @mauthIncomingMiddleware.should_receive(:log)
             @http.stub(:start).and_raise(exc)
-            @mauthIncomingMiddleware.send(:post, @authentication_url, 'data' => @data.to_json)
+            @mauthIncomingMiddleware.send(:post, @authentication_url, {:authentication_ticket => @data})
           end
         end
 
@@ -418,6 +416,67 @@ describe "Medidata::MAuthMiddleware" do
       @mauthIncomingMiddleware.stub(:token_expired?).and_return(true)
       @mauthIncomingMiddleware.should_receive(:refresh_token)
       @mauthIncomingMiddleware.send(:secret_for_app, @app_uuid)
+    end
+  end
+
+  describe "#refresh_token" do
+    it "gets the remote secret" do
+      @mauthIncomingMiddleware.should_receive(:get_remote_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "parses the secret if there is one" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return('dummy_app')
+      @mauthIncomingMiddleware.should_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "gets does not parse the secret if there is none" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return(nil)
+      @mauthIncomingMiddleware.should_not_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid)
+    end
+
+    it "returns a key pair it found on the remote server" do
+      @mauthIncomingMiddleware.stub(:get_remote_secret).and_return('dummy_app')
+      @mauthIncomingMiddleware.stub(:parse_secret).and_return('parsed_app')
+      @mauthIncomingMiddleware.stub(:synch_cache)
+      @mauthIncomingMiddleware.should_receive(:parse_secret)
+      @mauthIncomingMiddleware.send(:refresh_token, @app_uuid).should == 'parsed_app'
+    end
+  end
+
+  describe "#fetch_cached_token" do
+    it 'fetches a hash based on a the key passed in' do
+      dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_cached_token, 'dummy_app').should include(:private_key)
+    end
+
+    it 'returns nil when no key for an app uuid can be found' do
+      dummy_pair = nil
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_cached_token, 'dummy_app').should be_nil
+    end
+  end
+
+  describe "#fetch_private_key" do
+    it "fetches the value of an app's private key" do
+      dummy_pair = {'dummy_app'=> {:private_key => 'key'}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should include('key')
+    end
+
+    it "returns nil when no app can be found" do
+      dummy_pair = nil
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil
+    end
+
+    it "returns nil when an app does not have a private key" do
+      dummy_pair = {'dummy_app' => {:last_refresh => Time.now}}
+      @mauthIncomingMiddleware.send(:synch_cache, dummy_pair, 'dummy_app')
+      @mauthIncomingMiddleware.send(:fetch_private_key, 'dummy_app').should be_nil
     end
   end
 
@@ -513,6 +572,23 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
 
+  end
+  describe "protected methods" do
+    it "returns the authentication url" do
+      @mauthIncomingMiddleware.send(:authentication_url).path.should == "/mauth/v1/authentication_tickets.json"
+      @mauthIncomingMiddleware.send(:authentication_url).host.should == "localhost"
+      @mauthIncomingMiddleware.send(:authentication_url).scheme.should == "http"
+    end
+
+    it "returns the security token path" do
+      @mauthIncomingMiddleware.send(:security_token_path, "dummy_app").should == "/mauth/v1/security_tokens/dummy_app.json"
+    end
+
+    it "returns the security token url" do
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").path.should == "/mauth/v1/security_tokens/dummy_app.json"
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").host.should == "localhost"
+      @mauthIncomingMiddleware.send(:security_token_url, "dummy_app").scheme.should == "http"
+    end
   end
 
 end

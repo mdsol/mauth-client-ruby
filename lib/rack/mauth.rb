@@ -17,6 +17,7 @@ module Medidata
 
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
+      @version = config[:version] || missing_version
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
@@ -32,14 +33,19 @@ module Medidata
     end
 
     protected
+      # Need to pass in a version of mAuth api to use
+      def missing_version
+        raise ArgumentError, 'missing api version'
+      end
+
       # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
       def authentication_url
-        URI.parse(@mauth_baseurl + "/authentication_tickets.json")
+        URI.parse(@mauth_baseurl + "/mauth/#{@version}/authentication_tickets.json")
       end
 
       # Path to security tokens in mAuth
       def security_token_path(app_uuid)
-        "/security_tokens/#{app_uuid}.json"
+        "/mauth/#{@version}/security_tokens/#{app_uuid}.json"
       end
 
       # URL for security tokens
@@ -59,13 +65,20 @@ module Medidata
 
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
-        sec = synchronize do
-          token = @cached_secrets[app_uuid]
-          refresh_token(app_uuid) if token_expired?(token)
-          @cached_secrets[app_uuid]
-        end
-        log "Cannot find secret for app with uuid #{app_uuid}" unless sec
-        sec
+        sec = fetch_cached_token(app_uuid)
+        key = refresh_token(app_uuid) if token_expired?(sec)
+
+        log("Cannot find secret for app with uuid #{app_uuid}") unless key
+        return key
+      end
+
+      def fetch_cached_token(app_uuid)
+        synchronize { @cached_secrets[app_uuid] }
+      end
+
+      def fetch_private_key(app_uuid)
+        sec = fetch_cached_token(app_uuid)
+        synchronize { sec.nil? ? nil : sec[:private_key]}
       end
 
       # Refresh information for a token from mAuth
@@ -73,6 +86,7 @@ module Medidata
         remote_secret = get_remote_secret(app_uuid)
         remote_key_pair = parse_secret(remote_secret) if remote_secret
         synch_cache(remote_key_pair, app_uuid)
+        remote_key_pair
       end
 
       def synch_cache(remote_key_pair, app_uuid)
@@ -123,12 +137,12 @@ module Medidata
 
       #return the value inside the cache if remote mAuth responds 500
       def mauth_server_error(app_uuid)
-        private_key = synchronize {@cached_secrets[app_uuid]}
-        if private_key.nil?
+        app_token = fetch_cached_token(app_uuid)
+        if app_token.nil?
           log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth returned 500"
           return nil
         end
-        return {'security_token' => {app_uuid => {'private_key' => private_key[:private_key]}}}
+        return {'security_token' => {app_uuid => {'private_key' => fetch_private_key(app_uuid)}}}
       end
 
       # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
@@ -194,7 +208,7 @@ module Medidata
         }
 
         # Post to endpoint
-        response = post(authentication_url, 'data' => data.to_json)
+        response = post(authentication_url, {"authentication_ticket" => data})
 
         return false unless response
         if response.code.to_i == 204
@@ -226,8 +240,7 @@ module Medidata
           http = Net::HTTP.new(from_url.host, from_url.port)
           http.use_ssl = (from_url.scheme == 'https')
           http.read_timeout = 20 #seconds
-          headers = {"Content-Type" => "application/json"}
-          headers = options[:headers].nil? ? headers : headers.merge(options[:headers])
+          headers = options[:headers].nil? ? {} : options[:headers]
           request = Net::HTTP::Get.new(from_url.path, headers)
           response = http.start {|h| h.request(request) }
           return response
@@ -243,8 +256,12 @@ module Medidata
         begin
           http = Net::HTTP.new(to_url.host, to_url.port)
           http.use_ssl = (to_url.scheme == 'https')
-          request = Net::HTTP::Post.new(to_url.path)
-          request.set_form_data(post_data)
+          json_post_data = post_data.to_json
+          headers = {}
+          headers["Content-Length"] = json_post_data.length.to_s
+          headers["Content-Type"]   = 'application/json'
+          request = Net::HTTP::Post.new(to_url.path, headers)
+          request.body= json_post_data
           response = http.start {|h| h.request(request) }
           return response
         rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
