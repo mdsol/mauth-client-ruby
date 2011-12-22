@@ -1,0 +1,31 @@
+# All scenarios outlined below are manual.
+
+Scenario_1: No version is configured for rack-mauth, and local authentication is attempted
+--should raise error on server
+
+Scenario_2: No version is configured for rack-mauth, and remote authentication is attempted
+--should raise error on server
+
+Scenario_3: No base_url is configured for rack-mauth
+--should raise error on server
+
+Scenario_4: No app_uuid is configured for rack-mauth while attempting to perform local authentication
+--should revert to using remote authentication
+
+Scenario_5: No private_key is configured for rack-mauth while attempting to perform local authentication
+--should revert to using remote authentication
+
+Scenario_6: Incorrect app_uuid is configured for rack-mauth while attempting to perform local  authentication
+--should return 401
+
+Scenario_7: Incorrect private_key is configured for rack-mauth while attempting to perform local authentication
+--should return 401
+
+Scenario_8: An app_uuid is configured for rack-mauth while attempting to perform local authentication, but no such app_uuid exists
+--should return 401
+
+Scenario_9: mAuth is down and the app boots and a request arrives
+--should return 401
+
+Scenario_10: An app_uuid was locally authorized by rack-mauth becomes authorized on the next token_refresh
+--should return 401
