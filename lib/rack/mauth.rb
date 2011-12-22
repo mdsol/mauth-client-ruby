@@ -68,12 +68,8 @@ module Medidata
         sec = fetch_cached_token(app_uuid)
         key = refresh_token(app_uuid) if token_expired?(sec)
 
-        if key.nil?
-          log("Cannot find secret for app with uuid #{app_uuid}")
-          return nil
-        else
-          return key
-        end
+        log("Cannot find secret for app with uuid #{app_uuid}") unless key
+        return key
       end
 
       def fetch_cached_token(app_uuid)
