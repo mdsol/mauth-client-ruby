@@ -480,6 +480,32 @@ describe "Medidata::MAuthMiddleware" do
     end
   end
 
+  describe "#verify_mauth_baseurl" do
+    before(:each) do
+      @config = {
+        :mauth_baseurl => "http://localhost",
+        :app_uuid => "app_uuid",
+        :private_key => "secret",
+        :version => "v1"
+      }
+    end
+
+    it "raises an error when host cannot be found in config url" do
+      @config[:mauth_baseurl] = "http://"
+      expect {mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, @config)}.to raise_error
+    end
+
+    it "raises an error when scheme cannot be found in config url" do
+      @config[:mauth_baseurl] = "localhost"
+      expect {mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, @config)}.to raise_error
+    end
+
+    it "proceeds normally when host and scheme are found in config url" do
+      @config[:mauth_baseurl] = "http://localhost"
+      expect {mauthIncomingMiddleware = Medidata::MAuthMiddleware.new(@app, @config)}.to_not raise_error
+    end
+  end
+
   describe "#parse_secret" do
     it "calls JSON.parse" do
       JSON.stub(:parse).and_return([])

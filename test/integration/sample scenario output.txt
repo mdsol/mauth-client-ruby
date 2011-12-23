@@ -1,0 +1,331 @@
+# All scenarios outlined below are manual.
+
+Scenario_1: No version is configured for rack-mauth, and local authentication is attempted
+--should raise error on server
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:d448db2790c5ab87365d9c01a5b63603ea73cee3929275f4883046b10df249e7723856f3bc8bf7be2cece0622453e82e6ea6ac8d406cdd2e3bf45382b3354efd
+> x-mws-time: 1324580181
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+* Empty reply from server
+* Connection #0 to host localhost left intact
+curl: (52) Empty reply from server
+* Closing connection #0
+
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+12-22-2011 02:00:04 PM EST: Read error: #<ArgumentError: missing api version>
+/Users/gducharme/.rvm/gems/ruby-1.8.7-p352@balance/bundler/gems/rack-mauth-ee3ef1406776/lib/rack/mauth.rb:38:in `missing_version'
+
+Scenario_2: version not supported by mauth is specified in the environment config. of the application using rack-mauth.
+--should raise 401
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:d448db2790c5ab87365d9c01a5b63603ea73cee3929275f4883046b10df249e7723856f3bc8bf7be2cece0622453e82e6ea6ac8d406cdd2e3bf45382b3354efd
+> x-mws-time: 1324580181
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 401 Unauthorized
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:03:46 GMT
+< Content-Type: text/plain
+< Content-Length: 12
+< 
+* Closing connection #0
+
+
+script/server
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+warning: peer certificate won't be verified in this SSL session
+  SQL (0.2ms)   SET NAMES 'utf8'
+  SQL (0.1ms)   SET SQL_AUTO_IS_NULL=0
+rack-mauth: Cannot find secret for app with uuid 53388010-2d79-11e1-a223-0800200c9a66
+
+Scenario_3: No base_url is configured for rack-mauth
+--should raise error on server
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:afa5f84013e7c70ff031e1267e70c332280aff728efbc8c2cc3fa20bf0252d8e8da142d383fa6253f653265ab9c611a03c98dfe8f2bbb878fa3a3588b2cec15d
+> x-mws-time: 1324580770
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+* Empty reply from server
+* Connection #0 to host localhost left intact
+curl: (52) Empty reply from server
+* Closing connection #0
+
+12-22-2011 02:06:16 PM EST: Read error: #<Medidata::MAuthMiddleware::MissingBaseURL: Medidata::MAuthMiddleware::MissingBaseURL>
+/Users/gducharme/.rvm/gems/ruby-1.8.7-p352@balance/bundler/gems/rack-mauth-ee3ef1406776/lib/rack/mauth.rb:16:in `initialize'
+
+Scenario_4: No app_uuid is configured for rack-mauth while attempting to perform local authentication
+--should revert to using remote authentication
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:afa5f84013e7c70ff031e1267e70c332280aff728efbc8c2cc3fa20bf0252d8e8da142d383fa6253f653265ab9c611a03c98dfe8f2bbb878fa3a3588b2cec15d
+> x-mws-time: 1324580770
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 200 OK
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:10:29 GMT
+< ETag: "ac909fd468f2a65c96b0f820d8399bf0"
+< Content-Type: application/json; charset=utf-8
+< X-Runtime: 4
+< Content-Length: 130
+< Cache-Control: private, max-age=0, must-revalidate
+< 
+* Closing connection #0
+{"errors":["The request failed because its format is not valid; it could not be parsed. Please contact the study administrator."]}
+
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+^[[Awarning: peer certificate won't be verified in this SSL session
+  SQL (0.2ms)   SET NAMES 'utf8'
+  SQL (0.1ms)   SET SQL_AUTO_IS_NULL=0
+
+Processing Api::SubjectsController#update to json (for 127.0.0.1 at 2011-12-22 14:10:29) [POST]
+  Parameters: {"id"=>"153388010-2d79-11e1-a223-0800200c9a66", "study_id"=>"1", "foo"=>"bar"}
+Completed in 4ms (View: 1, DB: 0) | 200 OK [http://localhost/api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json]
+
+Scenario_5: No private_key is configured for rack-mauth while attempting to perform local authentication
+--should revert to using remote authentication
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:afa5f84013e7c70ff031e1267e70c332280aff728efbc8c2cc3fa20bf0252d8e8da142d383fa6253f653265ab9c611a03c98dfe8f2bbb878fa3a3588b2cec15d
+> x-mws-time: 1324580770
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 200 OK
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:12:27 GMT
+< ETag: "ac909fd468f2a65c96b0f820d8399bf0"
+< Content-Type: application/json; charset=utf-8
+< X-Runtime: 4
+< Content-Length: 130
+< Cache-Control: private, max-age=0, must-revalidate
+< 
+* Closing connection #0
+{"errors":["The request failed because its format is not valid; it could not be parsed. Please contact the study administrator."]}
+
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+warning: peer certificate won't be verified in this SSL session
+  SQL (0.1ms)   SET NAMES 'utf8'
+  SQL (0.1ms)   SET SQL_AUTO_IS_NULL=0
+
+
+Processing Api::SubjectsController#update to json (for 127.0.0.1 at 2011-12-22 14:12:28) [POST]
+  Parameters: {"id"=>"153388010-2d79-11e1-a223-0800200c9a66", "study_id"=>"1", "foo"=>"bar"}
+Completed in 4ms (View: 1, DB: 0) | 200 OK [http://localhost/api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json]
+
+Scenario_6: Incorrect app_uuid is configured for rack-mauth while attempting to perform local  authentication
+--should return 401
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:afa5f84013e7c70ff031e1267e70c332280aff728efbc8c2cc3fa20bf0252d8e8da142d383fa6253f653265ab9c611a03c98dfe8f2bbb878fa3a3588b2cec15d
+> x-mws-time: 1324580770
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 401 Unauthorized
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:13:43 GMT
+< Content-Type: text/plain
+< Content-Length: 12
+< 
+* Closing connection #0
+
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+warning: peer certificate won't be verified in this SSL session
+  SQL (0.1ms)   SET NAMES 'utf8'
+  SQL (0.1ms)   SET SQL_AUTO_IS_NULL=0
+rack-mauth: Cannot find secret for app with uuid 53388010-2d79-11e1-a223-0800200c9a66
+
+Scenario_7: Incorrect private_key is configured for rack-mauth while attempting to perform local authentication
+--should return 401
+
+script/server
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+warning: peer certificate won't be verified in this SSL session
+  SQL (0.2ms)   SET NAMES 'utf8'
+  SQL (0.1ms)   SET SQL_AUTO_IS_NULL=0
+rack-mauth: Attempt to refresh cache with secret from mAuth responded with 403   for 53388010-2d79-11e1-a223-0800200c9a66
+rack-mauth: Cannot find secret for app with uuid 53388010-2d79-11e1-a223-0800200c9a66
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:afa5f84013e7c70ff031e1267e70c332280aff728efbc8c2cc3fa20bf0252d8e8da142d383fa6253f653265ab9c611a03c98dfe8f2bbb878fa3a3588b2cec15d
+> x-mws-time: 1324580770
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 401 Unauthorized
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:15:00 GMT
+< Content-Type: text/plain
+< Content-Length: 12
+< 
+* Closing connection #0
+
+Scenario_8: mAuth is down and the app boots and a request arrives
+(SUBSTITUTED TO LOCALHOST)
+--should return 401
+
+rack-mauth: Attempt to GET from /mauth/v1/security_tokens/53388010-2d79-11e1-a223-0800200c9a66.json threw exception:  execution expired
+rack-mauth: Couldn't find app_uuid 53388010-2d79-11e1-a223-0800200c9a66 in local cache and mAuth returned 500
+rack-mauth: Cannot find secret for app with uuid 53388010-2d79-11e1-a223-0800200c9a66
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:f6f72b1072978423b1cc53f6100f989ecaffc5698443ca322818d8f0c952d568860f8ffa2721e33fbcb73fa1eb3bcc85a16fa642d9df1f09ac123229e4a8c89e
+> x-mws-time: 1324582548
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 401 Unauthorized
+< Connection: close
+< Date: Thu, 22 Dec 2011 19:35:52 GMT
+< Content-Type: text/plain
+< Content-Length: 12
+< 
+* Closing connection #0
+
+Scenario_9: An app_uuid was locally authorized by rack-mauth becomes authorized on the next token_refresh
+--should return 401
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:2df626bb1feb4de2097616103b9e02df11e6bf8e124ffb724a5ff5475089d00cc5c86c7dfb8ff149475aa39bf5e0b001b45736fa99cc2b3629cf4f996056bbe5
+> x-mws-time: 1324649773
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 200 OK
+< Connection: close
+< Date: Fri, 23 Dec 2011 14:16:22 GMT
+< ETag: "ac909fd468f2a65c96b0f820d8399bf0"
+< Content-Type: application/json; charset=utf-8
+< X-Runtime: 4
+< Content-Length: 130
+< Cache-Control: private, max-age=0, must-revalidate
+< 
+* Closing connection #0
+{"errors":["The request failed because its format...
+
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:c507310f8b7b58326a269a90a6bd0ec0efc555d30fe253936df00e71915e7c4b11966540fa902a1e81c8c9fcd32f429284d12c813b8f99fd1d494c95ae104923
+> x-mws-time: 1324649879
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+< HTTP/1.1 401 Unauthorized
+< Connection: close
+< Date: Fri, 23 Dec 2011 14:18:13 GMT
+< Content-Type: text/plain
+< Content-Length: 12
+< 
+* Closing connection #0
+
+
+Scenario_10: An error is thrown if mauth_baseurl is incorrect
+--should raise error
+=> Booting Mongrel
+=> Rails 2.3.4 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+12-22-2011 02:44:53 PM EST: Read error: #<Medidata::MAuthMiddleware::InvalidBaseURL: Medidata::MAuthMiddleware::InvalidBaseURL>
+/Users/gducharme/.rvm/gems/ruby-1.8.7-p352@balance/bundler/gems/rack-mauth-ee3ef1406776/lib/rack/mauth.rb:42:in `verify_mauth_baseurl'
+/Users/gducharme/.rvm/gems/ruby-1.8.7-p352@balance/bundler/gems/rack-mauth-ee3ef1406776/lib/rack/mauth.rb:25:in `initialize'
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:9f874b0bf86895c9a3c3c3fc2467ac75b0fe086227e5927281ca561ec77757ac4a478062fdb2c4d61d2dcd9495cddd9611e90185a1b10c4a8976e167fc74cabd
+> x-mws-time: 1324582983
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+* Empty reply from server
+* Connection #0 to host localhost left intact
+curl: (52) Empty reply from server
+* Closing connection #0
+
+Scenario_11: Remote authentication occurs correctly
+--should return API error. not a mauth error
+
+> POST /api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json HTTP/1.1
+> User-Agent: curl/7.19.7 (universal-apple-darwin10.0) libcurl/7.19.7 OpenSSL/0.9.8r zlib/1.2.3
+> Host: localhost:3000
+> Accept: */*
+> Authorization: MWS 53388010-2d79-11e1-a223-0800200c9a66:bd2a9212c6b93b4dd40eff14a20dc61f097e514b0d7377876ee9be363889bc8cd9543dcd43d17df5a6ba93fa475e56d89bd6a723bc62988137daaf7b5df4046d
+> x-mws-time: 1324650368
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+> 
+(FROM MAUTH LOGS)
+Parameters: {"authentication_ticket"=>{"verb"=>"POST", "b64encoded_post_data"=>"Zm9vPWJhcg==\n", "app_uuid"=>"53388010-2d79-11e1-a223-0800200c9a66", "request_time"=>"1324650368", "client_signature"=>"bd2a9212c6b93b4dd40eff14a20dc61f097e514b0d7377876ee9be363889bc8cd9543dcd43d17df5a6ba93fa475e56d89bd6a723bc62988137daaf7b5df4046d", "request_url"=>"/api/studies/1/subjects/153388010-2d79-11e1-a223-0800200c9a66.json"}}
+Rendered text template (0.0ms)
+
+
+< HTTP/1.1 200 OK
+< Connection: close
+< Date: Fri, 23 Dec 2011 14:28:33 GMT
+< ETag: "ac909fd468f2a65c96b0f820d8399bf0"
+< Content-Type: application/json; charset=utf-8
+< X-Runtime: 5
+< Content-Length: 130
+< Cache-Control: private, max-age=0, must-revalidate
+< 
+* Closing connection #0
+{"errors":["The request failed because its format is not valid;
+

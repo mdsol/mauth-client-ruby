@@ -2,30 +2,90 @@
 
 Scenario_1: No version is configured for rack-mauth, and local authentication is attempted
 --should raise error on server
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+  }
 
 Scenario_2: version not supported by mauth is specified in the environment config. of the application using rack-mauth.
 --should raise 401
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'spoon/fork/cuttlery',
+  }
 
 Scenario_3: No base_url is configured for rack-mauth
 --should raise error on server
+conf = {
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1',
+  }
 
 Scenario_4: No app_uuid is configured for rack-mauth while attempting to perform local authentication
 --should revert to using remote authentication
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1',
+  }
 
 Scenario_5: No private_key is configured for rack-mauth while attempting to perform local authentication
 --should revert to using remote authentication
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :version => 'v1',
+  }
 
 Scenario_6: Incorrect app_uuid is configured for rack-mauth while attempting to perform local  authentication
 --should return 401
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "%#^&#91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1',
+  }
 
 Scenario_7: Incorrect private_key is configured for rack-mauth while attempting to perform local authentication
 --should return 401
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "$^&*$^*&^$QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1',
+  }
 
 Scenario_8: mAuth is down and the app boots and a request arrives
 --should return 401
+  Can be simulated by :mauth_baseurl => 'http://server_is_down.com'
 
 Scenario_9: An app_uuid was locally authorized by rack-mauth becomes authorized on the next token_refresh
 --should return 401
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1'
+  }
+  Delete or change app_uuid on server
 
 Scenario_10: An error is thrown if mauth_baseurl is incorrect
 --should raise error on server
+conf = {
+    :mauth_baseurl => 'https://',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1',
+  }
+
+Scenario_11: Remote authentication authentication succeeds
+--should return an service api error, not a rack-mauth or mauth error
+conf = {
+    :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
+    :app_uuid => "91111111-1111-1111-1111-111111111111",
+    :private_key => "QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==",
+    :version => 'v1'
+  }

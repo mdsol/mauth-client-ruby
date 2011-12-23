@@ -10,6 +10,7 @@ module Medidata
   class MAuthMiddleware
 
     class MissingBaseURL < StandardError; end
+    class InvalidBaseURL < StandardError; end
 
     # Middleware initializer
     def initialize(app, config)
@@ -17,10 +18,12 @@ module Medidata
 
       @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
-      @version = config[:version] || missing_version
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
       @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
+
+      verify_mauth_baseurl
+      @version = config[:version] || missing_version
     end
 
     # Method called by app using middleware
@@ -33,6 +36,13 @@ module Medidata
     end
 
     protected
+      # Need to ensure the complete base url is valid
+      def verify_mauth_baseurl
+        parsed = URI.parse(@mauth_baseurl)
+        raise InvalidBaseURL unless parsed.host && parsed.scheme
+      end
+
+
       # Need to pass in a version of mAuth api to use
       def missing_version
         raise ArgumentError, 'missing api version'
@@ -139,7 +149,7 @@ module Medidata
       def mauth_server_error(app_uuid)
         app_token = fetch_cached_token(app_uuid)
         if app_token.nil?
-          log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth returned 500"
+          log "Couldn't find app_uuid #{app_uuid} in local cache and mAuth experienced an error"
           return nil
         end
         return {'security_token' => {app_uuid => {'private_key' => fetch_private_key(app_uuid)}}}
