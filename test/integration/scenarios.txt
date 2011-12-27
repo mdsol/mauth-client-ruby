@@ -11,12 +11,17 @@
 # }
 # config.middleware.use "Medidata::MAuthMiddleware", conf
 #
-# This then creates a new rack-mauth middleware with the configuration detailed in conf.
+# This then creates a new rack-mauth middleware with the configuration detailed in conf. More information about
+# rack-mauth configuration is available on Medinet at
+# https://sites.google.com/a/mdsol.com/knowledgebase/home/departments/engineering/on-demand-portfolio/services/core-services/mauth/rack-mauth
 #
 # The first parameter of conf is the URL of the server with which rack-mauth will attempt to communicate
 # in order to authenticate requests. For most of the tests below, the use of mauth-sandbox is needed.
 #
-# Make sure that the app_uuid and private_key are the same on the cloud and in the configuration file.
+# Make sure that the app_uuid and private_key are the same on the cloud and in the configuration file. If you are using
+# mauth-sandbox to authenticate, your app_uuid should the filename in the bucket called 'mauth-development', and in the
+# folder 'production/security_tokens', and the details of the token, including private key are inside the file. For example,
+# /mauth-development/production/security_tokens/91111111-1111-1111-1111-111111111111 will contain the private key for that app.
 #
 # Once the application using rack-mauth has been configured and started, we will need some way to generate signed HTTP headers.
 #

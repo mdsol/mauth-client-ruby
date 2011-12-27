@@ -76,10 +76,11 @@ module Medidata
       # Find the cached secret for app with given app_uuid
       def secret_for_app(app_uuid)
         sec = fetch_cached_token(app_uuid)
-        key = refresh_token(app_uuid) if token_expired?(sec)
+        refresh_token(app_uuid) if token_expired?(sec)
+        key = fetch_private_key(app_uuid)
 
         log("Cannot find secret for app with uuid #{app_uuid}") unless key
-        return key
+        key
       end
 
       def fetch_cached_token(app_uuid)
@@ -132,7 +133,6 @@ module Medidata
       end
 
       # Returns nil when a token should be removed or anything else to add to the cache
-      #TODO Call synch_cache directly with an action (ie remove or update) and value(s)
       def according_to(response, app_uuid)
         return mauth_server_error(app_uuid) if response.nil?
         case response.code.to_i
@@ -178,11 +178,14 @@ module Medidata
 
         return false unless app_uuid && digest && mws_token == 'MWS'
 
+
+        #TODO Find a rack env like 'PATH_INFO' that all servers will accept as the relative URI
+        # ie rack and rails have different REQUEST_URI
         params = {
           :app_uuid    => app_uuid,
           :digest      => digest,
           :verb        => env['REQUEST_METHOD'],
-          :request_url => env['REQUEST_URI'],
+          :request_url => env['PATH_INFO'],
           :time        => env['HTTP_X_MWS_TIME'],
           :post_data   => ''
         }
@@ -193,7 +196,7 @@ module Medidata
 
         if can_authenticate_locally?
           authenticate_locally(digest, params)
-       else
+        else
           authenticate_remotely(digest, params)
         end
       end
