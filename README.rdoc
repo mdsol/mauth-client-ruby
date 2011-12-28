@@ -6,7 +6,7 @@ This gem is a wrapper around the middleware called rack-mauth which rack applica
 
 Use the bundler gem (sudo gem install bundler).  Add the following to your Gemfile in your global environment:
 
-  gem 'rack-mauth', :git => "git@github.com:mdsol/rack-mauth.git", :tag => "v0.1.1", :require => 'rack/mauth'
+  gem 'rack-mauth', :git => "git@github.com:mdsol/rack-mauth.git", :tag => "v0.1.2", :require => 'rack/mauth'
   gem 'mauth_signer', :git => 'git@github.com:mdsol/mauth_signer.git', :tag => 'v0.6.3'
 
 == Usage
