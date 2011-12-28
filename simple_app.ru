@@ -1,18 +1,14 @@
 require 'rubygems'
 require "bundler/setup"
 require 'rack'
+require 'rack/mauth'
 
-simple_app = lambda { |env| [200, "Simple app: success!\n"] }
+simple_app = lambda { |env| [200, {'Content-Type' => 'application/json'}, "Simple app: Success!\n"] }
 
 config = {
   :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
-  :private_key => 'private_key',
-  :app_uuid => '1234'
+  :version => 'v1'
 }
-
-$: << 'lib'
-
-require 'rack/mauth'
 
 use Medidata::MAuthMiddleware, config
 run simple_app

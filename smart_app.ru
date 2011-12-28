@@ -1,16 +1,16 @@
 require 'rubygems'
-require 'bundler/setup'
+require "bundler/setup"
 require 'rack'
+require 'rack/mauth'
 
-simple_app = lambda { |env| puts 'Begin'; [200, {'Content-Type' => 'application/json'}, "Smart app: Success!\n"] }
+smart_app = lambda { |env| [200, {'Content-Type' => 'application/json'}, "Smart app: Success!\n"] }
 
 config = {
   :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
-  :private_key => "8CJFmJAS7tHEym8j/n+DWXqRT3QAm/elcsLisNQR4TTfUuzDY8MzcmgmM5ab8+ZzLN1cDKCnrfYS5mX2omyC1A==",
-  :app_uuid => 'G'
+  :private_key => 'QpeIisdvU9AJC15wkLf83xDPiCFaTL6r8iQY56nZqaqp0yTfJVKAgtOqdGyAOyVDd9b2Uz8ZukiyXR5H56JLEg==',
+  :app_uuid => '91111111-1111-1111-1111-111111111111',
+  :version => 'v1'
 }
 
-require 'rack/mauth'
-
 use Medidata::MAuthMiddleware, config
-run simple_app
+run smart_app
