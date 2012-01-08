@@ -1,18 +1,24 @@
 $: << 'lib'
 require 'mauth_signer'
+require 'openssl'
 
+@private_key = OpenSSL::PKey::RSA.generate( 2048 )
+@private_key_str = @private_key.to_s
+@public_key_str = @private_key.public_key.to_s
 @app_uuid = "11111111-1111-1111-1111-111111111111"
-@private_key = "VWuEoMS66BuANIUvyn7yAUwR5Oz8J1FOrXBSNB28MDDHqiPuiLCu2jrQlA5jYW509/ncs6j2K8GdkSzqJIqOTg=="
 
-def simple_request(host, url, post_data)
-  headers = MAuth::Signer.new(@private_key).signed_headers(:app_uuid => @app_uuid, :request_url => url, :post_data => post_data, :verb => 'POST')
-  puts "HEADERS: #{headers.inspect}"
-
-  args = headers.map{|k,v| "-H '#{k}: #{v}'"} * ' '
-  "curl -v #{args} -d '#{post_data}' #{host}#{url}"
+def generate_signed_request(params)
+  MAuth::Signer.new(:private_key => @private_key_str).signed_request_headers(params)
 end
 
-puts simple_request('http://localhost:3000', '/studies', 'foo=bar')
-puts simple_request('http://localhost:3001', '/studies', 'foo=bar')
+def verify_request(signature, params)
+  MAuth::Signer.new(:public_key => @public_key_str).verify_request(signature, params)
+end
+
+params = {:app_uuid => @app_uuid, :request_url => '/studies', :post_data => 'hello=there', :verb => 'PUT'}
+headers = generate_signed_request(params)
+sig_time = headers["x-mws-time"]
+sig = headers["Authorization"].split(':').last
+puts verify_request(sig, params.merge(:time => sig_time))
 
 
