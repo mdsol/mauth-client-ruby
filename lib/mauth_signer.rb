@@ -25,14 +25,15 @@ module MAuth
     def signed_request_headers(params)
       params.merge!(:time => Time.now.to_i)
       {
-        'Authorization' => "MWS #{params[:app_uuid]}:#{Base64.encode64(generate_request_signature(params))}",
+        'Authorization' => "MWS #{params[:app_uuid]}:#{generate_request_signature(params)}",
         'x-mws-time' => params[:time].to_s
       }
     end
 
     # Generates a signature by encrypting string of request parameters
     def generate_request_signature(params)
-      encrypt_with_private_key format_string_to_sign_for_request(params)
+      sig = encrypt_with_private_key format_string_to_sign_for_request(params)
+      Base64.encode64(sig)
     end
 
     # Generate the string to sign for the request, composed of
