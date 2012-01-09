@@ -33,7 +33,7 @@ module MAuth
     # Generates a signature by encrypting string of request parameters
     def generate_request_signature(params)
       sig = encrypt_with_private_key format_string_to_sign_for_request(params)
-      Base64.encode64(sig)
+      Base64.encode64(sig).gsub("\n","")
     end
 
     # Generate the string to sign for the request, composed of
