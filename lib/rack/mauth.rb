@@ -42,7 +42,6 @@ module Medidata
         raise InvalidBaseURL unless parsed.host && parsed.scheme
       end
 
-
       # Need to pass in a version of mAuth api to use
       def missing_version
         raise ArgumentError, 'missing api version'
