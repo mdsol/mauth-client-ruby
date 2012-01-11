@@ -15,7 +15,7 @@ module Medidata
       @version = config[:version] || raise ArgumentError, 'missing api version'
       verify_mauth_baseurl
       
-      @app, @app_uuid, @private_key = app,  config[:app_uuid], config[:private_key]
+      @app, @app_uuid, @private_key = app, config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
@@ -64,10 +64,10 @@ module Medidata
       end
 
       # Find the cached secret for app with given app_uuid
-      def secret_for_app(app_uuid)
-        sec = fetch_cached_token(app_uuid)
+      def public_key_for_app(app_uuid)
+        tok = fetch_cached_token(app_uuid)
         refresh_token(app_uuid) if token_expired?(sec)
-        key = fetch_private_key(app_uuid)
+        key = fetch_public_key(app_uuid)
 
         log("Cannot find secret for app with uuid #{app_uuid}") unless key
         key
@@ -77,7 +77,7 @@ module Medidata
         synchronize { @cached_secrets[app_uuid] }
       end
 
-      def fetch_private_key(app_uuid)
+      def fetch_public_key(app_uuid)
         sec = fetch_cached_token(app_uuid)
         synchronize { sec.nil? ? nil : sec[:private_key]}
       end
@@ -193,8 +193,8 @@ module Medidata
 
       # Rack-mauth does its own authentication
       def authenticate_locally(digest, params)
-        secret = secret_for_app(params[:app_uuid])
-        secret && MAuth::Signer.new(secret).verify(digest, params)
+        public_key = public_key_for_app(params[:app_uuid])
+        public_key && MAuth::Signer.new(:public_key => public_key).verify_request(digest, params)
       end
 
       # Ask mAuth to authenticate
