@@ -9,21 +9,17 @@ require 'mauth_signer'
 module Medidata
   class MAuthMiddleware
 
-    class MissingBaseURL < StandardError; end
-    class InvalidBaseURL < StandardError; end
-
     # Middleware initializer
-    def initialize(app, config)
-      raise MissingBaseURL unless config && config[:mauth_baseurl]
-
-      @app, @mauth_baseurl, @app_uuid, @private_key = app, config[:mauth_baseurl], config[:app_uuid], config[:private_key]
+    def initialize(app, config = {})
+      @mauth_baseurl = config[:mauth_baseurl] || raise ArgumentError, 'missing base url'
+      @version = config[:version] || raise ArgumentError, 'missing api version'
+      verify_mauth_baseurl
+      
+      @app, @app_uuid, @private_key = app,  config[:app_uuid], config[:private_key]
       @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
       @cached_secrets_mutex = Mutex.new
       @cached_secrets = {}
-      @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?
-
-      verify_mauth_baseurl
-      @version = config[:version] || missing_version
+      @mauth_signer = MAuth::Signer.new(@private_key) if can_authenticate_locally?      
     end
 
     # Method called by app using middleware
@@ -39,12 +35,7 @@ module Medidata
       # Need to ensure the complete base url is valid
       def verify_mauth_baseurl
         parsed = URI.parse(@mauth_baseurl)
-        raise InvalidBaseURL unless parsed.host && parsed.scheme
-      end
-
-      # Need to pass in a version of mAuth api to use
-      def missing_version
-        raise ArgumentError, 'missing api version'
+        raise ArgumentError, 'invalid base url' unless parsed.host && parsed.scheme
       end
 
       # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
