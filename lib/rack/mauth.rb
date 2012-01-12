@@ -66,9 +66,9 @@ module Medidata
         end
 
         if can_authenticate_locally?
-          @mauth_verifiers_manager.authenticate(digest, params)
+          @mauth_verifiers_manager.authenticate_request(digest, params)
         else
-          @mauth_remote_verifier.authenticate(digest, params)
+          @mauth_remote_verifier.authenticate_request(digest, params)
         end
       end
 
@@ -118,10 +118,11 @@ module Medidata
         @cached_verifiers_mutex = Mutex.new
         @cached_verifiers = {}
         @mauth_signer_for_self = MAuth::Signer.new(:private_key => @config.self_private_key)
+        @mauth_public_key_manager = MAuthPublicKeyManager.new(config)
       end
       
       # Rack-mauth does its own authentication
-      def authenticate(digest, params)
+      def authenticate_request(digest, params)
         verifier = verifier_for_app(params[:app_uuid])
         verifier && verifier.verify_request(digest, params)
       end
@@ -210,10 +211,28 @@ module Medidata
           end
         end
       
+        # Authenticate the response from MAuth
+        def authenticate_response(response)
+          mws_token, auth_info =  response.header['x-mws-authentication'].to_s.split(' ')
+          app_uuid, digest = auth_info.split(':') if auth_info
+
+          return false unless app_uuid && digest && mws_token == 'MWS'
+          
+          params = {
+            :app_uuid       => app_uuid.to_s,
+            :time           => response.header['x-mws-time'].to_s,
+            :message_body   => response.body.to_s,
+            :status_code    => response.code.to_s
+          }
+  
+          @mauth_public_key_manager.authenticate_response(digest, params)
+        end
+        
         # Get remote security token from MAuth (for the purposes of local authentication)
         def get_remote_security_token(app_uuid)
           headers = @mauth_signer_for_self.signed_request_headers(:app_uuid => @config.self_app_uuid, :verb => 'GET', :request_url => security_token_path(app_uuid))
           response = get(security_token_url(app_uuid), {:headers => headers})
+          return ({:status_code => 500, :body => nil}) unless authenticate_response(response)
           ret = according_to(response)
           begin
             ret[:body] = JSON.parse(ret[:body]) unless ret[:body].nil?
@@ -225,7 +244,8 @@ module Medidata
           return ret
         end
       
-        # Get remote public key from MAuth (for the purposes of local authentication)
+        # Get remote public key for given app_uuid from MAuth (for the purposes of local authentication)
+        # Fetches a security token and simply extracts the public key from it
         def get_remote_public_key(app_uuid)
           ret = get_remote_security_token(app_uuid)
           pub_key = ret[:body].nil? ? nil : ret[:body]['security_token']['public_key_str']
@@ -237,7 +257,7 @@ module Medidata
           begin
             http = Net::HTTP.new(from_url.host, from_url.port)
             http.use_ssl = (from_url.scheme == 'https')
-            http.read_timeout = 20 #seconds
+            http.read_timeout = 10 #seconds
             headers = options[:headers].nil? ? {} : options[:headers]
             request = Net::HTTP::Get.new(from_url.path, headers)
             response = http.start {|h| h.request(request) }
@@ -250,16 +270,47 @@ module Medidata
         end
     end # of MAuthVerifiersManager
     
-    # Ask MAuth for authenticate remotely
+    class MAuthPublicKeyManager
+      def initialize(config = nil)
+        raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
+        @config = config
+      end
+      
+      # Authenticate the given response with a list of MAuth verifiers
+      def authenticate_response(signature, params)
+        refresh_mauth_verifiers if mauth_verifiers_expired?
+        @mauth_response_verifiers.each do | mauth_response_verifier |
+          return true if mauth_response_verifier[:verifier].verify_response(signature, params)
+        end
+        
+        return false
+      end
+      
+      protected
+        # Refresh verifiers
+        def refresh_mauth_verifiers
+          @mauth_response_verifiers = []
+          [1,2].each do | i |
+            public_mauth_key_str = OpenSSL::PKey::RSA.new(File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pem")).to_s
+            @mauth_response_verifiers << {:verifier => MAuth::Signer.new(:public_key => public_mauth_key_str), :last_refresh => Time.now}
+          end
+        end
+        
+        # Check if our verifiers have expired
+        def mauth_verifiers_expired?
+          @mauth_response_verifiers.nil? || @mauth_response_verifiers.empty? || @mauth_response_verifiers.first[:last_refresh] < (Time.now - 60)
+        end        
+    end # of MAuthPublicKeyManager
+    
+    # Ask MAuth for authenticate remotely; probably won't be used much as MAuth servers public keys
     class MAuthRemoteVerifier
       def intialize(config = nil)
         raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
-        
         @config = config
       end
       
       # Ask mAuth to authenticate
-      def authenticate(digest, params)
+      def authenticate_request(digest, params)
 
         # TODO: refactor data keys to more closely match params
         data = {
