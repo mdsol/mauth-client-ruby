@@ -53,9 +53,9 @@ module MAuth
     # request data concatentated and hashed
     def format_string_to_sign_for_request(params)
       require_param(params, :app_uuid, :verb, :request_url, :time)
-      params[:post_data] = nil unless params.key?(:post_data)
+      params[:body] = nil unless params.key?(:body)
 
-      str_to_sign = [:verb, :request_url, :post_data, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
+      str_to_sign = [:verb, :request_url, :body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
       Digest::SHA512.hexdigest(str_to_sign)
     end
 
@@ -63,9 +63,9 @@ module MAuth
     # response data concatentated and hashed
     def format_string_to_sign_for_response(params)
       require_param(params, :app_uuid, :time, :status_code)
-      params[:message_body] = nil unless params.key?(:message_body)
+      params[:body] = nil unless params.key?(:body)
 
-      str_to_sign = [:status_code, :message_body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
+      str_to_sign = [:status_code, :body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
       Digest::SHA512.hexdigest(str_to_sign)
     end
     
