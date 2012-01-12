@@ -41,14 +41,12 @@ module MAuth
     
     # Generates a signature by encrypting string of request parameters
     def generate_request_signature(params)
-      sig = encrypt_with_private_key format_string_to_sign_for_request(params)
-      Base64.encode64(sig).gsub("\n","")
+      generate_signature(params, 'request')
     end
 
     # Generates a signature by encrypting string of response parameters
     def generate_response_signature(params)
-      sig = encrypt_with_private_key format_string_to_sign_for_response(params)
-      Base64.encode64(sig).gsub("\n","")
+      generate_signature(params, 'response')
     end
     
     # Generate the string to sign for the request, composed of
@@ -74,26 +72,32 @@ module MAuth
     # Verfiy that decrypted digest == encrypted params
     # and that signature time is within acceptable range
     def verify_request(signature, params)
-      begin
-        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign_for_request(params))
-      rescue OpenSSL::PKey::RSAError
-        Rails.logger.error $!, $!.backtrace if defined?(Rails)
-        false
-      end
+      verify_signature(signature, params, 'request')
     end
 
     # Verfiy that decrypted digest == encrypted params
     # and that signature time is within acceptable range
     def verify_response(signature, params)
+      verify_signature(signature, params, 'response')
+    end
+    
+    private
+    
+    # Generate request or response signature
+    def generate_signature(params, type)
+      sig = encrypt_with_private_key send("format_string_to_sign_for_#{type}", params)
+      Base64.encode64(sig).gsub("\n","")
+    end
+    
+    # Verify request or response signature
+    def verify_signature(signature, params, type)
       begin
-        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign_for_response(params))
+        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), send("format_string_to_sign_for_#{type}", params))
       rescue OpenSSL::PKey::RSAError
         Rails.logger.error $!, $!.backtrace if defined?(Rails)
         false
       end
     end
-    
-    private
     
     # Validate that time t is within the last 5 minutes, or 5 minutes in the future
     def verify_signature_time(t)
