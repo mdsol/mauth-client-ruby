@@ -29,42 +29,83 @@ module MAuth
         'x-mws-time' => params[:time].to_s
       }
     end
-
+    
+    # Returns a header to include in authenticated responses
+    def signed_response_headers(params)
+      params.merge!(:time => Time.now.to_i)
+      {
+        'x-mws-authentication' => "MWS #{params[:app_uuid]}:#{generate_response_signature(params)}",
+        'x-mws-time' => params[:time].to_s
+      }
+    end
+    
     # Generates a signature by encrypting string of request parameters
     def generate_request_signature(params)
       sig = encrypt_with_private_key format_string_to_sign_for_request(params)
       Base64.encode64(sig).gsub("\n","")
     end
 
+    # Generates a signature by encrypting string of response parameters
+    def generate_response_signature(params)
+      sig = encrypt_with_private_key format_string_to_sign_for_response(params)
+      Base64.encode64(sig).gsub("\n","")
+    end
+    
     # Generate the string to sign for the request, composed of
     # request data concatentated and hashed
     def format_string_to_sign_for_request(params)
       require_param(params, :app_uuid, :verb, :request_url, :time)
       params[:post_data] = nil unless params.key?(:post_data)
 
-      str_to_sign = [:verb, :request_url, :post_data, :app_uuid, :time].map {|key| params[key]}.join("\n")
+      str_to_sign = [:verb, :request_url, :post_data, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
       Digest::SHA512.hexdigest(str_to_sign)
     end
 
+    # Generate the string to sign for the response, composed of
+    # response data concatentated and hashed
+    def format_string_to_sign_for_response(params)
+      require_param(params, :app_uuid, :time, :status_code)
+      params[:message_body] = nil unless params.key?(:message_body)
+
+      str_to_sign = [:status_code, :message_body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
+      Digest::SHA512.hexdigest(str_to_sign)
+    end
+    
     # Verfiy that decrypted digest == encrypted params
     # and that signature time is within acceptable range
     def verify_request(signature, params)
-      # Validate that params[:time] is within the last 5 minutes, or 5 minutes in the future
-      valid_times = ((Time.now - 300).to_i..(Time.now + 300).to_i)
-      unless !params[:time].nil? && valid_times.include?(params[:time].to_i)
-        Rails.logger.info "Verfication failed: time outside valid range: #{params[:time]}" if defined?(Rails)
-        return false
-      end
-
       begin
-        secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign_for_request(params))
+        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign_for_request(params))
       rescue OpenSSL::PKey::RSAError
         Rails.logger.error $!, $!.backtrace if defined?(Rails)
         false
       end
     end
 
+    # Verfiy that decrypted digest == encrypted params
+    # and that signature time is within acceptable range
+    def verify_response(signature, params)
+      begin
+        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign_for_response(params))
+      rescue OpenSSL::PKey::RSAError
+        Rails.logger.error $!, $!.backtrace if defined?(Rails)
+        false
+      end
+    end
+    
     private
+    
+    # Validate that time t is within the last 5 minutes, or 5 minutes in the future
+    def verify_signature_time(t)
+      valid_times = ((Time.now - 300).to_i..(Time.now + 300).to_i)
+      if t.nil? || !valid_times.include?(t.to_i)
+        Rails.logger.info "Verfication failed: time outside valid range: #{t}" if defined?(Rails)
+        return false
+      else
+        return true
+      end
+    end
+    
     # constant-time comparison algorithm to prevent timing attacks
     # Copied from https://github.com/rails/rails/blob/b31ce90e99ca73ebbe52/activesupport/lib/active_support/message_verifier.rb
     def secure_compare(a, b)

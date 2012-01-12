@@ -15,10 +15,23 @@ def verify_request(signature, params)
   MAuth::Signer.new(:public_key => @public_key_str).verify_request(signature, params)
 end
 
+def generate_signed_response(params)
+  MAuth::Signer.new(:private_key => @private_key_str).signed_response_headers(params)
+end
+
+def verify_response(signature, params)
+  MAuth::Signer.new(:public_key => @public_key_str).verify_response(signature, params)
+end
+
 params = {:app_uuid => @app_uuid, :request_url => '/studies', :post_data => 'hello=there', :verb => 'PUT'}
 headers = generate_signed_request(params)
 sig_time = headers["x-mws-time"]
 sig = headers["Authorization"].split(':').last
 puts verify_request(sig, params.merge(:time => sig_time))
 
+params = {:app_uuid => @app_uuid, :message_body => 'hello=there', :status_code => 404}
+headers = generate_signed_response(params)
+sig_time = headers["x-mws-time"]
+sig = headers["x-mws-authentication"].split(':').last
+puts verify_response(sig, params.merge(:time => sig_time))
 
