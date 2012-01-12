@@ -41,58 +41,53 @@ module MAuth
     
     # Generates a signature by encrypting string of request parameters
     def generate_request_signature(params)
-      generate_signature(params, 'request')
+      generate_signature(params, :request)
     end
 
     # Generates a signature by encrypting string of response parameters
     def generate_response_signature(params)
-      generate_signature(params, 'response')
+      generate_signature(params, :response)
     end
     
-    # Generate the string to sign for the request, composed of
-    # request data concatentated and hashed
-    def format_string_to_sign_for_request(params)
-      require_param(params, :app_uuid, :verb, :request_url, :time)
+    # Generate the string to sign for the request or response, composed of
+    # request/response data concatentated and hashed
+    def format_string_to_sign(request_or_response, params)
+      raise ArgumentError, 'request_or_response must be :request or :response' unless (request_or_response == :request || request_or_response == :response)
+      
+      components = [:verb, :request_url, :body, :app_uuid, :time] if request_or_response == :request
+      components = [:status_code, :body, :app_uuid, :time] if request_or_response == :response
+      
+      require_param(params, components-[:body])
       params[:body] = nil unless params.key?(:body)
 
-      str_to_sign = [:verb, :request_url, :body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
+      str_to_sign = components.map {|key| params[key].to_s}.join("\n")
       Digest::SHA512.hexdigest(str_to_sign)
     end
-
-    # Generate the string to sign for the response, composed of
-    # response data concatentated and hashed
-    def format_string_to_sign_for_response(params)
-      require_param(params, :app_uuid, :time, :status_code)
-      params[:body] = nil unless params.key?(:body)
-
-      str_to_sign = [:status_code, :body, :app_uuid, :time].map {|key| params[key].to_s}.join("\n")
-      Digest::SHA512.hexdigest(str_to_sign)
-    end
-    
+        
     # Verfiy that decrypted digest == encrypted params
     # and that signature time is within acceptable range
     def verify_request(signature, params)
-      verify_signature(signature, params, 'request')
+      verify_signature(signature, params, :request)
     end
 
     # Verfiy that decrypted digest == encrypted params
     # and that signature time is within acceptable range
     def verify_response(signature, params)
-      verify_signature(signature, params, 'response')
+      verify_signature(signature, params, :response)
     end
     
     private
     
     # Generate request or response signature
-    def generate_signature(params, type)
-      sig = encrypt_with_private_key send("format_string_to_sign_for_#{type}", params)
+    def generate_signature(params, request_or_response)
+      sig = encrypt_with_private_key format_string_to_sign(request_or_response, params)
       Base64.encode64(sig).gsub("\n","")
     end
     
     # Verify request or response signature
-    def verify_signature(signature, params, type)
+    def verify_signature(signature, params, request_or_response)
       begin
-        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), send("format_string_to_sign_for_#{type}", params))
+        verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign(request_or_response, params))
       rescue OpenSSL::PKey::RSAError
         Rails.logger.error $!, $!.backtrace if defined?(Rails)
         false
@@ -133,8 +128,8 @@ module MAuth
     end
     
     # Raise unless all param requirements are met
-    # Note:  post_data should not be included in keys
-    def require_param(params, *keys)
+    # Note:  body should not be included in keys
+    def require_param(params, keys)
       keys.each do |key|
         raise ArgumentError.new("Missing parameter #{key.inspect}") unless params.key?(key)
         raise ArgumentError.new("Missing value for #{key.inspect}") if params[key].nil? || (params[key].respond_to?(:empty?) && params[key].empty?)
