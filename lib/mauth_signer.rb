@@ -3,7 +3,8 @@ require 'openssl'
 
 module MAuth
   class Signer
-
+    ALLOWED_DRIFT_SECONDS = 300
+    
     attr_reader :public_key, :private_key
     
     # Initialize with public or private key
@@ -96,7 +97,7 @@ module MAuth
     
     # Validate that time t is within the last 5 minutes, or 5 minutes in the future
     def verify_signature_time(t)
-      valid_times = ((Time.now - 300).to_i..(Time.now + 300).to_i)
+      valid_times = ((Time.now - ALLOWED_DRIFT_SECONDS).to_i..(Time.now + ALLOWED_DRIFT_SECONDS).to_i)
       if t.nil? || !valid_times.include?(t.to_i)
         Rails.logger.info "Verfication failed: time outside valid range: #{t}" if defined?(Rails)
         return false
