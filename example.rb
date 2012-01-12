@@ -23,13 +23,13 @@ def verify_response(signature, params)
   MAuth::Signer.new(:public_key => @public_key_str).verify_response(signature, params)
 end
 
-params = {:app_uuid => @app_uuid, :request_url => '/studies', :post_data => 'hello=there', :verb => 'PUT'}
+params = {:app_uuid => @app_uuid, :request_url => '/studies', :body => 'hello=there', :verb => 'PUT'}
 headers = generate_signed_request(params)
 sig_time = headers["x-mws-time"]
 sig = headers["Authorization"].split(':').last
 puts verify_request(sig, params.merge(:time => sig_time))
 
-params = {:app_uuid => @app_uuid, :message_body => 'hello=there', :status_code => 404}
+params = {:app_uuid => @app_uuid, :body => 'hello=there', :status_code => 404}
 headers = generate_signed_response(params)
 sig_time = headers["x-mws-time"]
 sig = headers["x-mws-authentication"].split(':').last
