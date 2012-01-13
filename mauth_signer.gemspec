@@ -3,11 +3,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth_signer}
-  s.version = "0.7.0"
+  s.version = "1.0.0"
 
   s.authors = ["Matthew Szenher", 'Aaron Suggs']
-  s.summary = %q{Create HMAC signatures for mAuth.}
-  s.description = %q{Create signatures (and header content containing such signatures) for use with mAuth.  Signatures are created from HMAC-SHA1'd request data. }
+  s.summary = %q{Create signatures for mAuth.}
+  s.description = %q{Create signatures (and header content containing such signatures) for use with mAuth. }
   s.email = %q{iwong@mdsol.com}
   s.extra_rdoc_files = %w(LICENSE.txt README.rdoc)
   s.files = `git ls-files`.split("\n")
