@@ -83,8 +83,8 @@ module Medidata
       attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions
       
       def initialize(config = {})
-        @mauth_baseurl = config[:mauth_baseurl] || (raise ArgumentError, 'missing base url')
-        @mauth_api_version = config[:mauth_api_version] || (raise ArgumentError, 'missing api mauth_api_version')
+        @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'missing base url')
+        @mauth_api_version = config[:mauth_api_version] || raise(ArgumentError, 'missing api mauth_api_version')
         verify_mauth_baseurl
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
