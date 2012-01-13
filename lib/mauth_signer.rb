@@ -6,10 +6,26 @@ module MAuth
     ALLOWED_DRIFT_SECONDS = 300
     
     attr_reader :public_key, :private_key
-    
+
+    attr_writer :logger
+    # return a logger - if #logger= has set one, then that; if Rails is defined, use its logger; 
+    # otherwise, a dummy that logs to /dev/null 
+    def logger
+      @logger ||= begin
+        if Object.const_defined?('Rails')
+          Rails.logger
+        else
+          require 'logger'
+          ::Logger.new(File.open('/dev/null', File::WRONLY))
+        end
+      end
+    end
+
     # Initialize with public or private key
     # Private key for encryption; public key for decryption
     # Keys should be passed in as strings
+    #
+    # you may also pass in a Logger on the :logger key. 
     def initialize(attrs = {})
       pub_key = attrs[:public_key] || attrs['public_key']
       priv_key = attrs[:private_key] || attrs['private_key']
@@ -20,6 +36,8 @@ module MAuth
       
       @public_key = OpenSSL::PKey::RSA.new(pub_key) unless pub_key.nil?
       @private_key = OpenSSL::PKey::RSA.new(priv_key) unless priv_key.nil?
+      
+      @logger = attrs[:logger] || attrs['logger']
     end
 
     # Returns a header to include in authenticated requests
@@ -90,7 +108,7 @@ module MAuth
       begin
         verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign(request_or_response, params))
       rescue OpenSSL::PKey::RSAError
-        Rails.logger.error $!, $!.backtrace if defined?(Rails)
+        logger.error $!, $!.backtrace
         false
       end
     end
@@ -99,7 +117,7 @@ module MAuth
     def verify_signature_time(t)
       valid_times = ((Time.now - ALLOWED_DRIFT_SECONDS).to_i..(Time.now + ALLOWED_DRIFT_SECONDS).to_i)
       if t.nil? || !valid_times.include?(t.to_i)
-        Rails.logger.info "Verfication failed: time outside valid range: #{t}" if defined?(Rails)
+        logger.info "Verfication failed: time outside valid range: #{t}"
         return false
       else
         return true
