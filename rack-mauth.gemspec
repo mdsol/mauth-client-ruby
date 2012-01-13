@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'rack'
   s.add_dependency 'rest-client'
+  s.add_dependency 'json'
   
   if RUBY_VERSION['1.9']
     s.add_development_dependency('ruby-debug19', '0.11.6')
