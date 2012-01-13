@@ -156,15 +156,15 @@ module Medidata
         end
 
         # Make a new signer with info. (i.e. public key) from MAuth
-        # if MAuth returns 200, then add to/replace in cache
-        # if MAuth returns 404, then remove from cache
-        # if MAuth return 500, do nothing
+        # if MAuth can find, then add to/replace in cache
+        # if MAuth cannot find public key, then remove from cache
+        # if an error occurs (e.g. MAuth 500 or JSON parse error), do nothing
         def refresh_verifier(app_uuid)
           ret = get_remote_public_key(app_uuid)
 
-          if ret[:status_code] == 200
+          if ret[:response_code] == :found
             update_cache(app_uuid, new_signer = MAuth::Signer.new(:public_key => ret[:public_key]), :add)
-          elsif ret[:status_code] == 404
+          elsif ret[:status_code] == :not_found
             update_cache(app_uuid, nil, :delete)
           end
         end
@@ -193,23 +193,6 @@ module Medidata
             return nil
           end
         end
-        
-        # Returns status code and relevant response.body info given respose
-        def according_to(response)
-          return {:status_code => 500, :body => nil}  if response.nil?
-        
-          code = response.code.to_i
-          if code == 200
-            return {:status_code => 200, :body => response.body}
-          elsif code == 404
-            return {:status_code => 404, :body => nil}
-          elsif code >= 500
-            return {:status_code => 500, :body => nil}
-          else
-            @config.log "Attempt to refresh cache with secret from mAuth responded with #{response.code.to_i} #{response.body}"
-            return {:status_code => 500, :body => nil}
-          end
-        end
       
         # Authenticate the response from MAuth
         def authenticate_response(response)
@@ -228,28 +211,42 @@ module Medidata
           @mauth_public_key_manager.authenticate_response(digest, params)
         end
         
+        # Formulate return values given response
+        def formulate_return_values(response)
+          return {:response_code => :error, :body => nil} if response.nil?
+          return {:response_code => :error, :body => nil} unless authenticate_response(response)
+          
+          code = response.code.to_i
+          return {:response_code => :found, :body => response.body} if code == 200
+          return {:response_code => :not_found, :body => nil} if code == 404
+          return {:response_code => :error, :body => nil} if code >= 500
+          
+          return {:response_code => :error, :body => nil} #fallback return code
+        end
+        
         # Get remote security token from MAuth (for the purposes of local authentication)
         def get_remote_security_token(app_uuid)
           headers = @mauth_signer_for_self.signed_request_headers(:app_uuid => @config.self_app_uuid, :verb => 'GET', :request_url => security_token_path(app_uuid))
           response = get(security_token_url(app_uuid), {:headers => headers})
-          return ({:status_code => 500, :body => nil}) unless authenticate_response(response)
-          ret = according_to(response)
-          begin
-            ret[:body] = JSON.parse(ret[:body]) unless ret[:body].nil?
-          rescue JSON::ParserError, TypeError
-            ret = {:status_code => 500, :body => nil}
-            @config.log "Cannot parse JSON response from MAuth for security token for app_uuid #{app_uuid} request "
-          end
-        
-          return ret
-        end
+          formulate_return_values(response)
+        end 
       
         # Get remote public key for given app_uuid from MAuth (for the purposes of local authentication)
         # Fetches a security token and simply extracts the public key from it
         def get_remote_public_key(app_uuid)
           ret = get_remote_security_token(app_uuid)
-          pub_key = ret[:body].nil? ? nil : ret[:body]['security_token']['public_key_str']
-          {:status_code => ret[:status_code], :public_key => pub_key}
+          
+          ret[:public_key] = nil
+          unless ret[:body].nil?
+            begin
+              ret[:public_key] = JSON.parse(ret[:body])['security_token']['public_key_str']
+            rescue JSON::ParserError, TypeError
+              ret = {:response_code => :error, :public_key => nil}
+              @config.log "Cannot parse JSON response from MAuth for security token for app_uuid #{app_uuid} request "
+            end
+          end
+          
+          ret          
         end
       
         # Generic get
