@@ -83,8 +83,8 @@ module Medidata
       attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions
       
       def initialize(config = {})
-        @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'missing base url')
-        @mauth_api_version = config[:mauth_api_version] || raise(ArgumentError, 'missing api mauth_api_version')
+        @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'mauth_baseurl: missing base url')
+        @mauth_api_version = config[:mauth_api_version] || raise(ArgumentError, 'mauth_api_version: missing api mauth_api_version')
         verify_mauth_baseurl
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
@@ -99,8 +99,12 @@ module Medidata
       protected
         # Need to ensure the complete base url is valid
         def verify_mauth_baseurl
-          parsed = URI.parse(@mauth_baseurl)
-          raise ArgumentError, 'invalid base url' unless parsed.host && parsed.scheme
+          begin
+            parsed = URI.parse(@mauth_baseurl)
+            raise ArgumentError, "mauth_baseurl: #{@mauth_baseurl} must contain a scheme and host" unless parsed.host && parsed.scheme
+          rescue URI::InvalidURIError
+            raise ArgumentError, "mauth_baseurl: #{@mauth_baseurl} in not a valid uri"
+          end
         end
         
         # Can we write to the Rails log
