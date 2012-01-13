@@ -15,7 +15,8 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = ">= 1.3.6"
 
   s.add_dependency 'rack'
-
+  s.add_dependency 'rest-client'
+  
   if RUBY_VERSION['1.9']
     s.add_development_dependency('ruby-debug19', '0.11.6')
   elsif RUBY_VERSION['1.8']

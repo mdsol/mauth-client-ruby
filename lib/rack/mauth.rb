@@ -5,6 +5,7 @@ require 'net/https'
 require 'thread'
 require 'bundler/setup'
 require 'mauth_signer'
+require 'rest_client'
 
 module Medidata
   class MAuthMiddleware
@@ -256,15 +257,12 @@ module Medidata
         # Generic get
         def get(from_url, options = {})
           begin
-            http = Net::HTTP.new(from_url.host, from_url.port)
-            http.use_ssl = (from_url.scheme == 'https')
-            http.read_timeout = 10 #seconds
-            headers = options[:headers].nil? ? {} : options[:headers]
-            request = Net::HTTP::Get.new(from_url.path, headers)
-            response = http.start {|h| h.request(request) }
-            return response
-          rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
-                 Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+            opts = {:timeout => 10}
+            opts.merge!({:headers => options[:headers]}) if options[:headers]
+            response = RestClient::Resource.new(from_url.to_s, opts).get
+            return response.net_http_res
+          rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
             @config.log "Attempt to GET from #{from_url.path} threw exception:  #{e.message}"
             return nil
           end
@@ -305,7 +303,7 @@ module Medidata
     
     # Ask MAuth for authenticate remotely; probably won't be used much as MAuth servers public keys
     class MAuthRemoteVerifier
-      def intialize(config = nil)
+      def initialize(config = nil)
         raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
         @config = config
       end
@@ -342,20 +340,14 @@ module Medidata
         end
       
         # Generic post
-        def post(to_url, post_data)
+        def post(to_url, post_data, options = {})
           begin
-            http = Net::HTTP.new(to_url.host, to_url.port)
-            http.use_ssl = (to_url.scheme == 'https')
-            json_post_data = post_data.to_json
-            headers = {}
-            headers["Content-Length"] = json_post_data.length.to_s
-            headers["Content-Type"]   = 'application/json'
-            request = Net::HTTP::Post.new(to_url.path, headers)
-            request.body= json_post_data
-            response = http.start {|h| h.request(request) }
-            return response
-          rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError, OpenSSL::SSL::SSLError,
-                 Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+            opts = {:timeout => 10}
+            opts.merge!({:headers => options[:headers]}) if options[:headers]
+            response = RestClient::Resource.new(to_url.to_s, opts).post(post_data.to_json, :content_type => 'application/json')
+            return response.net_http_res            
+          rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
             @config.log "Attempt to POST to #{to_url.path} threw exception:  #{e.message}"
             return nil
           end
