@@ -80,11 +80,11 @@ module Medidata
     
     # Manages configuration for middleware
     class MAuthMiddlewareConfig
-      attr_reader :mauth_baseurl, :version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions
+      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions
       
       def initialize(config = {})
         @mauth_baseurl = config[:mauth_baseurl] || (raise ArgumentError, 'missing base url')
-        @version = config[:version] || (raise ArgumentError, 'missing api version')
+        @mauth_api_version = config[:mauth_api_version] || (raise ArgumentError, 'missing api mauth_api_version')
         verify_mauth_baseurl
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
@@ -135,7 +135,7 @@ module Medidata
         
         # Path to security tokens in mAuth
         def security_token_path(app_uuid)
-          "/mauth/#{@config.version}/security_tokens/#{app_uuid}.json"
+          "/mauth/#{@config.mauth_api_version}/security_tokens/#{app_uuid}.json"
         end
         
         # Synchronize ivars
@@ -334,7 +334,7 @@ module Medidata
       protected
         # URL to which authenication tickets are posted for the purpose of remote authentication with mAuth
         def authentication_url
-          URI.parse(@config.mauth_baseurl + "/mauth/#{@config.version}/authentication_tickets.json")
+          URI.parse(@config.mauth_baseurl + "/mauth/#{@config.mauth_api_version}/authentication_tickets.json")
         end
       
         # Generic post

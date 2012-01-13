@@ -7,7 +7,7 @@ simple_app = lambda { |env| [200, {'Content-Type' => 'application/json'}, "Simpl
 
 config = {
   :mauth_baseurl => 'https://mauth-sandbox.imedidata.net',
-  :version => 'v1'
+  :mauth_api_version => 'v1'
 }
 
 use Medidata::MAuthMiddleware, config
