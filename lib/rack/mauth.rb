@@ -58,10 +58,10 @@ module Medidata
           :verb        => env['REQUEST_METHOD'],
           :request_url => env['PATH_INFO'],
           :time        => env['HTTP_X_MWS_TIME'],
-          :post_data   => ''
+          :body        => ''
         }
         if %w(POST PUT).include? env['REQUEST_METHOD']
-          params[:post_data] = env['rack.input'].read
+          params[:body] = env['rack.input'].read
           env['rack.input'].rewind
         end
 
@@ -221,7 +221,7 @@ module Medidata
           params = {
             :app_uuid       => app_uuid.to_s,
             :time           => response.header['x-mws-time'].to_s,
-            :message_body   => response.body.to_s,
+            :body           => response.body.to_s,
             :status_code    => response.code.to_s
           }
   
@@ -319,7 +319,7 @@ module Medidata
           'client_signature' => params[:digest],
           'request_url' => params[:request_url],
           'request_time' => params[:time],
-          'b64encoded_post_data' => Base64.encode64(params[:post_data])
+          'b64encoded_body' => Base64.encode64(params[:body])
         }
 
         # Post to endpoint
