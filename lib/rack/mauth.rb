@@ -291,7 +291,7 @@ module Medidata
         def refresh_mauth_verifiers
           @mauth_response_verifiers = []
           [1,2].each do | i |
-            public_mauth_key_str = OpenSSL::PKey::RSA.new(File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pem")).to_s
+            public_mauth_key_str = OpenSSL::PKey::RSA.new(File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pub")).to_s
             @mauth_response_verifiers << {:verifier => MAuth::Signer.new(:public_key => public_mauth_key_str), :last_refresh => Time.now}
           end
         end
