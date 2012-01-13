@@ -200,7 +200,7 @@ module Medidata
         end
       
         # Authenticate the response from MAuth
-        def authenticate_response(response)
+        def authenticate_mauth_response(response)
           mws_token, auth_info =  response.header['x-mws-authentication'].to_s.split(' ')
           app_uuid, digest = auth_info.split(':') if auth_info
 
@@ -217,9 +217,9 @@ module Medidata
         end
         
         # Formulate return values given response
-        def formulate_return_values(response)
+        def formulate_return_values_from_mauth(response)
           return {:response_code => :error, :body => nil} if response.nil?
-          return {:response_code => :error, :body => nil} unless authenticate_response(response)
+          return {:response_code => :error, :body => nil} unless authenticate_mauth_response(response)
           
           code = response.code.to_i
           return {:response_code => :found, :body => response.body} if code == 200
@@ -233,7 +233,7 @@ module Medidata
         def get_remote_security_token(app_uuid)
           headers = @mauth_signer_for_self.signed_request_headers(:app_uuid => @config.self_app_uuid, :verb => 'GET', :request_url => security_token_path(app_uuid))
           response = get(security_token_url(app_uuid), {:headers => headers})
-          formulate_return_values(response)
+          formulate_return_values_from_mauth(response)
         end 
       
         # Get remote public key for given app_uuid from MAuth (for the purposes of local authentication)
