@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rack-mauth'
-  s.version = '0.1.1'
+  s.version = '1.0.0'
 
   s.summary = "Rack middleware to perform request authentication for Medidata web services."
   s.description = "This middleware can be used in any rack-based project as middleware to intercept and authenticate requests to selected urls."
