@@ -134,19 +134,7 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
   end
-  
-  # Should we passthrough request to be authenticated by app using this middleware?
-  def should_passthrough?(env)
-    return false if @config.passthrough_when_no_mauth_headers == false
     
-    mws_token,app_uuid,digest = env_authentication_data(env)
-    if mws_token == "MWS"
-      return false
-    else
-      return true
-    end
-  end
-  
   describe "should_passthrough?" do
     before(:each) do
       @env = {}
