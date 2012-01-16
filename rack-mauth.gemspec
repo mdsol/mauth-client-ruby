@@ -29,7 +29,8 @@ Gem::Specification.new do |s|
   end
   s.add_development_dependency('rspec', '~> 2.7.0')
   s.add_development_dependency('timecop', '0.3.5')
-
+  s.add_development_dependency('rack-test')
+  
   s.files = `git ls-files`.split("\n")
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 end
