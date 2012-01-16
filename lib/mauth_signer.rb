@@ -108,7 +108,7 @@ module MAuth
       begin
         verify_signature_time(params[:time]) && secure_compare(decrypt_with_public_key(Base64.decode64(signature)), format_string_to_sign(request_or_response, params))
       rescue OpenSSL::PKey::RSAError
-        logger.error $!, $!.backtrace
+        logger.error "#{$!} #{$!.backtrace}"
         false
       end
     end
