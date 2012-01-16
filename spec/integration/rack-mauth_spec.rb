@@ -76,6 +76,29 @@ describe 'Local Authentication with Rack-Mauth' do
     end
   end
   
+  describe "improper information provided by client" do
+    it "should return 401 if incorrect signature" do
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "GETTY")
+      headers.each{|k,v| header(k,v)}
+      get '/'
+      last_response.status.should == 401
+    end
+    
+    it "should return 401 if client's app_uuid is unknown to MAuth" do
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => "appuuid_does_not_exist123",
+        :request_url => '/',
+        :verb => "GET")
+      headers.each{ |k,v| header(k,v) }
+      get '/'
+      last_response.status.should == 401
+    end
+    
+  end
+  
   describe "MAuth is down" do
     before(:each) do
       class Medidata::MAuthMiddleware
