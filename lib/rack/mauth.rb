@@ -30,8 +30,9 @@ module Medidata
     protected
       # Determine if the given endpoint should be authenticated.
       def should_authenticate?(env)
+        return false if should_passthrough?(env)
         return true unless @config.path_whitelist
-
+        
         path_info = env['PATH_INFO']
         any_matches = @config.path_whitelist.any?{|re| path_info =~ re}
         any_exceptions = @config.whitelist_exceptions ? @config.whitelist_exceptions.any?{|re| path_info =~ re} : false
@@ -39,6 +40,18 @@ module Medidata
         any_matches && !any_exceptions
       end
 
+      # Should we passthrough request to be authenticated by app using this middleware?
+      def should_passthrough?(env)
+        return false if @config.passthrough_when_no_mauth_headers == false
+        
+        mws_token,app_uuid,digest = env_authentication_data(env)
+        if mws_token == "MWS"
+          return false
+        else
+          return true
+        end
+      end
+      
       # Rack-mauth can authenticate locally if the middleware user provided an self_app_uuid and self_private_key
       # self_app_uuid is the app_uuid (in MAuth db) of app using this middleware
       # self_private_key is the private of app using this middleware which corresponds to public key of app_uuid in MAuth db
@@ -46,10 +59,16 @@ module Medidata
         !@config.self_app_uuid.nil? && !@config.self_private_key.nil?
       end
 
-      # Is the request authentic?
-      def authenticated?(env)
+      # Parse HTTP_AUTHORIZATION header for authentication data
+      def env_authentication_data(env)
         mws_token, auth_info =  env['HTTP_AUTHORIZATION'].to_s.split(' ')
         app_uuid, digest = auth_info.split(':') if auth_info
+        [mws_token, app_uuid, digest]
+      end
+      
+      # Is the request authentic?
+      def authenticated?(env)
+        mws_token,app_uuid,digest = env_authentication_data(env)
 
         return false unless app_uuid && digest && mws_token == 'MWS'
 
@@ -83,7 +102,7 @@ module Medidata
     
     # Manages configuration for middleware
     class MAuthMiddlewareConfig
-      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions
+      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions, :passthrough_when_no_mauth_headers
       
       def initialize(config = {})
         @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'mauth_baseurl: missing base url')
@@ -92,6 +111,7 @@ module Medidata
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
         @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
+        @passthrough_when_no_mauth_headers = config[:passthrough_when_no_mauth_headers] || false
       end
       
       # Write to log
