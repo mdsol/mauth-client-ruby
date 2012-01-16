@@ -30,7 +30,7 @@ module Medidata
     protected
       # Determine if the given endpoint should be authenticated.
       def should_authenticate?(env)
-        return false if should_passthrough?(env)
+        return false if should_passthrough_when_no_mauth_headers?(env)
         return true unless @config.path_whitelist
         
         path_info = env['PATH_INFO']
@@ -41,7 +41,9 @@ module Medidata
       end
 
       # Should we passthrough request to be authenticated by app using this middleware?
-      def should_passthrough?(env)
+      # If config.passthrough_when_no_mauth_headers, we pass through when requesting app
+      # chooses not to include MAuth Authorization header
+      def should_passthrough_when_no_mauth_headers?(env)
         return false if @config.passthrough_when_no_mauth_headers == false
         
         mws_token,app_uuid,digest = env_authentication_data(env)

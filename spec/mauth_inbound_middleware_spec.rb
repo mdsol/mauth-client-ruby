@@ -57,9 +57,9 @@ describe "Medidata::MAuthMiddleware" do
       @middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
     end
     
-    context "should_passthrough? is true" do
+    context "should_passthrough_when_no_mauth_headers? is true" do
       before(:each) do
-        @middlew.stub(:should_passthrough?).and_return(true)
+        @middlew.stub(:should_passthrough_when_no_mauth_headers?).and_return(true)
       end
       
       it "should not authenticate with middleware" do
@@ -67,9 +67,9 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
     
-    context "should_passthrough? is false and @config.path_whitelist is nil" do
+    context "should_passthrough_when_no_mauth_headers? is false and @config.path_whitelist is nil" do
       before(:each) do
-        @middlew.stub(:should_passthrough?).and_return(false)
+        @middlew.stub(:should_passthrough_when_no_mauth_headers?).and_return(false)
         @middlew.config.stub(:path_whitelist).and_return(nil)
       end
       
@@ -83,9 +83,9 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
     
-    context "should_passthrough? is false and @config.path_whitelist is not nil" do
+    context "should_passthrough_when_no_mauth_headers? is false and @config.path_whitelist is not nil" do
       before(:each) do
-        @middlew.stub(:should_passthrough?).and_return(false)
+        @middlew.stub(:should_passthrough_when_no_mauth_headers?).and_return(false)
         @env['PATH_INFO'] = "/studies/abc.json"
       end
       
@@ -135,7 +135,7 @@ describe "Medidata::MAuthMiddleware" do
     end
   end
     
-  describe "should_passthrough?" do
+  describe "should_passthrough_when_no_mauth_headers?" do
     before(:each) do
       @env = {}
     end
@@ -143,7 +143,7 @@ describe "Medidata::MAuthMiddleware" do
     it "should return false if @config.passthrough_when_no_mauth_headers is false" do
       @sample_config.merge!(:passthrough_when_no_mauth_headers => false)
       middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
-      middlew.send(:should_passthrough?, @env).should == false
+      middlew.send(:should_passthrough_when_no_mauth_headers?, @env).should == false
     end
     
     it "should return true if @config.passthrough_when_no_mauth_headers is true and authorization header does not begin with MWS" do
@@ -151,7 +151,7 @@ describe "Medidata::MAuthMiddleware" do
       middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
       ["AWS", "AWS A:", "AWS :B", "A:B"].each do |auth|
         @env['HTTP_AUTHORIZATION'] = auth
-        middlew.send(:should_passthrough?, @env).should == true
+        middlew.send(:should_passthrough_when_no_mauth_headers?, @env).should == true
       end
     end
     
@@ -160,7 +160,7 @@ describe "Medidata::MAuthMiddleware" do
       middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
       ["MWS", "MWS A:", "MWS :B"].each do |auth|
         @env['HTTP_AUTHORIZATION'] = auth
-        middlew.send(:should_passthrough?, @env).should == false
+        middlew.send(:should_passthrough_when_no_mauth_headers?, @env).should == false
       end
     end
   end
