@@ -28,7 +28,7 @@ module Medidata
     end
 
     protected
-      # Determine if the given endpoint should be authenticated. Perhaps use env['PATH_INFO']
+      # Determine if the given endpoint should be authenticated.
       def should_authenticate?(env)
         return true unless @config.path_whitelist
 
@@ -39,9 +39,11 @@ module Medidata
         any_matches && !any_exceptions
       end
 
-      # Rack-mauth can authenticate locally if the middleware user provided an app_uuid and private_key
+      # Rack-mauth can authenticate locally if the middleware user provided an self_app_uuid and self_private_key
+      # self_app_uuid is the app_uuid (in MAuth db) of app using this middleware
+      # self_private_key is the private of app using this middleware which corresponds to public key of app_uuid in MAuth db
       def can_authenticate_locally?
-        @config.self_app_uuid && @config.self_private_key
+        !@config.self_app_uuid.nil? && !@config.self_private_key.nil?
       end
 
       # Is the request authentic?
@@ -129,7 +131,7 @@ module Medidata
       # Rack-mauth does its own authentication
       def authenticate_request(digest, params)
         verifier = verifier_for_app(params[:app_uuid])
-        verifier && verifier.verify_request(digest, params)
+        !verifier.nil? && verifier.verify_request(digest, params)
       end
       
       protected
@@ -273,6 +275,7 @@ module Medidata
       def initialize(config = nil)
         raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
         @config = config
+        @mauth_response_verifiers = []
       end
       
       # Authenticate the given response with a list of MAuth verifiers
@@ -290,8 +293,12 @@ module Medidata
         def refresh_mauth_verifiers
           @mauth_response_verifiers = []
           [1,2].each do | i |
-            public_mauth_key_str = OpenSSL::PKey::RSA.new(File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pub")).to_s
-            @mauth_response_verifiers << {:verifier => MAuth::Signer.new(:public_key => public_mauth_key_str), :last_refresh => Time.now}
+            begin
+              public_mauth_key_str = File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pub")
+              @mauth_response_verifiers << {:verifier => MAuth::Signer.new(:public_key => public_mauth_key_str), :last_refresh => Time.now}
+            rescue TypeError, Errno::ENOENT, ArgumentError, OpenSSL::PKey::RSAError => e
+              @config.log "Attempt to read mauth public key file threw exception:  #{e.message}"
+            end
           end
         end
         
@@ -301,7 +308,7 @@ module Medidata
         end        
     end # of MAuthPublicKeyManager
     
-    # Ask MAuth for authenticate remotely; probably won't be used much as MAuth servers public keys
+    # Ask MAuth for authenticate remotely; probably won't be used much as MAuth serves public keys
     class MAuthRemoteVerifier
       def initialize(config = nil)
         raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
@@ -315,7 +322,7 @@ module Medidata
         data = {
           'verb' => params[:verb],
           'app_uuid' => params[:app_uuid],
-          'client_signature' => params[:digest],
+          'client_signature' => digest,
           'request_url' => params[:request_url],
           'request_time' => params[:time],
           'b64encoded_body' => Base64.encode64(params[:body])
@@ -324,12 +331,14 @@ module Medidata
         # Post to endpoint
         response = post(authentication_url, {"authentication_ticket" => data})
 
-        return false unless response
-        if response.code.to_i == 204
-          return true
-        else
+        if response.nil?
+          @config.log "Remote authen. returned nil response"
+          return false
+        elsif response.code.to_i != 204
           @config.log "Attempt to authenticate remotely failed with status code #{response.code}"
           return false
+        else
+          return true
         end
       end
       

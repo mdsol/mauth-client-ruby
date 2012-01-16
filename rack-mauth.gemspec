@@ -18,14 +18,16 @@ Gem::Specification.new do |s|
   s.add_dependency 'rest-client'
   s.add_dependency 'json'
   
-  if RUBY_VERSION['1.9']
+  if (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 9]) >= 0
     s.add_development_dependency('ruby-debug19', '0.11.6')
-  elsif RUBY_VERSION['1.8']
+    s.add_development_dependency('simplecov')
+    s.add_development_dependency('simplecov-gem-adapter')
+  elsif (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 8]) >= 0
     s.add_development_dependency('ruby-debug', '0.10.3')
   else
     raise "Unknown RUBY_VERSION"
   end
-  s.add_development_dependency('rspec', '2.6.0')
+  s.add_development_dependency('rspec', '~> 2.7.0')
   s.add_development_dependency('timecop', '0.3.5')
 
   s.files = `git ls-files`.split("\n")
