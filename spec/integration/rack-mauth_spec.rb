@@ -120,6 +120,20 @@ describe 'Local Authentication with Rack-Mauth' do
       get '/'
       last_response.status.should == 401
     end
+    
+    it "should return 200 if MAuth is not responding but public key for app has already been cached by rack-mauth" do
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "GET")
+      headers.each{ |k,v| header(k,v) }
+      get '/'
+      RestClient::Resource.stub_chain(:new, :get).and_raise(Errno::ECONNREFUSED.new)
+      headers.each{ |k,v| header(k,v) }
+      get '/'
+      last_response.status.should == 200
+    end
+    
   end
   
 end
