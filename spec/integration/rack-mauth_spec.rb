@@ -104,21 +104,18 @@ describe 'Local Authentication with Rack-Mauth' do
   end
   
   describe "MAuth is down" do
-    before(:each) do
-      class Medidata::MAuthMiddleware
-        attr_reader :mauth_verifiers_manager
-      end
-    end
-    
     it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
-      RestClient::Resource.stub_chain(:new, :get).and_raise(Errno::ECONNREFUSED.new)
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
-      get '/'
-      last_response.status.should == 401
+      [RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+      Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exception|
+        RestClient::Resource.stub_chain(:new, :get).and_raise(exception.new) # Note:  this should change if rack-mauth stops using rest-client
+        headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+          :app_uuid => APP_UUID,
+          :request_url => '/',
+          :verb => "GET")
+        headers.each{ |k,v| header(k,v) }
+        get '/'
+        last_response.status.should == 401
+      end
     end
     
     it "should return 200 if MAuth is not responding but public key for app has already been cached by rack-mauth" do
@@ -133,7 +130,114 @@ describe 'Local Authentication with Rack-Mauth' do
       get '/'
       last_response.status.should == 200
     end
+  end
+end
+
+describe 'Remote Authentication with Rack-Mauth' do
+  include Rack::Test::Methods
+
+  def app
+    mini_app = lambda { |env| [200, {'Content-Type' => 'text/plain'}, ["Hello World"]] }
     
+    config = {
+      :mauth_baseurl => MAUTH_BASE_URL,
+      :mauth_api_version => 'v1'
+    }
+
+    @mware = Medidata::MAuthMiddleware.new(mini_app, config)
+  end
+
+  describe "proper signatures provided by client" do
+    it "should return 200 if GET request is properly signed" do
+      #Note, in this case, client making call to app has same private key as app
+      #This is not the normal state of affairs
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "GET")
+      headers.each{ |k,v| header(k,v) }
+      get '/'
+      last_response.should be_ok
+      last_response.body.should == 'Hello World'
+    end
+    
+    it "should return 200 if POST request is properly signed" do
+      #Note, in this case, client making call to app has same private key as app
+      #This is not the normal state of affairs
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "POST",
+        :body => "blah")
+      headers.each{ |k,v| header(k,v) }
+      post '/', "blah"
+      last_response.should be_ok
+      last_response.body.should == 'Hello World'
+    end
+    
+    it "should return 200 if PUT request is properly signed" do
+      #Note, in this case, client making call to app has same private key as app
+      #This is not the normal state of affairs
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "PUT",
+        :body => "blah")
+      headers.each{ |k,v| header(k,v) }
+      put '/', "blah"
+      last_response.should be_ok
+      last_response.body.should == 'Hello World'
+    end
+    
+    it "should return 200 if DELETE request is properly signed" do
+      #Note, in this case, client making call to app has same private key as app
+      #This is not the normal state of affairs
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "DELETE")
+      headers.each{ |k,v| header(k,v) }
+      delete '/'
+      last_response.should be_ok
+      last_response.body.should == 'Hello World'
+    end
   end
   
+  describe "improper information provided by client" do
+    it "should return 401 if incorrect signature" do
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => APP_UUID,
+        :request_url => '/',
+        :verb => "GETTY")
+      headers.each{|k,v| header(k,v)}
+      get '/'
+      last_response.status.should == 401
+    end
+    
+    it "should return 401 if client's app_uuid is unknown to MAuth" do
+      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+        :app_uuid => "appuuid_does_not_exist123",
+        :request_url => '/',
+        :verb => "GET")
+      headers.each{ |k,v| header(k,v) }
+      get '/'
+      last_response.status.should == 401
+    end
+  end
+  
+  describe "MAuth is down" do
+    it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
+      [RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
+      Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exception|
+        RestClient::Resource.stub_chain(:new, :post).and_raise(exception.new) # Note:  this should change if rack-mauth stops using rest-client
+        headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
+          :app_uuid => APP_UUID,
+          :request_url => '/',
+          :verb => "GET")
+        headers.each{ |k,v| header(k,v) }
+        get '/'
+        last_response.status.should == 401
+      end
+    end
+  end
 end
