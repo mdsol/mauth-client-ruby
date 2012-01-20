@@ -138,11 +138,13 @@ module MAuth
 
     # Encrypt hash of +string_to_encr+ with private key
     def encrypt_with_private_key(string_to_encr)
+      raise("Must specify private key to encrypt data") if private_key.nil?
       private_key.private_encrypt(string_to_encr)
     end
 
     # Decrypt signature with public key
     def decrypt_with_public_key(signature)
+      raise("Must specify public key to decrypt data") if public_key.nil?
       public_key.public_decrypt(signature)
     end
     
