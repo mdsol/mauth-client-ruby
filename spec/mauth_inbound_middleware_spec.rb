@@ -276,7 +276,6 @@ describe "Medidata::MAuthVerifiersManager" do
         @config = mock(Medidata::MAuthMiddlewareConfig)
         @config.stub(:self_private_key).and_return("blah")
         MAuth::Signer.stub(:new)
-        Medidata::MAuthPublicKeyManager.stub(:new)
       end
       
       after(:each) do
@@ -285,11 +284,7 @@ describe "Medidata::MAuthVerifiersManager" do
       
       it "should make mauth_signer_for_self" do
         MAuth::Signer.should_receive(:new).with(:private_key => @config.self_private_key)
-      end
-      
-      it "should make mauth_public_key_manager" do
-        Medidata::MAuthPublicKeyManager.should_receive(:new).with(@config)
-      end
+      end      
     end
   end
   
@@ -298,7 +293,6 @@ describe "Medidata::MAuthVerifiersManager" do
       @config = mock(Medidata::MAuthMiddlewareConfig)
       @config.stub(:self_private_key).and_return("blah")
       MAuth::Signer.stub(:new)
-      Medidata::MAuthPublicKeyManager.stub(:new)
       Medidata::MAuthVerifiersManager.new(@config)
       @verifiers_manager = Medidata::MAuthVerifiersManager.new(@config)
     end
@@ -328,135 +322,6 @@ describe "Medidata::MAuthVerifiersManager" do
     end
   end
   
-end
-
-describe "Medidata::MAuthPublicKeyManager" do
-  before(:each) do
-    class Medidata::MAuthPublicKeyManager
-      attr_accessor :mauth_response_verifiers # allow specs to write mauth_response_verifiers for testing purposes
-    end
-  end
-  
-  describe "initialize" do
-    context "no config" do
-      it "should raise error" do
-        lambda { Medidata::MAuthPublicKeyManager.new }.should raise_error(ArgumentError, 'must provide an MAuthMiddlewareConfig')
-      end
-    end
-  end
-  
-  describe "authenticate_response" do
-    before(:each) do
-      @config = mock(Medidata::MAuthMiddlewareConfig)
-      @mauth_public_key_manager = Medidata::MAuthPublicKeyManager.new(@config)
-      @signature = "blah"
-      @params = {}
-      @mock_mauth_verifier = mock(MAuth::Signer)
-      @verifier = {:verifier => @mock_mauth_verifier, :last_refresh => Time.now}
-      @verifiers = [@verifier]
-    end
-    
-    it "should call refresh_mauth_verifiers if mauth_verifiers_expired" do
-      @mauth_public_key_manager.stub(:mauth_verifiers_expired?).and_return(true)
-      @mauth_public_key_manager.should_receive(:refresh_mauth_verifiers)
-      @mauth_public_key_manager.authenticate_response(@signature, @params)
-    end
-    
-    it "should not call refresh_mauth_verifiers if !mauth_verifiers_expired" do
-      @mauth_public_key_manager.stub(:mauth_verifiers_expired?).and_return(false)
-      @mauth_public_key_manager.should_not_receive(:refresh_mauth_verifiers)
-      @mauth_public_key_manager.authenticate_response(@signature, @params)
-    end
-    
-    it "should try to verify response signature using mauth_verifiers" do
-      @mauth_public_key_manager.mauth_response_verifiers = @verifiers
-      @mock_mauth_verifier.should_receive(:verify_response).with(@signature, @params)
-      @mauth_public_key_manager.authenticate_response(@signature, @params)
-    end
-    
-    it "should return true if any mauth_response_verifier is able to verify the response from mauth" do
-      @mauth_public_key_manager.mauth_response_verifiers = @verifiers
-      @mock_mauth_verifier.stub(:verify_response).with(@signature, @params).and_return(true)
-      @mauth_public_key_manager.authenticate_response(@signature, @params).should == true
-    end
-    
-    it "should return false if no mauth_response_verifier is able to verify the response from mauth" do
-      @mauth_public_key_manager.mauth_response_verifiers = @verifiers
-      @mock_mauth_verifier.stub(:verify_response).with(@signature, @params).and_return(false)
-      @mauth_public_key_manager.authenticate_response(@signature, @params).should == false
-    end
-    
-    it "should return false if no mauth_response_verifiers" do
-      @mauth_public_key_manager.mauth_response_verifiers = []
-      @mauth_public_key_manager.authenticate_response(@signature, @params).should == false
-    end
-  end
-    
-  describe "refresh_mauth_verifiers" do
-    before(:each) do
-      @config = mock(Medidata::MAuthMiddlewareConfig)
-      @mauth_public_key_manager = Medidata::MAuthPublicKeyManager.new(@config)
-    end
-    
-    it "should return fresh MAuth::Signer verifiers normally" do
-      @mauth_public_key_manager.send(:refresh_mauth_verifiers)
-      verifiers = @mauth_public_key_manager.mauth_response_verifiers
-      verifiers.each do |v|
-        v[:verifier].is_a?(MAuth::Signer).should == true
-        v[:last_refresh].to_i.should == Time.now.to_i
-      end
-    end
-    
-    it "should return fresh MAuth::Signer verifiers normally" do
-      @mauth_public_key_manager.send(:refresh_mauth_verifiers)
-      verifiers = @mauth_public_key_manager.mauth_response_verifiers
-      verifiers.length.should == 2
-    end
-    
-    it "should log if cannot open MAuth public key file" do
-      Dir.stub(:pwd).and_return('xyz/')
-      @config.should_receive(:log).twice
-      @mauth_public_key_manager.send(:refresh_mauth_verifiers)
-    end
-    
-    it "should log if MAuth public key file is blank or contains something other than a public key string" do
-      ['', nil, 'blah'].each do |file_contents|
-        File.stub(:read).and_return(file_contents)
-        @config.should_receive(:log).twice
-        @mauth_public_key_manager.send(:refresh_mauth_verifiers)
-      end
-    end
-    
-    it "verifiers should be empty array if no public key files can be read" do
-      Dir.stub(:pwd).and_return('xyz/')
-      @config.stub(:log)
-      @mauth_public_key_manager.send(:refresh_mauth_verifiers)
-      @mauth_public_key_manager.mauth_response_verifiers.should == []
-    end
-    
-  end
-  
-  describe "mauth_verifiers_expired?" do
-    before(:each) do
-      @config = mock(Medidata::MAuthMiddlewareConfig)
-      @mauth_public_key_manager = Medidata::MAuthPublicKeyManager.new(@config)
-    end
-    
-    it "should return true if mauth_response_verifiers is nil" do
-      @mauth_public_key_manager.mauth_response_verifiers = nil
-      @mauth_public_key_manager.send(:mauth_verifiers_expired?).should == true
-    end
-    
-    it "should return true if mauth_response_verifiers is empty" do
-      @mauth_public_key_manager.mauth_response_verifiers = []
-      @mauth_public_key_manager.send(:mauth_verifiers_expired?).should == true
-    end
-    
-    it "should return true if mauth_response_verifiers refreshed more than 60 seconds ago" do
-      @mauth_public_key_manager.mauth_response_verifiers = [{:last_refresh => Time.now - 61}]
-      @mauth_public_key_manager.send(:mauth_verifiers_expired?).should == true
-    end    
-  end
 end
 
 describe "Medidata::MAuthRemoteVerifier" do

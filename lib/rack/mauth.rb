@@ -147,7 +147,6 @@ module Medidata
         @cached_verifiers_mutex = Mutex.new
         @cached_verifiers = {}
         @mauth_signer_for_self = MAuth::Signer.new(:private_key => @config.self_private_key)
-        @mauth_public_key_manager = MAuthPublicKeyManager.new(config)
       end
       
       # Rack-mauth does its own authentication
@@ -222,28 +221,10 @@ module Medidata
             return nil
           end
         end
-      
-        # Authenticate the response from MAuth
-        def authenticate_mauth_response(response)
-          mws_token, auth_info =  response.header['x-mws-authentication'].to_s.split(' ')
-          app_uuid, digest = auth_info.split(':') if auth_info
-
-          return false unless app_uuid && digest && mws_token == 'MWS'
-          
-          params = {
-            :app_uuid       => app_uuid.to_s,
-            :time           => response.header['x-mws-time'].to_s,
-            :body           => response.body.to_s,
-            :status_code    => response.code.to_s
-          }
-  
-          @mauth_public_key_manager.authenticate_response(digest, params)
-        end
-        
+            
         # Formulate return values given response
         def formulate_return_values_from_mauth(response)
           return {:response_code => :error, :body => nil} if response.nil?
-          return {:response_code => :error, :body => nil} unless authenticate_mauth_response(response)
           
           code = response.code.to_i
           return {:response_code => :found, :body => response.body} if code == 200
@@ -292,44 +273,7 @@ module Medidata
           end
         end
     end # of MAuthVerifiersManager
-    
-    class MAuthPublicKeyManager
-      def initialize(config = nil)
-        raise ArgumentError, 'must provide an MAuthMiddlewareConfig' if config.nil?
-        @config = config
-        @mauth_response_verifiers = []
-      end
-      
-      # Authenticate the given response with a list of MAuth verifiers
-      def authenticate_response(signature, params)
-        refresh_mauth_verifiers if mauth_verifiers_expired?
-        @mauth_response_verifiers.each do | mauth_response_verifier |
-          return true if mauth_response_verifier[:verifier].verify_response(signature, params)
-        end
         
-        return false
-      end
-      
-      protected
-        # Refresh verifiers
-        def refresh_mauth_verifiers
-          @mauth_response_verifiers = []
-          [1,2].each do | i |
-            begin
-              public_mauth_key_str = File.read("#{Dir.pwd}/config/public_keys/mauth_#{i}.pub")
-              @mauth_response_verifiers << {:verifier => MAuth::Signer.new(:public_key => public_mauth_key_str), :last_refresh => Time.now}
-            rescue TypeError, Errno::ENOENT, ArgumentError, OpenSSL::PKey::RSAError => e
-              @config.log "Attempt to read mauth public key file threw exception:  #{e.message}"
-            end
-          end
-        end
-        
-        # Check if our verifiers have expired
-        def mauth_verifiers_expired?
-          @mauth_response_verifiers.nil? || @mauth_response_verifiers.empty? || @mauth_response_verifiers.first[:last_refresh] < (Time.now - 60)
-        end        
-    end # of MAuthPublicKeyManager
-    
     # Ask MAuth for authenticate remotely; probably won't be used much as MAuth serves public keys
     class MAuthRemoteVerifier
       def initialize(config = nil)
