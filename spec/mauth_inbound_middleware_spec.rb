@@ -423,7 +423,7 @@ describe "Medidata::MAuthRemoteVerifier" do
       resp = mock
       resp.stub(:net_http_res)
       post_data = "blah"
-      RestClient::Resource.should_receive(:new).with(@authentication_url.to_s, {:timeout => 2}).and_return(rcr)
+      RestClient::Resource.should_receive(:new).with(@authentication_url.to_s, {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}).and_return(rcr)
       rcr.should_receive(:post).with(post_data.to_json, :content_type => 'application/json').and_return(resp)
       resp.should_receive(:net_http_res)
       @mauth_remote_verifier.send(:post, @authentication_url, post_data)

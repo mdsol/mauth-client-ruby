@@ -262,7 +262,7 @@ module Medidata
         # Generic get
         def get(from_url, options = {})
           begin
-            opts = {:timeout => 2}
+            opts = {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}
             opts.merge!({:headers => options[:headers]}) if options[:headers]
             response = RestClient::Resource.new(from_url.to_s, opts).get
             return response.net_http_res
@@ -317,7 +317,7 @@ module Medidata
         # Generic post
         def post(to_url, post_data, options = {})
           begin
-            opts = {:timeout => 2}
+            opts = {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}
             opts.merge!({:headers => options[:headers]}) if options[:headers]
             response = RestClient::Resource.new(to_url.to_s, opts).post(post_data.to_json, :content_type => 'application/json')
             return response.net_http_res            
