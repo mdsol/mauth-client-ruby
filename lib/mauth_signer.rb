@@ -44,7 +44,7 @@ module MAuth
     def signed_request_headers(params)
       params.merge!(:time => Time.now.to_i)
       {
-        'Authorization' => "MWS #{params[:app_uuid]}:#{generate_request_signature(params)}",
+        'x-mws-authentication' => "MWS #{params[:app_uuid]}:#{generate_request_signature(params)}",
         'x-mws-time' => params[:time].to_s
       }
     end
