@@ -251,7 +251,7 @@ module Medidata
           rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                  Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
                  OpenSSL::SSL::SSLError => e
-            @config.log "Attempt to GET from #{from_url.path} threw exception:  #{e.message}"
+            @config.log "Attempt to GET from #{from_url.path} threw exception:  #{e.class} -- #{e.message}"
             return nil
           end
         end
@@ -307,7 +307,7 @@ module Medidata
           rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                  Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
                  OpenSSL::SSL::SSLError => e
-            @config.log "Attempt to POST to #{to_url.path} threw exception:  #{e.message}"
+            @config.log "Attempt to POST to #{to_url.path} threw exception:  #{e.class} -- #{e.message}"
             return nil
           end
         end
