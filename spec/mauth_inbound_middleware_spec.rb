@@ -55,9 +55,9 @@ describe "Medidata::MAuthMiddleware" do
       @middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
     end
     
-    context "@config.should_authentication_check is nil" do
+    context "@config.should_authenticate_check is nil" do
       before(:each) do
-        @middlew.config.stub(:should_authentication_check).and_return(nil)
+        @middlew.config.stub(:should_authenticate_check).and_return(nil)
       end
       
       it "should return true" do
@@ -65,22 +65,22 @@ describe "Medidata::MAuthMiddleware" do
       end
     end
     
-    context "@config.should_authentication_check is not nil" do  
+    context "@config.should_authenticate_check is not nil" do  
       it "should call" do
-        @middlew.config.stub(:should_authentication_check).and_return(Proc.new{|env| true })
-        @middlew.config.should_authentication_check.should_receive(:call).with(@env)
+        @middlew.config.stub(:should_authenticate_check).and_return(Proc.new{|env| true })
+        @middlew.config.should_authenticate_check.should_receive(:call).with(@env)
         @middlew.send(:should_authenticate?, @env)
       end
       
       it "should execute proc and return true when appropriate" do
         env = {:PATH_INFO => "/api/studies.json"}
-        @middlew.config.stub(:should_authentication_check).and_return(Proc.new{|env| (env[:PATH_INFO] =~ /api/) != nil })
+        @middlew.config.stub(:should_authenticate_check).and_return(Proc.new{|env| (env[:PATH_INFO] =~ /api/) != nil })
         @middlew.send(:should_authenticate?, env).should == true
       end
       
       it "should execute proc and return false when appropriate" do
         env = {:PATH_INFO => "/user/studies.json"}
-        @middlew.config.stub(:should_authentication_check).and_return(Proc.new{|env| (env[:PATH_INFO] =~ /api/) != nil })
+        @middlew.config.stub(:should_authenticate_check).and_return(Proc.new{|env| (env[:PATH_INFO] =~ /api/) != nil })
         @middlew.send(:should_authenticate?, env).should == false
       end
     end    

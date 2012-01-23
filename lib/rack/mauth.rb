@@ -30,10 +30,10 @@ module Medidata
     protected
       # Determine if the given endpoint should be authenticated.
       def should_authenticate?(env)        
-        if @config.should_authentication_check.nil?
+        if @config.should_authenticate_check.nil?
           return true
         else
-          return @config.should_authentication_check.call(env)
+          return @config.should_authenticate_check.call(env)
         end
       end
       
@@ -87,7 +87,7 @@ module Medidata
     
     # Manages configuration for middleware
     class MAuthMiddlewareConfig
-      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :should_authentication_check
+      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :should_authenticate_check
       
       def initialize(config = {})
         @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'mauth_baseurl: missing base url')
@@ -95,7 +95,7 @@ module Medidata
         verify_mauth_baseurl
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
-        @should_authentication_check = config[:should_authentication_check]
+        @should_authenticate_check = config[:should_authenticate_check]
       end
       
       # Write to log
