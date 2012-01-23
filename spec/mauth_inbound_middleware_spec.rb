@@ -117,7 +117,7 @@ describe "Medidata::MAuthMiddleware" do
       @client_sig = "B"
       @client_app_uuid = "A"
       @env = {
-        'HTTP_AUTHORIZATION' => "MWS #{@client_app_uuid}:#{@client_sig}",
+        'HTTP_X_MWS_AUTHENTICATION' => "MWS #{@client_app_uuid}:#{@client_sig}",
         'REQUEST_METHOD' => 'POST',
         'PATH_INFO' => '/studies',
         'HTTP_X_MWS_TIME' => Time.now.to_i,
@@ -126,21 +126,21 @@ describe "Medidata::MAuthMiddleware" do
       @middlew = Medidata::MAuthMiddleware.new(@app, @sample_config)
     end
     
-    it "should return false if something other than MWS (case-sensitive) is given in Authorization header" do
+    it "should return false if something other than MWS (case-sensitive) is given in HTTP_X_MWS_AUTHENTICATION header" do
       ['AWS', 'blah', 'mws'].each do | mws |
-        @env['HTTP_AUTHORIZATION'] = "#{mws} foo:bar"
+        @env['HTTP_X_MWS_AUTHENTICATION'] = "#{mws} foo:bar"
         @middlew.send(:authenticated?, @env).should == false
       end
     end
     
     it "should return false if app_uuid is nil in header" do
-      @env['HTTP_AUTHORIZATION'] = "MWS :bar"
+      @env['HTTP_X_MWS_AUTHENTICATION'] = "MWS :bar"
       @middlew.send(:authenticated?, @env).should == false
     end
     
     it "should return false if signature is nil in header" do
       ['foo', 'foo:'].each do |sig|
-        @env['HTTP_AUTHORIZATION'] = "MWS #{sig}"
+        @env['HTTP_X_MWS_AUTHENTICATION'] = "MWS #{sig}"
         @middlew.send(:authenticated?, @env).should == false
       end
     end

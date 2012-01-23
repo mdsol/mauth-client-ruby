@@ -44,9 +44,9 @@ module Medidata
         !@config.self_app_uuid.nil? && !@config.self_private_key.nil?
       end
 
-      # Parse HTTP_AUTHORIZATION header for authentication data
+      # Parse HTTP_X_MWS_AUTHENTICATION header for authentication data
       def env_authentication_data(env)
-        mws_token, auth_info =  env['HTTP_AUTHORIZATION'].to_s.split(' ')
+        mws_token, auth_info =  env['HTTP_X_MWS_AUTHENTICATION'].to_s.split(' ')
         app_uuid, digest = auth_info.split(':') if auth_info
         [mws_token, app_uuid, digest]
       end
