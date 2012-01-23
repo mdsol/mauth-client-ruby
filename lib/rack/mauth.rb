@@ -29,28 +29,11 @@ module Medidata
 
     protected
       # Determine if the given endpoint should be authenticated.
-      def should_authenticate?(env)
-        return false if should_passthrough_when_no_mauth_headers?(env)
-        return true unless @config.path_whitelist
-        
-        path_info = env['PATH_INFO']
-        any_matches = @config.path_whitelist.any?{|re| path_info =~ re}
-        any_exceptions = @config.whitelist_exceptions ? @config.whitelist_exceptions.any?{|re| path_info =~ re} : false
-
-        any_matches && !any_exceptions
-      end
-
-      # Should we passthrough request to be authenticated by app using this middleware?
-      # If config.passthrough_when_no_mauth_headers, we pass through when requesting app
-      # chooses not to include MAuth Authorization header
-      def should_passthrough_when_no_mauth_headers?(env)
-        return false if @config.passthrough_when_no_mauth_headers == false
-        
-        mws_token,app_uuid,digest = env_authentication_data(env)
-        if mws_token == "MWS"
-          return false
-        else
+      def should_authenticate?(env)        
+        if @config.should_authentication_check.nil?
           return true
+        else
+          return @config.should_authentication_check.call(env)
         end
       end
       
@@ -104,7 +87,7 @@ module Medidata
     
     # Manages configuration for middleware
     class MAuthMiddlewareConfig
-      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :path_whitelist, :whitelist_exceptions, :passthrough_when_no_mauth_headers
+      attr_reader :mauth_baseurl, :mauth_api_version, :self_app_uuid, :self_private_key, :should_authentication_check
       
       def initialize(config = {})
         @mauth_baseurl = config[:mauth_baseurl] || raise(ArgumentError, 'mauth_baseurl: missing base url')
@@ -112,8 +95,7 @@ module Medidata
         verify_mauth_baseurl
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
-        @path_whitelist, @whitelist_exceptions = config[:path_whitelist], config[:whitelist_exceptions]
-        @passthrough_when_no_mauth_headers = config[:passthrough_when_no_mauth_headers] || false
+        @should_authentication_check = config[:should_authentication_check]
       end
       
       # Write to log
@@ -267,7 +249,8 @@ module Medidata
             response = RestClient::Resource.new(from_url.to_s, opts).get
             return response.net_http_res
           rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+                 OpenSSL::SSL::SSLError => e
             @config.log "Attempt to GET from #{from_url.path} threw exception:  #{e.message}"
             return nil
           end
@@ -322,7 +305,8 @@ module Medidata
             response = RestClient::Resource.new(to_url.to_s, opts).post(post_data.to_json, :content_type => 'application/json')
             return response.net_http_res            
           rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+                 OpenSSL::SSL::SSLError => e
             @config.log "Attempt to POST to #{to_url.path} threw exception:  #{e.message}"
             return nil
           end
