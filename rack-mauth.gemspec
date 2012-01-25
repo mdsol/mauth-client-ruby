@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = ">= 1.3.6"
 
   s.add_dependency 'rack'
-  s.add_dependency 'rest-client'
+  s.add_dependency 'httpclient', '>= 2.2.4'
   s.add_dependency 'json'
   
   if (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 9]) >= 0

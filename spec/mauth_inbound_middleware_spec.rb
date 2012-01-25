@@ -339,14 +339,12 @@ describe "Medidata::MAuthRemoteVerifier" do
       @authentication_url = @mauth_remote_verifier.send(:authentication_url)
     end   
     
-    it "should post with RestClient, sending several arguments" do
-      rcr = mock(RestClient::Resource)
-      resp = mock
-      resp.stub(:net_http_res)
+    it "should post with HTTPClient, sending several arguments" do
+      httpcli = mock(HTTPClient)
+      httpcli.should_receive(:receive_timeout=).with(2)
+      HTTPClient.stub(:new).and_return(httpcli)
       post_data = "blah"
-      RestClient::Resource.should_receive(:new).with(@authentication_url.to_s, {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}).and_return(rcr)
-      rcr.should_receive(:post).with(post_data.to_json, :content_type => 'application/json').and_return(resp)
-      resp.should_receive(:net_http_res)
+      httpcli.should_receive(:post).with(@authentication_url.to_s, post_data.to_json, {"Content-Type" => "application/json"})
       @mauth_remote_verifier.send(:post, @authentication_url, post_data)
     end
   end

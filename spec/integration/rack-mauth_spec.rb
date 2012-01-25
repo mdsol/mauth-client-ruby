@@ -105,9 +105,13 @@ describe 'Local Authentication with Rack-Mauth' do
   
   describe "MAuth is down" do
     it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
-      [RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-      Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exception|
-        RestClient::Resource.stub_chain(:new, :get).and_raise(exception.new) # Note:  this should change if rack-mauth stops using rest-client
+      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
+       Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+       HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError].each do |exception|
+        cli = mock
+        cli.stub(:receive_timeout=)
+        HTTPClient.stub(:new).and_return(cli)
+        cli.stub(:get).and_raise(exception.new("bad")) # Note:  this should change if rack-mauth stops using httpclient
         headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
           :app_uuid => APP_UUID,
           :request_url => '/',
@@ -125,7 +129,7 @@ describe 'Local Authentication with Rack-Mauth' do
         :verb => "GET")
       headers.each{ |k,v| header(k,v) }
       get '/'
-      RestClient::Resource.stub_chain(:new, :get).and_raise(Errno::ECONNREFUSED.new)
+      HTTPClient.stub_chain(:new, :get).and_raise(HTTPClient::BadResponseError.new("bad")) # this will change if rack-mauth stops using httpclient
       headers.each{ |k,v| header(k,v) }
       get '/'
       last_response.status.should == 200
@@ -227,9 +231,13 @@ describe 'Remote Authentication with Rack-Mauth' do
   
   describe "MAuth is down" do
     it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
-      [RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-      Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].each do |exception|
-        RestClient::Resource.stub_chain(:new, :post).and_raise(exception.new) # Note:  this should change if rack-mauth stops using rest-client
+      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
+       Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+       HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError].each do |exception|
+        cli = mock
+        cli.stub(:receive_timeout=)
+        HTTPClient.stub(:new).and_return(cli)
+        cli.stub(:post).and_raise(exception.new("bad")) # Note:  this should change if rack-mauth stops using httpclient
         headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
           :app_uuid => APP_UUID,
           :request_url => '/',

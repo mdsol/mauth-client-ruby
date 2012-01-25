@@ -5,7 +5,7 @@ require 'net/https'
 require 'thread'
 require 'bundler/setup'
 require 'mauth_signer'
-require 'rest_client'
+require 'httpclient'
 
 module Medidata
   class MAuthMiddleware
@@ -244,13 +244,13 @@ module Medidata
         # Generic get
         def get(from_url, options = {})
           begin
-            opts = {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}
-            opts.merge!({:headers => options[:headers]}) if options[:headers]
-            response = RestClient::Resource.new(from_url.to_s, opts).get
-            return response.net_http_res
-          rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
-                 OpenSSL::SSL::SSLError => e
+            @http_client ||= HTTPClient.new
+            @http_client.receive_timeout = 2
+            response = @http_client.get(from_url.to_s, nil, options[:headers] || {})
+            return response
+          rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
+           Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+           HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError => e
             @config.log "Attempt to GET from #{from_url.path} threw exception:  #{e.class} -- #{e.message}"
             return nil
           end
@@ -300,13 +300,13 @@ module Medidata
         # Generic post
         def post(to_url, post_data, options = {})
           begin
-            opts = {:timeout => 2, :verify_ssl => (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)}
-            opts.merge!({:headers => options[:headers]}) if options[:headers]
-            response = RestClient::Resource.new(to_url.to_s, opts).post(post_data.to_json, :content_type => 'application/json')
-            return response.net_http_res            
-          rescue RestClient::Exception, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
-                 Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
-                 OpenSSL::SSL::SSLError => e
+            @http_client ||= HTTPClient.new
+            @http_client.receive_timeout = 2
+            response = @http_client.post(to_url.to_s, post_data.to_json, (options[:headers] || {}).merge("Content-Type" => "application/json"))
+            return response            
+          rescue Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
+           Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
+           HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError => e
             @config.log "Attempt to POST to #{to_url.path} threw exception:  #{e.class} -- #{e.message}"
             return nil
           end
