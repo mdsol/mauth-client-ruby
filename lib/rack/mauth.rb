@@ -96,11 +96,26 @@ module Medidata
 
         @self_app_uuid, @self_private_key = config[:app_uuid], config[:private_key]
         @should_authenticate_check = config[:should_authenticate_check]
+        @logger = config[:logger]
       end
       
+      attr_writer :logger
+      # return a logger - if #logger= has set one, then that; if Rails is defined, use its logger; 
+      # otherwise, a dummy that logs to /dev/null 
+      def logger
+        @logger ||= begin
+          if Object.const_defined?('Rails')
+            Rails.logger
+          else
+            require 'logger'
+            ::Logger.new(File.open('/dev/null', File::WRONLY))
+          end
+        end
+      end
+
       # Write to log
       def log(str_to_log)
-        Rails.logger.info("rack-mauth: " + str_to_log) if can_log?
+        logger.info("rack-mauth: " + str_to_log)
       end
        
       protected
@@ -113,11 +128,6 @@ module Medidata
             raise ArgumentError, "mauth_baseurl: #{@mauth_baseurl} in not a valid uri"
           end
         end
-        
-        # Can we write to the Rails log
-        def can_log?
-          @can_log ||= (defined?(Rails) && Rails.respond_to?(:logger))
-        end
     end # of MAuthMiddleware
     
     # Manages cached MAuth verifiers for use in local authentication
@@ -128,7 +138,7 @@ module Medidata
         @config = config
         @cached_verifiers_mutex = Mutex.new
         @cached_verifiers = {}
-        @mauth_signer_for_self = MAuth::Signer.new(:private_key => @config.self_private_key)
+        @mauth_signer_for_self = MAuth::Signer.new(:private_key => @config.self_private_key, :logger => @config.logger)
       end
       
       # Rack-mauth does its own authentication
