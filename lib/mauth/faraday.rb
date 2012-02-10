@@ -2,7 +2,7 @@ require 'faraday/middleware'
 
 module MAuth
   module Faraday
-    class Signer < ::Faraday::Middleware
+    class RequestSigner < ::Faraday::Middleware
       def initialize(app, app_uuid, mauth_signer_config)
         @app = app
         @app_uuid = app_uuid
