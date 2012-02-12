@@ -1,0 +1,7 @@
+require 'rack/mauth.rb'
+require 'timecop'
+if (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 9]) >= 0
+  require 'simplecov'
+  require 'simplecov-gem-adapter'
+  SimpleCov.start 'gem'
+end
