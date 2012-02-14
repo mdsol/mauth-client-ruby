@@ -1,5 +1,6 @@
+require 'mauth/client'
+require 'mauth/rack'
 require 'rack/test'
-require 'rack/mauth'
 
 # NOTE:  In order for these tests to pass, the APP_UUID and PUBLIC_KEY given below must exist as a security token
 # in the persistent store of the specified MAUTH_BASE_URL
@@ -9,6 +10,18 @@ PRIVATE_KEY = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2GhmijLqVmuT2D7H
 PUBLIC_KEY = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA2GhmijLqVmuT2D7H0wLfq4LIJ6fpHMyl5Tz1mytNz4/pa0fIzxab\nMDBpC9hhLkzNUPoOFcI9Cz2aEIW+HHqkxCcifmqXEF5MlQz1OHJYKKFXvEPuWNlI\nLCtCiRosw5xwZDrVntufPhsUWTTiHpG9VHdK79VnUVD65yA8f9ma9Gwsx9/ARpet\nEpzttm+183nY6adGytmK32F8l58DmGyV5lGHcouyhddMwLD2VDJm6hlMqlN7Jrn7\nYdzcHCWrUUkan7zwlS/d/AGN9gjFHKa6dJvyTAONTD4s2SHNifhv79eeu1AzNlTI\nb9X0ZgRPPRh/6NfVLsmj6ScVloW2Bf7VHQIDAQAB\n-----END RSA PUBLIC KEY-----\n"
 # SecurityToken.create!(:app_uuid => APP_UUID, :public_key_str => PUBLIC_KEY, :app_name => 'testing hands off')
 
+TEST_MAUTH_CLIENT = MAuth::Client.new(
+  :mauth_baseurl => MAUTH_BASE_URL,
+  :private_key => PRIVATE_KEY,
+  :app_uuid => APP_UUID,
+  :mauth_api_version => 'v1'
+)
+
+def merge_signed_headers(mauth_client, params)
+  mauth_client.signed_headers(MAuth::Request.new(params)).each do |k,v|
+    header(k,v)
+  end
+end
 describe 'Local Authentication with Rack-Mauth' do
   include Rack::Test::Methods
 
@@ -22,18 +35,14 @@ describe 'Local Authentication with Rack-Mauth' do
       :mauth_api_version => 'v1'
     }
 
-    @mware = Medidata::MAuthMiddleware.new(mini_app, config)
+    @mware = MAuth::Rack::RequestAuthenticator.new(mini_app, config)
   end
 
   describe "proper signatures provided by client" do
     it "should return 200 if GET request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'GET')
       get '/'
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -42,12 +51,7 @@ describe 'Local Authentication with Rack-Mauth' do
     it "should return 200 if POST request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "POST",
-        :body => "blah")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'POST', :body => 'blah')
       post '/', "blah"
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -56,12 +60,7 @@ describe 'Local Authentication with Rack-Mauth' do
     it "should return 200 if PUT request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "PUT",
-        :body => "blah")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'PUT', :body => 'blah')
       put '/', "blah"
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -70,11 +69,7 @@ describe 'Local Authentication with Rack-Mauth' do
     it "should return 200 if DELETE request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "DELETE")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'DELETE')
       delete '/'
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -83,21 +78,19 @@ describe 'Local Authentication with Rack-Mauth' do
   
   describe "improper information provided by client" do
     it "should return 401 if incorrect signature" do
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GETTY")
-      headers.each{|k,v| header(k,v)}
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'GETTY')
       get '/'
       last_response.status.should == 401
     end
     
     it "should return 401 if client's app_uuid is unknown to MAuth" do
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => "appuuid_does_not_exist123",
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
+      bad_app_mauth_client = MAuth::Client.new(
+        :mauth_baseurl => MAUTH_BASE_URL,
+        :private_key => PRIVATE_KEY,
+        :app_uuid => 'does_not_exist',
+        :mauth_api_version => 'v1'
+      )
+      merge_signed_headers(bad_app_mauth_client, :request_url => '/', :verb => 'GET')
       get '/'
       last_response.status.should == 401
     end
@@ -105,33 +98,20 @@ describe 'Local Authentication with Rack-Mauth' do
   end
   
   describe "MAuth is down" do
-    it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
-      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
-       Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
-       HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError].each do |exception|
-        cli = mock
-        cli.stub(:receive_timeout=)
-        HTTPClient.stub(:new).and_return(cli)
-        cli.stub(:get).and_raise(exception.new("bad")) # Note:  this should change if rack-mauth stops using httpclient
-        headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-          :app_uuid => APP_UUID,
-          :request_url => '/',
-          :verb => "GET")
-        headers.each{ |k,v| header(k,v) }
+    it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
+      begin
+        ::Faraday.stub_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday
+        merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
         get '/'
-        last_response.status.should == 401
+        last_response.status.should == 500
       end
     end
     
     it "should return 200 if MAuth is not responding but public key for app has already been cached by rack-mauth" do
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
-      HTTPClient.stub_chain(:new, :get).and_raise(HTTPClient::BadResponseError.new("bad")) # this will change if rack-mauth stops using httpclient
-      headers.each{ |k,v| header(k,v) }
+      ::Faraday.stub_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
       last_response.status.should == 200
     end
@@ -149,18 +129,14 @@ describe 'Remote Authentication with Rack-Mauth' do
       :mauth_api_version => 'v1'
     }
 
-    @mware = Medidata::MAuthMiddleware.new(mini_app, config)
+    @mware = MAuth::Rack::RequestAuthenticator.new(mini_app, config)
   end
 
   describe "proper signatures provided by client" do
     it "should return 200 if GET request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -169,12 +145,7 @@ describe 'Remote Authentication with Rack-Mauth' do
     it "should return 200 if POST request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "POST",
-        :body => "blah")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "POST", :body => "blah")
       post '/', "blah"
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -183,12 +154,7 @@ describe 'Remote Authentication with Rack-Mauth' do
     it "should return 200 if PUT request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "PUT",
-        :body => "blah")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "PUT", :body => "blah")
       put '/', "blah"
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -197,11 +163,7 @@ describe 'Remote Authentication with Rack-Mauth' do
     it "should return 200 if DELETE request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "DELETE")
-      headers.each{ |k,v| header(k,v) }
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "DELETE")
       delete '/'
       last_response.should be_ok
       last_response.body.should == 'Hello World'
@@ -210,42 +172,31 @@ describe 'Remote Authentication with Rack-Mauth' do
   
   describe "improper information provided by client" do
     it "should return 401 if incorrect signature" do
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => APP_UUID,
-        :request_url => '/',
-        :verb => "GETTY")
-      headers.each{|k,v| header(k,v)}
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GETTY")
       get '/'
       last_response.status.should == 401
     end
     
     it "should return 401 if client's app_uuid is unknown to MAuth" do
-      headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-        :app_uuid => "appuuid_does_not_exist123",
-        :request_url => '/',
-        :verb => "GET")
-      headers.each{ |k,v| header(k,v) }
+      bad_app_mauth_client = MAuth::Client.new(
+        :mauth_baseurl => MAUTH_BASE_URL,
+        :private_key => PRIVATE_KEY,
+        :app_uuid => 'does_not_exist',
+        :mauth_api_version => 'v1'
+      )
+      merge_signed_headers(bad_app_mauth_client, :request_url => '/', :verb => 'GET')
       get '/'
       last_response.status.should == 401
     end
   end
   
   describe "MAuth is down" do
-    it "should return 401 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
-      [Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, Errno::EADDRNOTAVAIL, Errno::ETIMEDOUT, EOFError, 
-       Errno::ECONNREFUSED, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError,
-       HTTPClient::BadResponseError, HTTPClient::TimeoutError, OpenSSL::SSL::SSLError].each do |exception|
-        cli = mock
-        cli.stub(:receive_timeout=)
-        HTTPClient.stub(:new).and_return(cli)
-        cli.stub(:post).and_raise(exception.new("bad")) # Note:  this should change if rack-mauth stops using httpclient
-        headers = MAuth::Signer.new(:private_key => PRIVATE_KEY).signed_request_headers(
-          :app_uuid => APP_UUID,
-          :request_url => '/',
-          :verb => "GET")
-        headers.each{ |k,v| header(k,v) }
+    it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
+      begin
+        ::Faraday.stub_chain(:new, :post).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+        merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
         get '/'
-        last_response.status.should == 401
+        last_response.status.should == 500
       end
     end
   end
