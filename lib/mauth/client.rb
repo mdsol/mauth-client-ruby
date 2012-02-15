@@ -17,6 +17,10 @@ module MAuth
   class InauthenticError < StandardError
   end
 
+  # required information for signing was missing 
+  class UnableToSignError < StandardError
+  end
+
   # does operations which require a private key and corresponding app uuid. this is primarily:
   # - signing outgoing requests and responses 
   # - authenticating incoming requests and responses, which may require retrieving the appropriate 
@@ -126,7 +130,7 @@ module MAuth
       # takes a signable object (outgoing request or response). returns a hash of headers to be 
       # applied tothe object which comprise its signature. 
       def signed_headers(object, attributes={})
-        assert_private_key("mAuth client cannot sign without a private key!")
+        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = {:time => Time.now.to_i.to_s, :app_uuid => client_app_uuid}.merge(attributes)
         signature = self.signature(object, attributes)
         {'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time]}
@@ -216,7 +220,7 @@ module MAuth
         end
         def initialize(mauth_client)
           @mauth_client = mauth_client
-          @mauth_client.assert_private_key(UnableToAuthenticateError.new("Cannot fetch public keys from mAuth service without a private key!"))
+          @mauth_client.assert_private_key(UnableToAuthenticateError.new("Cannot fetch public keys from mAuth service without a private key!")) # TODO should this be UnableToSignError? 
           @cache = {}
           require 'thread'
           @cache_write_lock = Mutex.new

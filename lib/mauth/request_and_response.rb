@@ -17,7 +17,7 @@ module MAuth
       missing_attributes = self.class::SIGNATURE_COMPONENTS.select{|key| !attributes_for_signing.key?(key) || attributes_for_signing[key].nil? }
       missing_attributes.delete(:body) # body may be omitted 
       if missing_attributes.any?
-        raise(ArgumentError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{self.inspect}")
+        raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{self.inspect}")
       end
       string = self.class::SIGNATURE_COMPONENTS.map{|k| attributes_for_signing[k].to_s }.join("\n")
       Digest::SHA512.hexdigest(string)
