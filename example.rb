@@ -1,37 +1,22 @@
 $: << 'lib'
-require 'mauth_signer'
+require 'mauth-client'
 require 'openssl'
+require 'uuidtools'
+require 'mauth/request_and_response'
 
-@private_key = OpenSSL::PKey::RSA.generate( 2048 )
-@private_key_str = @private_key.to_s
-@public_key_str = @private_key.public_key.to_s
-@app_uuid = "11111111-1111-1111-1111-111111111111"
+private_key = OpenSSL::PKey::RSA.generate(2048)
+app_uuid = UUIDTools::UUID.random_create.to_s
 
-def generate_signed_request(params)
-  MAuth::Signer.new(:private_key => @private_key_str).signed_request_headers(params)
-end
+mauth_client = MAuth::Client.new(:private_key => private_key, :app_uuid => app_uuid)
 
-def verify_request(signature, params)
-  MAuth::Signer.new(:public_key => @public_key_str).verify_request(signature, params)
-end
+params = {:app_uuid => app_uuid, :request_url => '/studies', :body => 'hello=there', :verb => 'PUT'}
+request = MAuth::Request.new(params)
+headers = mauth_client.signed_headers(request)
+sig_time = headers["X-MWS-Time"]
+sig = headers["X-MWS-Authentication"].split(':').last
 
-def generate_signed_response(params)
-  MAuth::Signer.new(:private_key => @private_key_str).signed_response_headers(params)
-end
-
-def verify_response(signature, params)
-  MAuth::Signer.new(:public_key => @public_key_str).verify_response(signature, params)
-end
-
-params = {:app_uuid => @app_uuid, :request_url => '/studies', :body => 'hello=there', :verb => 'PUT'}
-headers = generate_signed_request(params)
-sig_time = headers["x-mws-time"]
-sig = headers["Authorization"].split(':').last
-puts verify_request(sig, params.merge(:time => sig_time))
-
-params = {:app_uuid => @app_uuid, :body => 'hello=there', :status_code => 404}
-headers = generate_signed_response(params)
-sig_time = headers["x-mws-time"]
-sig = headers["x-mws-authentication"].split(':').last
-puts verify_response(sig, params.merge(:time => sig_time))
-
+params = {:app_uuid => app_uuid, :body => 'hello=there', :status_code => 404}
+response = MAuth::Response.new(params)
+headers = mauth_client.signed_headers(response)
+sig_time = headers["X-MWS-Time"]
+sig = headers["X-MWS-Authentication"].split(':').last
