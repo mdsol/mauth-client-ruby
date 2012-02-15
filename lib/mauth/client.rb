@@ -74,6 +74,7 @@ module MAuth
           ::Logger.new(File.open('/dev/null', File::WRONLY))
         end
       end
+      @config['faraday_options'] = {:timeout => 1, :open_timeout => 1}.merge(given_config['faraday_options'] || {})
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false 
       if given_config.key?('authenticator')
@@ -104,6 +105,9 @@ module MAuth
     end
     def private_key
       @config['private_key']
+    end
+    def faraday_options
+      @config['faraday_options']
     end
     def assert_private_key(err)
       unless private_key
@@ -261,7 +265,7 @@ module MAuth
         def signed_mauth_connection
           require 'faraday'
           require 'mauth/faraday'
-          @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl) do |builder|
+          @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
             builder.adapter ::Faraday.default_adapter
           end
@@ -302,7 +306,7 @@ module MAuth
       def mauth_connection
         require 'faraday'
         require 'faraday_middleware'
-        @mauth_connection ||= ::Faraday.new(mauth_baseurl) do |builder|
+        @mauth_connection ||= ::Faraday.new(mauth_baseurl, faraday_options) do |builder|
           builder.use FaradayMiddleware::EncodeJson
           builder.adapter ::Faraday.default_adapter
         end
