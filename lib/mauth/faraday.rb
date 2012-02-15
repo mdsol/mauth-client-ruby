@@ -30,7 +30,9 @@ module MAuth
         @request_env = request_env
       end
       def attributes_for_signing
-        @attributes_for_signing ||= {:verb => @request_env[:method].to_s.upcase, :request_url => @request_env[:url].path, :body => @request_env[:body]}
+        request_url = @request_env[:url].path
+        request_url = '/' if request_url.empty?
+        @attributes_for_signing ||= {:verb => @request_env[:method].to_s.upcase, :request_url => request_url, :body => @request_env[:body]}
       end
       # takes a Hash of headers; returns an instance of this class whose 
       # headers have been updated with the argument headers
