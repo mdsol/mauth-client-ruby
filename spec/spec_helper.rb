@@ -1,5 +1,7 @@
 require 'timecop'
 require 'uuidtools'
+require 'json'
+
 if (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 9]) >= 0
   require 'simplecov'
   require 'simplecov-gem-adapter'
