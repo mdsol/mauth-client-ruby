@@ -1,3 +1,8 @@
+# rackup simple_app.ru for a simple application which does not have a private key or app_uuid. it 
+# only authenticates incoming requests and does not sign outgoing responses. 
+#
+# you must have a mauth instance running on localhost at port 3000. 
+
 require 'rubygems'
 require "bundler/setup"
 require 'rack'

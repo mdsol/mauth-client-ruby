@@ -1,3 +1,13 @@
+# rackup smart_app.ru for an application which has a private key and app_uuid. it 
+# authenticates incoming requests and signs outgoing responses. it 
+#
+# you must have a mauth instance running on localhost at port 3000. 
+#
+# to add this service to your local mauth, you can paste into a rails console the lines below
+# for `config = { ... }`, and then running:
+#
+# SecurityToken.create!(:app_uuid => config[:app_uuid], :public_key_str => OpenSSL::PKey::RSA.new(config[:private_key]).public_key.to_s, :app_name => 'smart_app')
+
 require 'rubygems'
 require "bundler/setup"
 require 'rack'
@@ -11,8 +21,6 @@ config = {
   :app_uuid => "b5d72b78-2e5a-4f60-8ee1-cb297c9ce7cd",
   :mauth_api_version => 'v1'
 }
-
-# SecurityToken.create!(:app_uuid => config[:app_uuid], :public_key_str => OpenSSL::PKey::RSA.new(config[:private_key]).public_key.to_s, :app_name => 'smart_app')
 
 require 'logger'
 config[:logger] = Logger.new(STDERR)
