@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
+
+require 'faraday'
+require 'faraday_middleware'
+require 'logger'
+require 'mauth/client'
+require 'mauth/faraday'
+require 'yaml'
+
+possible_mauth_config_files = [
+  ENV['MAUTH_CONFIG_YAML'],
+  File.expand_path('~/.mauth_config.yml'),
+  './config/mauth.yml',
+  './mauth.yml',
+].compact
+
+environment = ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
+
+mauth_config = possible_mauth_config_files.map do |filename|
+  if filename && File.exists?(filename)
+    mauth_config_all_envs = YAML.load(File.read(filename))
+    if mauth_config_all_envs && mauth_config_all_envs.is_a?(Hash) && mauth_config_all_envs[environment]
+      mauth_config_all_envs[environment]
+    end
+  end
+end.detect{|c| c }
+
+unless mauth_config
+  abort "could not find mauth config. giving up."
+end
+
+logger = Logger.new(STDERR)
+mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
+
+# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
+# the real text written and read for request and response. whatever, close enough. 
+class FaradayCurlVOutputter < Faraday::Middleware
+  def initialize(app, outdev=STDOUT)
+    @app=app
+    @outdev = outdev
+  end
+
+  def call(request_env)
+    @outdev.puts "* connect to #{request_env[:url].host} on port #{request_env[:url].port}"
+    @outdev.puts "* getting our SSL on" if request_env[:url].scheme=='https'
+    @outdev.puts "> #{request_env[:method].to_s.upcase} #{request_env[:url].path} #{'HTTP/1.1' || 'or something - TODO'}"
+    request_env[:request_headers].each do |k, v|
+      @outdev.puts "> #{k}: #{v}"
+    end
+    @outdev.puts "> "
+    (request_env[:body] || '').split("\n", -1).each do |line|
+      @outdev.puts "> #{line}"
+    end
+    @app.call(request_env).on_complete do |response_env|
+      @outdev.puts "< #{'HTTP/1.1' || 'or something - TODO'} #{response_env[:status]}"
+      request_env[:response_headers].each do |k, v|
+        @outdev.puts "< #{k}: #{v}"
+      end
+      @outdev.puts "< "
+      (response_env[:body] || '').split("\n", -1).each do |line|
+        @outdev.puts "< #{line}"
+      end
+    end
+  end
+end
+
+connection = Faraday.new do |builder|
+  builder.use FaradayMiddleware::EncodeJson
+  builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
+  builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
+  builder.use FaradayCurlVOutputter
+  builder.adapter Faraday.default_adapter
+end
+
+httpmethod = ARGV.first.downcase
+args = ARGV[1..-1]
+unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
+  abort "unrecognized http method given: #{httpmethod}"
+end
+
+response = connection.send httpmethod, *args
