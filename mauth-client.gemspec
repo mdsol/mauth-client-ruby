@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = %w(LICENSE.txt README.rdoc)
   s.files = `git ls-files`.split("\n")
 
-  s.homepage = %q{http://github.com/mdsol/mauth_signer}
+  s.homepage = %q{http://github.com/mdsol/mauth-client}
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
   s.add_dependency 'json'
