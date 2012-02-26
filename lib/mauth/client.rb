@@ -44,7 +44,8 @@ module MAuth
     # - mauth_baseurl - required. needed for local authentication to retrieve public keys; needed 
     #   for remote authentication for hopefully obvious reasons. 
     # - mauth_api_version - required. only 'v1' exists / is supported as of this writing. 
-    # - logger - a Logger to which any useful information will be written 
+    # - logger - a Logger to which any useful information will be written. if this is omitted and 
+    #   Rails.logger exists, that will be used. 
     # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or 
     #   RemoteRequestAuthenticator will be used as appropriate. 
     def initialize(config={})
