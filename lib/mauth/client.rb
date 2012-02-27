@@ -44,7 +44,8 @@ module MAuth
     # - mauth_baseurl - required. needed for local authentication to retrieve public keys; needed 
     #   for remote authentication for hopefully obvious reasons. 
     # - mauth_api_version - required. only 'v1' exists / is supported as of this writing. 
-    # - logger - a Logger to which any useful information will be written 
+    # - logger - a Logger to which any useful information will be written. if this is omitted and 
+    #   Rails.logger exists, that will be used. 
     # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or 
     #   RemoteRequestAuthenticator will be used as appropriate. 
     def initialize(config={})
@@ -196,7 +197,7 @@ module MAuth
       private
       def signature_valid!(object)
         expected = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
-        pubkey = OpenSSL::PKey::RSA.new(retreive_public_key(object.signature_app_uuid))
+        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
         rescue OpenSSL::PKey::PKeyError
@@ -207,10 +208,10 @@ module MAuth
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
       end
-      def retreive_public_key(app_uuid)
-        retreive_security_token(app_uuid)['security_token']['public_key_str']
+      def retrieve_public_key(app_uuid)
+        retrieve_security_token(app_uuid)['security_token']['public_key_str']
       end
-      def retreive_security_token(app_uuid)
+      def retrieve_security_token(app_uuid)
         security_token_cacher.get(app_uuid)
       end
       def security_token_cacher
