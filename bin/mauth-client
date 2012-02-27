@@ -2,6 +2,7 @@
 
 $LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
 
+require 'rubygems'
 require 'faraday'
 require 'faraday_middleware'
 require 'logger'
