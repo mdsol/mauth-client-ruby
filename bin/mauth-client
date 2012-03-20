@@ -12,12 +12,15 @@ require 'yaml'
 
 require 'optparse'
 
-$options = {:verbose => true}
+$options = {:authenticate_response => true, :verbose => true}
 OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
   opts.on("-v", "--[no-]verbose", "Run verbosely - output is like curl -v (this is the default)") do |v|
     $options[:verbose] = v
+  end
+  opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
+    $options[:authenticate_response] = v
   end
 end.parse!
 
@@ -87,10 +90,14 @@ class FaradayCurlVOutputter < FaradayOutputter
   end
 end
 
+# CONFIGURE THE FARADAY CONNECTION 
+
 connection = Faraday.new do |builder|
   builder.use FaradayMiddleware::EncodeJson
   builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
-  builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
+  if $options[:authenticate_response]
+    builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
+  end
   builder.use $options[:verbose] ? FaradayCurlVOutputter : FaradayOutputter
   builder.adapter Faraday.default_adapter
 end
