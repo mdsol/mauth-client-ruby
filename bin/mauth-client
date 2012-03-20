@@ -42,14 +42,23 @@ end
 logger = Logger.new(STDERR)
 mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
 
-# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
-# the real text written and read for request and response. whatever, close enough. 
-class FaradayCurlVOutputter < Faraday::Middleware
+# outputs the response body to the given output device (defaulting to STDOUT) 
+class FaradayOutputter < Faraday::Middleware
   def initialize(app, outdev=STDOUT)
     @app=app
     @outdev = outdev
   end
 
+  def call(request_env)
+    @app.call(request_env).on_complete do |response_env|
+      @outdev.puts(response_env[:body] || '')
+    end
+  end
+end
+
+# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
+# the real text written and read for request and response. whatever, close enough. 
+class FaradayCurlVOutputter < FaradayOutputter
   def call(request_env)
     @outdev.puts "* connect to #{request_env[:url].host} on port #{request_env[:url].port}"
     @outdev.puts "* getting our SSL on" if request_env[:url].scheme=='https'
