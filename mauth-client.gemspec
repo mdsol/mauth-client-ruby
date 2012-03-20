@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
   s.add_dependency 'json'
-  s.add_dependency 'faraday'
+  s.add_dependency 'faraday', '~> 0.7'
   s.add_dependency 'faraday_middleware'
   s.add_dependency 'backports'
   s.add_development_dependency('shoulda', [">= 0"])
