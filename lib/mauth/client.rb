@@ -53,6 +53,9 @@ module MAuth
       given_config = config.stringify_keys
       # build a configuration which discards any irrelevant parts of the given config (small memory usage matters here) 
       @config = {}
+      if given_config['private_key_file'] && !given_config['private_key']
+        given_config['private_key'] = File.read(given_config['private_key_file'])
+      end
       @config['private_key'] = case given_config['private_key']
       when nil
         nil
