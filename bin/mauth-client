@@ -10,6 +10,13 @@ require 'mauth/client'
 require 'mauth/faraday'
 require 'yaml'
 
+require 'optparse'
+
+$options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
+end.parse!
+
 possible_mauth_config_files = [
   ENV['MAUTH_CONFIG_YAML'],
   File.expand_path('~/.mauth_config.yml'),
