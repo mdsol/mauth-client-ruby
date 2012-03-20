@@ -3,6 +3,8 @@ require 'openssl'
 require 'base64'
 require 'json'
 
+require 'mauth/autoload'
+
 module MAuth
   # mAuth client was unable to verify the authenticity of a signed object (this does NOT mean the 
   # object is inauthentic). typically due to a failure communicating with the mAuth service, in 
