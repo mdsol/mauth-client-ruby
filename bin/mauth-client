@@ -10,6 +10,8 @@ require 'mauth/client'
 require 'mauth/faraday'
 require 'yaml'
 
+# OPTION PARSER 
+
 require 'optparse'
 
 $options = {:authenticate_response => true, :verbose => true}
@@ -23,6 +25,8 @@ OptionParser.new do |opts|
     $options[:authenticate_response] = v
   end
 end.parse!
+
+# FIND MAUTH CONFIG 
 
 possible_mauth_config_files = [
   ENV['MAUTH_CONFIG_YAML'],
@@ -49,8 +53,12 @@ unless mauth_config
   abort message
 end
 
+# INSTANTIATE MAUTH CLIENT 
+
 logger = Logger.new(STDERR)
 mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
+
+# OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE 
 
 # outputs the response body to the given output device (defaulting to STDOUT) 
 class FaradayOutputter < Faraday::Middleware
@@ -110,5 +118,7 @@ args = ARGV[1..-1]
 unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
   abort "unrecognized http method given: #{httpmethod}"
 end
+
+# OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
 
 response = connection.send httpmethod, *args
