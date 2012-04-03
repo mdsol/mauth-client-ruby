@@ -193,12 +193,19 @@ module MAuth
 
       # raises InauthenticError unless the given object is authentic 
       def authenticate!(object)
+        authentication_present!(object)
         time_valid!(object)
         token_valid!(object)
         signature_valid!(object)
       end
 
       private
+      def authentication_present!(object)
+        if object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/
+          raise InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
+        end
+      end
+
       def time_valid!(object, now=Time.now)
         if object.x_mws_time.nil?
           raise InauthenticError, "Time verification failed for #{object.class}. No x-mws-time present."
