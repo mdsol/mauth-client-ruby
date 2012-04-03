@@ -3,6 +3,15 @@ require 'mauth/request_and_response'
 
 module MAuth
   module Rack
+    # middleware which will check that a request is authentically signed. 
+    #
+    # if the request is checked and is not authentic, 401 Unauthorized is returned
+    # and the app is not called. 
+    #
+    # options accepted (key may be string or symbol)
+    # - should_authenticate_check: a proc which should accept a rack env as an argument, 
+    #   and return true if the request should be authenticated; false if not. if the result 
+    #   from this is false, the request is passed to the app with no authentication performed.
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
         if should_authenticate?(env)
