@@ -30,6 +30,14 @@ module MAuth
         [500, {'Content-Type' => 'text/plain'}, ['Could not determine request authenticity']]
       end
     end
+
+    # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status 
+    class RequestAuthenticatorNoAppStatus < RequestAuthenticator
+      def should_authenticate?(env)
+        env['PATH_INFO'] != "/app_status" && super
+      end
+    end
+
     class ResponseSigner < MAuth::Middleware
       def call(env)
         unsigned_response = @app.call(env)
