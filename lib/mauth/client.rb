@@ -141,7 +141,6 @@ module MAuth
       # takes a signable object (outgoing request or response). returns a hash of headers to be 
       # applied tothe object which comprise its signature. 
       def signed_headers(object, attributes={})
-        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = {:time => Time.now.to_i.to_s, :app_uuid => client_app_uuid}.merge(attributes)
         signature = self.signature(object, attributes)
         {'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time]}
@@ -150,6 +149,7 @@ module MAuth
       # takes a signable object (outgoing request or response). returns a mauth signature string 
       # for that object. 
       def signature(object, attributes={})
+        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = {:time => Time.now.to_i.to_s, :app_uuid => client_app_uuid}.merge(attributes)
         signature = Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).gsub("\n","")
       end
