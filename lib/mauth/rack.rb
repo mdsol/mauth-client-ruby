@@ -40,6 +40,7 @@ module MAuth
       end
     end
 
+    # signs outgoing responses 
     class ResponseSigner < MAuth::Middleware
       def call(env)
         unsigned_response = @app.call(env)
