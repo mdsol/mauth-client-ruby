@@ -50,6 +50,7 @@ module MAuth
         @attributes_for_signing ||= begin
           body = nil
           if %w(POST PUT).include?(env['REQUEST_METHOD'])
+            env['rack.input'].rewind
             body = env['rack.input'].read
             env['rack.input'].rewind
           end
