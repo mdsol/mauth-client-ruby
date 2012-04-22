@@ -51,8 +51,8 @@ module MAuth
     # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or 
     #   RemoteRequestAuthenticator will be used as appropriate. 
     def initialize(config={})
-      require 'backports/rails/hash'
-      given_config = config.stringify_keys
+      # stringify symbol keys
+      given_config = config.inject({}){|acc, (k,v)| acc.update((k.is_a?(Symbol) ? k.to_s : k) => v) }
       # build a configuration which discards any irrelevant parts of the given config (small memory usage matters here) 
       @config = {}
       if given_config['private_key_file'] && !given_config['private_key']
