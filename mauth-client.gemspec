@@ -16,6 +16,9 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/mdsol/mauth-client}
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
+  s.bindir = 'bin'
+  s.executables = 'mauth-client'
+
   s.add_dependency 'json'
   s.add_dependency 'faraday', '~> 0.7'
   s.add_dependency 'faraday_middleware'
