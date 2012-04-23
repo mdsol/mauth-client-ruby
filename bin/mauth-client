@@ -21,6 +21,9 @@ OptionParser.new do |opts|
   opts.on("-v", "--[no-]verbose", "Run verbosely - output is like curl -v (this is the default)") do |v|
     $options[:verbose] = v
   end
+  opts.on("-q", "Run quietly - only outputs the response body (same as --no-verbose)") do |v|
+    $options[:verbose] = !v
+  end
   opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
     $options[:authenticate_response] = v
   end
