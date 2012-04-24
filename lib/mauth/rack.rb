@@ -24,10 +24,12 @@ module MAuth
         @config['should_authenticate_check'] ? @config['should_authenticate_check'].call(env) : true
       end
       def response_for_inauthentic_request(env)
-        [401, {'Content-Type' => 'text/plain'}, ['Unauthorized']]
+        body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Unauthorized']
+        [401, {'Content-Type' => 'text/plain'}, body]
       end
       def response_for_unable_to_authenticate(env)
-        [500, {'Content-Type' => 'text/plain'}, ['Could not determine request authenticity']]
+        body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Could not determine request authenticity']
+        [500, {'Content-Type' => 'text/plain'}, body]
       end
     end
     class ResponseSigner < MAuth::Middleware
