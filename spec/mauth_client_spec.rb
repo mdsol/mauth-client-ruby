@@ -107,7 +107,7 @@ describe MAuth::Client do
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i + time_offset)
-          assert_equal authentic, @authenticating_mc.authentic?(signed_request)
+          assert_equal authentic, @authenticating_mc.authentic?(signed_request), "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
         end
       end
       it "considers an authentically-signed request to be inauthentic when it has no x-mws-time" do
