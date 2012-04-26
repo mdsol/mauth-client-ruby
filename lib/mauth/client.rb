@@ -3,6 +3,7 @@ require 'openssl'
 require 'base64'
 require 'json'
 
+require 'mauth/core_ext'
 require 'mauth/autoload'
 
 module MAuth
@@ -51,8 +52,8 @@ module MAuth
     # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or 
     #   RemoteRequestAuthenticator will be used as appropriate. 
     def initialize(config={})
-      require 'backports/rails/hash'
-      given_config = config.stringify_keys
+      # stringify symbol keys
+      given_config = config.stringify_symbol_keys
       # build a configuration which discards any irrelevant parts of the given config (small memory usage matters here) 
       @config = {}
       if given_config['private_key_file'] && !given_config['private_key']
@@ -141,7 +142,6 @@ module MAuth
       # takes a signable object (outgoing request or response). returns a hash of headers to be 
       # applied tothe object which comprise its signature. 
       def signed_headers(object, attributes={})
-        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = {:time => Time.now.to_i.to_s, :app_uuid => client_app_uuid}.merge(attributes)
         signature = self.signature(object, attributes)
         {'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time]}
@@ -150,6 +150,7 @@ module MAuth
       # takes a signable object (outgoing request or response). returns a mauth signature string 
       # for that object. 
       def signature(object, attributes={})
+        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = {:time => Time.now.to_i.to_s, :app_uuid => client_app_uuid}.merge(attributes)
         signature = Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).gsub("\n","")
       end

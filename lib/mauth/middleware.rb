@@ -1,10 +1,11 @@
+require 'mauth/core_ext'
 module MAuth
   # base class for middleware, common to both Faraday and Rack
   class Middleware
     def initialize(app, config={})
       @app = app
-      require 'backports/rails/hash'
-      @config = config.stringify_keys
+      # stringify symbol keys
+      @config = config.stringify_symbol_keys
     end
     # returns a MAuth::Client - if one was given as 'mauth_client' when initializing the 
     # middleware, then that one; otherwise the configurationg given to initialize the 
