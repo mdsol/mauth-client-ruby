@@ -3,6 +3,7 @@ require 'openssl'
 require 'base64'
 require 'json'
 
+require 'mauth/core_ext'
 require 'mauth/autoload'
 
 module MAuth
@@ -52,7 +53,7 @@ module MAuth
     #   RemoteRequestAuthenticator will be used as appropriate. 
     def initialize(config={})
       # stringify symbol keys
-      given_config = config.inject({}){|acc, (k,v)| acc.update((k.is_a?(Symbol) ? k.to_s : k) => v) }
+      given_config = config.stringify_symbol_keys
       # build a configuration which discards any irrelevant parts of the given config (small memory usage matters here) 
       @config = {}
       if given_config['private_key_file'] && !given_config['private_key']
