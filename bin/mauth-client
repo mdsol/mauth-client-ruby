@@ -10,9 +10,30 @@ require 'mauth/client'
 require 'mauth/faraday'
 require 'yaml'
 
+# OPTION PARSER 
+
+require 'optparse'
+
+$options = {:authenticate_response => true, :verbose => true}
+OptionParser.new do |opts|
+  opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
+
+  opts.on("-v", "--[no-]verbose", "Run verbosely - output is like curl -v (this is the default)") do |v|
+    $options[:verbose] = v
+  end
+  opts.on("-q", "Run quietly - only outputs the response body (same as --no-verbose)") do |v|
+    $options[:verbose] = !v
+  end
+  opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
+    $options[:authenticate_response] = v
+  end
+end.parse!
+
+# FIND MAUTH CONFIG 
+
 possible_mauth_config_files = [
   ENV['MAUTH_CONFIG_YAML'],
-  File.expand_path('~/.mauth_config.yml'),
+  '~/.mauth_config.yml',
   './config/mauth.yml',
   './mauth.yml',
 ].compact
@@ -20,6 +41,7 @@ possible_mauth_config_files = [
 environment = ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
 
 mauth_config = possible_mauth_config_files.map do |filename|
+  filename = File.expand_path(filename)
   if filename && File.exists?(filename)
     mauth_config_all_envs = YAML.load(File.read(filename))
     if mauth_config_all_envs && mauth_config_all_envs.is_a?(Hash) && mauth_config_all_envs[environment]
@@ -29,20 +51,35 @@ mauth_config = possible_mauth_config_files.map do |filename|
 end.detect{|c| c }
 
 unless mauth_config
-  abort "could not find mauth config. giving up."
+  message = "could not find mauth config. giving up. please place a mauth config in one of the standard places, or point the MAUTH_CONFIG_YAML environment variable at an existing one. standard places are:"
+  message += possible_mauth_config_files.map{|f| "\n\t#{f}" }.join
+  abort message
 end
+
+# INSTANTIATE MAUTH CLIENT 
 
 logger = Logger.new(STDERR)
 mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
 
-# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
-# the real text written and read for request and response. whatever, close enough. 
-class FaradayCurlVOutputter < Faraday::Middleware
+# OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE 
+
+# outputs the response body to the given output device (defaulting to STDOUT) 
+class FaradayOutputter < Faraday::Middleware
   def initialize(app, outdev=STDOUT)
     @app=app
     @outdev = outdev
   end
 
+  def call(request_env)
+    @app.call(request_env).on_complete do |response_env|
+      @outdev.puts(response_env[:body] || '')
+    end
+  end
+end
+
+# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
+# the real text written and read for request and response. whatever, close enough. 
+class FaradayCurlVOutputter < FaradayOutputter
   def call(request_env)
     @outdev.puts "* connect to #{request_env[:url].host} on port #{request_env[:url].port}"
     @outdev.puts "* getting our SSL on" if request_env[:url].scheme=='https'
@@ -67,11 +104,15 @@ class FaradayCurlVOutputter < Faraday::Middleware
   end
 end
 
+# CONFIGURE THE FARADAY CONNECTION 
+
 connection = Faraday.new do |builder|
   builder.use FaradayMiddleware::EncodeJson
   builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
-  builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
-  builder.use FaradayCurlVOutputter
+  if $options[:authenticate_response]
+    builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
+  end
+  builder.use $options[:verbose] ? FaradayCurlVOutputter : FaradayOutputter
   builder.adapter Faraday.default_adapter
 end
 
@@ -80,5 +121,7 @@ args = ARGV[1..-1]
 unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
   abort "unrecognized http method given: #{httpmethod}"
 end
+
+# OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
 
 response = connection.send httpmethod, *args
