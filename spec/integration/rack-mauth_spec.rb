@@ -80,6 +80,15 @@ describe 'Local Authentication with Rack-Mauth' do
       last_response.should be_ok
       last_response.body.should == 'Hello World'
     end
+
+    it "should return 200 if DELETE request with a body is properly signed" do
+      #Note, in this case, client making call to app has same private key as app
+      #This is not the normal state of affairs
+      merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'DELETE', :body => 'go away')
+      delete '/', 'go away'
+      last_response.should be_ok
+      last_response.body.should == 'Hello World'
+    end
   end
   
   describe "improper information provided by client" do
