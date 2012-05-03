@@ -58,12 +58,9 @@ module MAuth
       end
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          body = nil
-          if %w(POST PUT).include?(env['REQUEST_METHOD'])
-            env['rack.input'].rewind
-            body = env['rack.input'].read
-            env['rack.input'].rewind
-          end
+          env['rack.input'].rewind
+          body = env['rack.input'].read
+          env['rack.input'].rewind
           {:verb => env['REQUEST_METHOD'], :request_url => env['PATH_INFO'], :body => body}
         end
       end
