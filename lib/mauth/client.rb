@@ -303,7 +303,7 @@ module MAuth
         end
         if (200..299).include?(response.status)
           nil
-        elsif response.status==412
+        elsif response.status==412 || response.status==404
           raise InauthenticError, "The mAuth service responded with #{response.status}: #{response.body}"
         else
           mauth_service_response_error(response)
