@@ -304,6 +304,11 @@ module MAuth
         if (200..299).include?(response.status)
           nil
         elsif response.status==412 || response.status==404
+          # the mAuth service responds with 412 when the given request is not authentically signed. 
+          # older versions of the mAuth service respond with 404 when the given app_uuid
+          # does not exist, which is also considered to not be authentically signed. newer 
+          # versions of the service respond 412 in all cases, so the 404 check may be removed 
+          # when the old version of the mAuth service is out of service. 
           raise InauthenticError, "The mAuth service responded with #{response.status}: #{response.body}"
         else
           mauth_service_response_error(response)
