@@ -30,6 +30,7 @@ module MAuth
   # the mauth service (if it was contactable at all), which may contain more information about 
   # the error. 
   class UnableToAuthenticateError < StandardError
+    # the response from the MAuth service encountered when attempting to retrieve authentication 
     attr_accessor :mauth_service_response
   end
 
