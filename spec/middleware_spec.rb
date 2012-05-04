@@ -45,15 +45,23 @@ describe MAuth::Rack::RequestAuthenticator do
     mw = described_class.new(@rack_app)
     mw.mauth_client.should_receive(:authentic?).and_return(false)
     @rack_app.should_not_receive(:call)
-    status, headers, body = mw.call(mock('env'))
+    status, headers, body = mw.call({'REQUEST_METHOD' => 'GET'})
     assert_equal 401, status
     assert_equal ['Unauthorized'], body
+  end
+  it 'returns 401 with no body if the request method is HEAD and authentication fails' do
+    mw = described_class.new(@rack_app)
+    mw.mauth_client.should_receive(:authentic?).and_return(false)
+    @rack_app.should_not_receive(:call)
+    status, headers, body = mw.call({'REQUEST_METHOD' => 'HEAD'})
+    assert_equal 401, status
+    assert_equal [], body
   end
   it 'returns 500 and does not call the app if unable to authenticate' do
     mw = described_class.new(@rack_app)
     mw.mauth_client.should_receive(:authentic?).and_raise(MAuth::UnableToAuthenticateError.new(''))
     @rack_app.should_not_receive(:call)
-    status, headers, body = mw.call(mock('env'))
+    status, headers, body = mw.call({'REQUEST_METHOD' => 'GET'})
     assert_equal 500, status
     assert_equal ['Could not determine request authenticity'], body
   end
