@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'mauth/rack'
+require 'mauth/fake/rack'
 require 'mauth/faraday'
 
 shared_examples MAuth::Middleware do
@@ -66,6 +67,23 @@ describe MAuth::Rack::RequestAuthenticator do
     assert_equal ['Could not determine request authenticity'], body
   end
 end
+
+describe MAuth::Rack::RequestAuthenticationFaker do
+  before do
+    @res = [200, {}, ['hello world']]
+    @rack_app = proc{|env| @res }
+  end
+  it 'does not call check authenticity for any request' do
+    mw = described_class.new(@rack_app)
+    env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+    mw.mauth_client.should_not_receive(:authentic?)
+    @rack_app.should_receive(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(@res)
+    status, headers, body = mw.call(env)
+    assert_equal 200, status
+    assert_equal ['hello world'], body
+  end
+end
+
 describe MAuth::Rack::ResponseSigner do
   include_examples MAuth::Middleware
 end
