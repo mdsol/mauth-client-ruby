@@ -15,7 +15,7 @@ require 'yaml'
 require 'optparse'
 
 $options = {:authenticate_response => true, :verbose => true}
-OptionParser.new do |opts|
+opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
   opts.on("-v", "--[no-]verbose", "Run verbosely - output is like curl -v (this is the default)") do |v|
@@ -27,7 +27,9 @@ OptionParser.new do |opts|
   opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
     $options[:authenticate_response] = v
   end
-end.parse!
+end
+opt_parser.parse!
+abort(opt_parser.help) unless (2..3).include?(ARGV.size)
 
 # FIND MAUTH CONFIG 
 
