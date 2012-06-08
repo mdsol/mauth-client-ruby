@@ -121,7 +121,7 @@ end
 httpmethod = ARGV.first.downcase
 args = ARGV[1..-1]
 unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
-  abort "unrecognized http method given: #{httpmethod}"
+  abort "Unrecognized HTTP method given: #{httpmethod}\n\n" + opt_parser.help
 end
 
 # OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
