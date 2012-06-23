@@ -7,6 +7,23 @@ require 'mauth/core_ext'
 require 'mauth/autoload'
 
 module MAuth
+  class Client
+    class << self
+      # the root of the MAuth-Client library 
+      def root
+        File.expand_path('../..', File.dirname(__FILE__))
+      end
+
+      # the MAuth::Client library's current version 
+      def version
+        version_file = File.join(root, 'VERSION')
+        File.exists?(version_file) ? File.read(version_file).chomp : "?"
+      end
+    end
+  end
+end
+
+module MAuth
   # mAuth client was unable to verify the authenticity of a signed object (this does NOT mean the 
   # object is inauthentic). typically due to a failure communicating with the mAuth service, in 
   # which case the error may include the attribute mauth_service_response - a response from 
