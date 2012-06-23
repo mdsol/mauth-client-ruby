@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
-$mauth_root = File.expand_path('..', File.dirname(__FILE__))
-$LOAD_PATH.unshift File.join($mauth_root, 'lib')
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
 
 require 'rubygems'
 require 'faraday'
