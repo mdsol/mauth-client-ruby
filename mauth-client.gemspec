@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mauth-client}
-  s.version = "2.2.0"
+  s.version = File.read('VERSION')
 
   s.authors = ["Matthew Szenher", "Aaron Suggs", "Geoffrey Ducharme", "Ethan"]
   s.summary = %q{Sign and authenticate requests and responses with mAuth authentication.}
