@@ -59,5 +59,18 @@ module MAuth
         @response_env[:response_headers]['x-mws-authentication']
       end
     end
+
+    # add MAuth-Client's user-agent to a request
+    class MAuthClientUserAgent
+      def initialize(app, agent_base="Mauth-Client")
+        @app = app
+        @agent_base = agent_base
+      end
+      def call(request_env)
+        agent = "#{@agent_base} (MAuth-Client: #{MAuth::Client.version}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+        request_env[:request_headers]['User-Agent'] ||= agent
+        @app.call(request_env)
+      end
+    end
   end
 end
