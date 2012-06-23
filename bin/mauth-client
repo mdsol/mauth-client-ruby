@@ -111,7 +111,7 @@ end
 class MAuthClientUserAgent < Faraday::Middleware
   def call(request_env)
     version_file = File.join($mauth_root, 'VERSION')
-    version = File.exists?(version_file) ? File.read(version_file) : "?"
+    version = File.exists?(version_file) ? File.read(version_file).chomp : "?"
     agent = "MAuth-Client CLI (MAuth-Client: #{version}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
     request_env[:request_headers]['User-Agent'] ||= agent
     @app.call(request_env)
