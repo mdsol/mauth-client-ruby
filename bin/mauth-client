@@ -107,10 +107,22 @@ class FaradayCurlVOutputter < FaradayOutputter
   end
 end
 
+# tack on MAuth-Client's user-agent 
+class MAuthClientUserAgent < Faraday::Middleware
+  def call(request_env)
+    version_file = File.join($mauth_root, 'VERSION')
+    version = File.exists?(version_file) ? File.read(version_file) : "?"
+    agent = "MAuth-Client CLI (MAuth-Client: #{version}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+    request_env[:request_headers]['User-Agent'] ||= agent
+    @app.call(request_env)
+  end
+end
+
 # CONFIGURE THE FARADAY CONNECTION 
 
 connection = Faraday.new do |builder|
   builder.use FaradayMiddleware::EncodeJson
+  builder.use MAuthClientUserAgent
   builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
   if $options[:authenticate_response]
     builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
