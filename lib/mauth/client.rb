@@ -290,6 +290,7 @@ module MAuth
           require 'faraday'
           require 'mauth/faraday'
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
+            builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
             builder.adapter ::Faraday.default_adapter
           end
@@ -336,6 +337,7 @@ module MAuth
         require 'faraday'
         require 'faraday_middleware'
         @mauth_connection ||= ::Faraday.new(mauth_baseurl, faraday_options) do |builder|
+          builder.use MAuth::Faraday::MAuthClientUserAgent
           builder.use FaradayMiddleware::EncodeJson
           builder.adapter ::Faraday.default_adapter
         end
