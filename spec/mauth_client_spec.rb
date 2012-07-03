@@ -125,6 +125,14 @@ describe MAuth::Client do
           @authenticating_mc.authenticate!(signed_request)
         end
       end
+      it "considers a request with no X-MWS-Authentication to be inauthentic" do
+        request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+        signed_request = @signing_mc.signed(request)
+        signed_request.headers.delete('X-MWS-Authentication')
+        assert_raise_with_message(MAuth::InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank.") do
+          @authenticating_mc.authenticate!(signed_request)
+        end
+      end
       it "considers a request with a bad MWS token to be inauthentic" do
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
