@@ -107,21 +107,40 @@ describe MAuth::Client do
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i + time_offset)
-          assert_equal authentic, @authenticating_mc.authentic?(signed_request), "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
+          message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
+          if authentic
+            assert @authenticating_mc.authentic?(signed_request), message
+          else
+            assert_raise_with_message(MAuth::InauthenticError, /Time verification failed for .*\. .* not within 300 of/, message) do
+              @authenticating_mc.authenticate!(signed_request)
+            end
+          end
         end
       end
       it "considers an authentically-signed request to be inauthentic when it has no x-mws-time" do
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         signed_request = @signing_mc.signed(request)
         signed_request.headers.delete('X-MWS-Time')
-        assert !@authenticating_mc.authentic?(signed_request)
+        assert_raise_with_message(MAuth::InauthenticError, /Time verification failed for .*\. No x-mws-time present\./) do
+          @authenticating_mc.authenticate!(signed_request)
+        end
+      end
+      it "considers a request with no X-MWS-Authentication to be inauthentic" do
+        request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+        signed_request = @signing_mc.signed(request)
+        signed_request.headers.delete('X-MWS-Authentication')
+        assert_raise_with_message(MAuth::InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank.") do
+          @authenticating_mc.authenticate!(signed_request)
+        end
       end
       it "considers a request with a bad MWS token to be inauthentic" do
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
           signed_request = @signing_mc.signed(request)
           signed_request.headers['X-MWS-Authentication'] = signed_request.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
-          assert !@authenticating_mc.authentic?(signed_request)
+          assert_raise_with_message(MAuth::InauthenticError, /Token verification failed for .*\. Expected "MWS"; token was .*/) do
+            @authenticating_mc.authenticate!(signed_request)
+          end
         end
       end
       it "raises UnableToAuthenticate if mauth is down" do
