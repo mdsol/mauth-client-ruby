@@ -153,12 +153,12 @@ connection = Faraday.new do |builder|
   builder.adapter Faraday.default_adapter
 end
 
-httpmethod = ARGV.first.downcase
-args = ARGV[1..-1]
-unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
+httpmethod, url, body = *ARGV
+
+unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod.downcase)
   abort "Unrecognized HTTP method given: #{httpmethod}\n\n" + opt_parser.help
 end
 
 # OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
 
-response = connection.send httpmethod, *args
+response = connection.run_request(httpmethod.downcase.to_sym, url, body, {})
