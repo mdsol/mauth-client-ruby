@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
+
+require 'rubygems'
+require 'faraday'
+require 'mauth/client'
+require 'rack'
+require 'yaml'
+
+module MAuth
+  class Proxy
+    def initialize(target_uri, options={})
+      @target_uri = target_uri
+      @options = options
+      options = {:authenticate_responses => true}.merge(options)
+      options[:mauth_config] ||= MAuth::Client.default_config
+      @connection = ::Faraday.new(target_uri) do |builder|
+        builder.use MAuth::Faraday::RequestSigner, options[:mauth_config]
+        if options[:authenticate_responses]
+          builder.use MAuth::Faraday::ResponseAuthenticator, options[:mauth_config]
+        end
+        builder.adapter ::Faraday.default_adapter
+      end
+    end
+
+    def call(request_env)
+      request_method = request_env['REQUEST_METHOD'].downcase.to_sym
+      request_path = URI.parse(request_env['REQUEST_URI']).request_uri
+      request_env['rack.input'].rewind
+      request_body = request_env['rack.input'].read
+      request_env['rack.input'].rewind
+      request_headers = {}
+      request_env.each do |k,v|
+        if k =~ /\AHTTP_/
+          name = $'
+          request_headers[name] = v
+        end
+      end
+      response = @connection.run_request(request_method, request_path, request_body, request_headers)
+      response_headers = response.headers.reject do |name, value|
+        %w(Content-Length Transfer-Encoding).map(&:downcase).include?(name.downcase)
+      end
+      [response.status, response_headers, [response.body]]
+    end
+  end
+end
+
+target_uri = ARGV.pop
+
+rack_server_options = Rack::Server::Options.new.parse!(ARGV)
+rack_server_options[:app] = MAuth::Proxy.new(target_uri)
+mauth_proxy_server = Rack::Server.new(rack_server_options)
+mauth_proxy_server.start
