@@ -19,6 +19,61 @@ module MAuth
         version_file = File.join(root, 'VERSION')
         File.exists?(version_file) ? File.read(version_file).chomp : "?"
       end
+
+      def default_config(options={})
+        options = options.stringify_symbol_keys
+
+        # find the app_root (relative to which we look for yaml files). note that this 
+        # is different than MAuth::Client.root, the root of the mauth-client library. 
+        app_root = options['root'] || begin
+          if Object.const_defined?('Rails') && ::Rails.respond_to?(:root) && ::Rails.root
+            Rails.root
+          else
+            ENV['RAILS_ROOT'] || '.'
+          end
+        end
+
+        # find the environment (with which yaml files are keyed) 
+        env = options['environment'] || begin
+          if Object.const_defined?('Rails') && ::Rails.respond_to?(:environment)
+            Rails.environment
+          else
+            ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+          end
+        end
+
+        # find mauth config, given on options, or in a file at 
+        # ENV['MAUTH_CONFIG_YML'] or config/mauth.yml in the app_root 
+        mauth_config = options['mauth_config'] || begin
+          mauth_config_yml = options['mauth_config_yml']
+          mauth_config_yml ||= ENV['MAUTH_CONFIG_YML']
+          default_loc = 'config/mauth.yml'
+          default_yml = File.join(app_root, default_loc)
+          mauth_config_yml ||= default_yml if File.exists?(default_yml)
+          if mauth_config_yml && File.exists?(mauth_config_yml)
+            whole_config = YAML.load_file(mauth_config_yml)
+            errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
+            whole_config[env] || raise(errmessage)
+          else
+            raise "could not find mauth config yaml file. this file may be placed in #{default_loc}, specified " +
+              "with the mauth_config_yml option, or specified with the MAUTH_CONFIG_YML " +
+              "environment variable."
+          end
+        end
+
+        unless mauth_config.key?('logger')
+          # the logger. Rails.logger if it exists, otherwise, no logger 
+          mauth_config['logger'] = options['logger'] || begin
+            if Object.const_defined?('Rails') && ::Rails.respond_to?(:logger)
+              Rails.logger
+            else
+              # any other default loggers to try? maybe dump to STDERR by default? 
+            end
+          end
+        end
+
+        mauth_config
+      end
     end
   end
 end
