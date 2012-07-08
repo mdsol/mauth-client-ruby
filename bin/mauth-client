@@ -9,6 +9,7 @@ require 'logger'
 require 'mauth/client'
 require 'mauth/faraday'
 require 'yaml'
+require 'term/ansicolor'
 
 # OPTION PARSER 
 
@@ -82,25 +83,56 @@ end
 # this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
 # the real text written and read for request and response. whatever, close enough. 
 class FaradayCurlVOutputter < FaradayOutputter
-  def call(request_env)
-    @outdev.puts "* connect to #{request_env[:url].host} on port #{request_env[:url].port}"
-    @outdev.puts "* getting our SSL on" if request_env[:url].scheme=='https'
-    @outdev.puts "> #{request_env[:method].to_s.upcase} #{request_env[:url].path} #{'HTTP/1.1' || 'or something - TODO'}"
-    request_env[:request_headers].each do |k, v|
-      @outdev.puts "> #{k}: #{v}"
+
+  # defines a method with the given name, applying coloring defined 
+  # by any additional arguments. only has any effect if the output device 
+  # is a tty. 
+  def self.color(name, *color_args)
+    define_method(name) do |arg|
+      if @outdev.tty?
+        color_args.inject(arg) do |result, color_arg|
+          Term::ANSIColor.send(color_arg, result)
+        end
+      else
+        arg
+      end
     end
-    @outdev.puts "> "
+  end
+
+  color :info, :intense_yellow
+  color :info_body, :yellow
+  color :protocol
+
+  color :request, :intense_cyan
+  color :request_verb, :bold
+  color :request_header
+  color :request_blankline, :intense_cyan, :bold
+
+  color :response, :intense_green
+  color :response_status, :bold, :green
+  color :response_header
+  color :response_blankline, :intense_green, :bold
+  color :response_body
+
+  def call(request_env)
+    @outdev.puts "#{info('*')} #{info_body("connect to #{request_env[:url].host} on port #{request_env[:url].port}")}"
+    @outdev.puts "#{info('*')} #{info_body("getting our SSL on")}" if request_env[:url].scheme=='https'
+    @outdev.puts "#{request('>')} #{request_verb(request_env[:method].to_s.upcase)} #{request_env[:url].path} #{protocol('HTTP/1.1' || 'or something - TODO')}"
+    request_env[:request_headers].each do |k, v|
+      @outdev.puts "#{request('>')} #{request_header(k)}#{request(':')} #{v}"
+    end
+    @outdev.puts "#{request_blankline('>')} "
     (request_env[:body] || '').split("\n", -1).each do |line|
-      @outdev.puts "> #{line}"
+      @outdev.puts "#{request('>')} #{line}"
     end
     @app.call(request_env).on_complete do |response_env|
-      @outdev.puts "< #{'HTTP/1.1' || 'or something - TODO'} #{response_env[:status]}"
+      @outdev.puts "#{response('<')} #{protocol('HTTP/1.1' || 'or something - TODO')} #{response_status(response_env[:status].to_s)}"
       request_env[:response_headers].each do |k, v|
-        @outdev.puts "< #{k}: #{v}"
+        @outdev.puts "#{response('<')} #{response_header(k)}#{response(':')} #{v}"
       end
-      @outdev.puts "< "
+      @outdev.puts "#{response_blankline  ('<')} "
       (response_env[:body] || '').split("\n", -1).each do |line|
-        @outdev.puts "< #{line}"
+        @outdev.puts "#{response('<')} #{response_body(line)}"
       end
     end
   end
