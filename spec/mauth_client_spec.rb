@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'mauth/client'
+require 'faraday'
 
 describe MAuth::Client do
   describe '#initialize' do
@@ -143,12 +144,14 @@ describe MAuth::Client do
           end
         end
       end
-      it "raises UnableToAuthenticate if mauth is down" do
-        @test_faraday.stub(:get).and_raise(::Faraday::Error::ConnectionFailed.new(''))
-        @test_faraday.stub(:post).and_raise(::Faraday::Error::ConnectionFailed.new(''))
-        request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
-        signed_request = @signing_mc.signed(request)
-        assert_raises(MAuth::UnableToAuthenticateError) { @authenticating_mc.authentic?(signed_request) }
+      [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
+        it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
+          @test_faraday.stub(:get).and_raise(error_klass.new(''))
+          @test_faraday.stub(:post).and_raise(error_klass.new(''))
+          request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+          signed_request = @signing_mc.signed(request)
+          assert_raises(MAuth::UnableToAuthenticateError) { @authenticating_mc.authentic?(signed_request) }
+        end
       end
       it "raises UnableToAuthenticate if mauth errors" do
         @stubs.instance_eval{ @stack.clear } #HAX 
