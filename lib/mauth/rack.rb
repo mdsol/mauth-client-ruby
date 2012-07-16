@@ -29,13 +29,22 @@ module MAuth
           @app.call(env)
         end
       end
+
+      # whether the request needs to be authenticated 
       def should_authenticate?(env)
         @config['should_authenticate_check'] ? @config['should_authenticate_check'].call(env) : true
       end
+
+      # response when the request is inauthentic. responds with status 401 Unauthorized and a 
+      # message. 
       def response_for_inauthentic_request(env)
         body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Unauthorized']
         [401, {'Content-Type' => 'text/plain'}, body]
       end
+
+      # response when the authenticity of the request cannot be determined, due to 
+      # a problem communicating with the MAuth service. responds with a status of 500 and
+      # a message. 
       def response_for_unable_to_authenticate(env)
         body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Could not determine request authenticity']
         [500, {'Content-Type' => 'text/plain'}, body]
