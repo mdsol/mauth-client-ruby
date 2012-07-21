@@ -34,29 +34,25 @@ abort(opt_parser.help) unless (2..3).include?(ARGV.size)
 # FIND MAUTH CONFIG 
 
 possible_mauth_config_files = [
+  # whoops, I called this MAUTH_CONFIG_YML in one place and MAUTH_CONFIG_YAML in another. supporting both for now. 
+  ENV['MAUTH_CONFIG_YML'],
   ENV['MAUTH_CONFIG_YAML'],
   '~/.mauth_config.yml',
   './config/mauth.yml',
   './mauth.yml',
 ].compact
 
-environment = ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
-
-mauth_config = possible_mauth_config_files.map do |filename|
-  filename = File.expand_path(filename)
-  if filename && File.exists?(filename)
-    mauth_config_all_envs = YAML.load(File.read(filename))
-    if mauth_config_all_envs && mauth_config_all_envs.is_a?(Hash) && mauth_config_all_envs[environment]
-      mauth_config_all_envs[environment]
-    end
-  end
-end.detect{|c| c }
-
-unless mauth_config
-  message = "could not find mauth config. giving up. please place a mauth config in one of the standard places, or point the MAUTH_CONFIG_YAML environment variable at an existing one. standard places are:"
-  message += possible_mauth_config_files.map{|f| "\n\t#{f}" }.join
+mauth_config_yml = possible_mauth_config_files.detect do |filename|
+  File.exists?(File.expand_path(filename))
+end
+unless mauth_config_yml
+  message = "could not find mauth config. giving up. please place a mauth config in one of the standard places, " +
+    "or point the MAUTH_CONFIG_YML environment variable at an existing one. standard places are:" +
+    possible_mauth_config_files.map{|f| "\n\t#{f}" }.join
   abort message
 end
+
+mauth_config = MAuth::Client.default_config(:mauth_config_yml => File.expand_path(mauth_config_yml))
 
 # INSTANTIATE MAUTH CLIENT 
 
