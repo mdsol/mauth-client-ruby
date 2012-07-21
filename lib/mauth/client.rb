@@ -20,6 +20,22 @@ module MAuth
         File.exists?(version_file) ? File.read(version_file).chomp : "?"
       end
 
+      # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in 
+      # standard places. all of which is overridable by options in case some defaults do not apply. 
+      #
+      # options (may be symbols or strings) - any or all may be omitted where your usage conforms to the defaults. 
+      # - root: the path relative to which this method looks for configuration yaml files. defaults to Rails.root 
+      #   if ::Rails is defined, otherwise '.'
+      # - environment: the environment, pertaining to top-level keys of the configuration yaml files. by default, 
+      #   tries Rails.environment, ENV['RAILS_ENV'], and ENV['RACK_ENV'], and falls back to 'development' if none 
+      #   of these are set. 
+      # - mauth_config - MAuth configuration. defaults to load this from a yaml file (see mauth_config_yml option) 
+      #   which is assumed to be keyed with the environment at the root. if this is specified, no yaml file is 
+      #   loaded, and the given config is passed through with any other defaults applied. at the moment, the only 
+      #   other default is to set the logger. 
+      # - mauth_config_yml - specifies where a mauth configuration yaml file can be found. by default checks 
+      #   ENV['MAUTH_CONFIG_YML'] or a file 'config/mauth.yml' relative to the root.
+      # - logger - by default checks ::Rails.logger 
       def default_config(options={})
         options = options.stringify_symbol_keys
 
