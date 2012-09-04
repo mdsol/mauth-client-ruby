@@ -94,8 +94,9 @@ module MAuth
           Rails.logger
         else
           require 'logger'
-          #::Logger.new(STDERR)
-          ::Logger.new(File.open('/dev/null', File::WRONLY))
+          is_win = RUBY_PLATFORM =~ /mswin|windows|mingw32|cygwin/i
+          null_device = is_win ? 'NUL' : '/dev/null'
+          ::Logger.new(File.open(null_device, File::WRONLY))
         end
       end
       @config['faraday_options'] = {:timeout => 1, :open_timeout => 1}.merge(given_config['faraday_options'] || {})
