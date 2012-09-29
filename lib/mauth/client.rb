@@ -25,7 +25,7 @@ module MAuth
       #
       # options (may be symbols or strings) - any or all may be omitted where your usage conforms to the defaults. 
       # - root: the path relative to which this method looks for configuration yaml files. defaults to Rails.root 
-      #   if ::Rails is defined, otherwise '.'
+      #   if ::Rails is defined, otherwise ENV['RAILS_ROOT'], ENV['RACK_ROOT'], ENV['APP_ROOT'], or '.'
       # - environment: the environment, pertaining to top-level keys of the configuration yaml files. by default, 
       #   tries Rails.environment, ENV['RAILS_ENV'], and ENV['RACK_ENV'], and falls back to 'development' if none 
       #   of these are set. 
@@ -45,7 +45,7 @@ module MAuth
           if Object.const_defined?('Rails') && ::Rails.respond_to?(:root) && ::Rails.root
             Rails.root
           else
-            ENV['RAILS_ROOT'] || '.'
+            ENV['RAILS_ROOT'] || ENV['RACK_ROOT'] || ENV['APP_ROOT'] || '.'
           end
         end
 
