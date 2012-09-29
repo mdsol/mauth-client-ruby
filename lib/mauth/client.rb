@@ -69,11 +69,11 @@ module MAuth
           if mauth_config_yml && File.exists?(mauth_config_yml)
             whole_config = YAML.load_file(mauth_config_yml)
             errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
-            whole_config[env] || raise(errmessage)
+            whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
           else
-            raise "could not find mauth config yaml file. this file may be placed in #{default_loc}, specified " +
-              "with the mauth_config_yml option, or specified with the MAUTH_CONFIG_YML " +
-              "environment variable."
+            raise MAuth::Client::ConfigurationError, "could not find mauth config yaml file. this file may be " +
+              "placed in #{default_loc}, specified with the mauth_config_yml option, or specified with the " +
+              "MAUTH_CONFIG_YML environment variable."
           end
         end
 
