@@ -15,7 +15,7 @@ require 'term/ansicolor'
 
 require 'optparse'
 
-$options = {:authenticate_response => true, :verbose => true}
+$options = {:authenticate_response => true, :verbose => true, :color => nil}
 opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
@@ -27,6 +27,9 @@ opt_parser = OptionParser.new do |opts|
   end
   opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
     $options[:authenticate_response] = v
+  end
+  opts.on("--[no-]color", "Color the output (defaults to color if the output device is a TTY)") do |v|
+    $options[:color] = v
   end
 end
 opt_parser.parse!
@@ -84,12 +87,11 @@ end
 # the real text written and read for request and response. whatever, close enough. 
 class FaradayCurlVOutputter < FaradayOutputter
 
-  # defines a method with the given name, applying coloring defined 
-  # by any additional arguments. only has any effect if the output device 
-  # is a tty. 
+  # defines a method with the given name, applying coloring defined by any additional arguments. 
+  # if $options[:color] is set, respects that; otherwise, applies color if the output device is a tty. 
   def self.color(name, *color_args)
     define_method(name) do |arg|
-      if @outdev.tty?
+      if $options[:color].nil? ? @outdev.tty? : $options[:color]
         color_args.inject(arg) do |result, color_arg|
           Term::ANSIColor.send(color_arg, result)
         end
