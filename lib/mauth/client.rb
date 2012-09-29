@@ -123,6 +123,8 @@ module MAuth
   # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as 
   # appropriate) 
   class Client
+    class ConfigurationError < StandardError; end
+
     MWS_TOKEN = 'MWS'
 
     # new client with the given App UUID and public key. config may include the following (all 
@@ -155,7 +157,8 @@ module MAuth
       when OpenSSL::PKey::RSA
         given_config['private_key']
       else
-        raise ArgumentError, "unrecognized value given for 'private_key' - this may be a String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
+        raise MAuth::Client::ConfigurationError, "unrecognized value given for 'private_key' - this may be a " +
+          "String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
       end
       @config['app_uuid'] = given_config['app_uuid']
       @config['mauth_baseurl'] = given_config['mauth_baseurl']
@@ -194,10 +197,10 @@ module MAuth
       @config['app_uuid']
     end
     def mauth_baseurl
-      @config['mauth_baseurl'] || raise("no configured mauth_baseurl!")
+      @config['mauth_baseurl'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_baseurl!")
     end
     def mauth_api_version
-      @config['mauth_api_version'] || raise("no configured mauth_api_version!")
+      @config['mauth_api_version'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_api_version!")
     end
     def private_key
       @config['private_key']
