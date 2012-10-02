@@ -3,6 +3,15 @@ require 'mauth/request_and_response'
 
 module MAuth
   module Rack
+    # middleware which will check that a request is authentically signed. 
+    #
+    # if the request is checked and is not authentic, 401 Unauthorized is returned
+    # and the app is not called. 
+    #
+    # options accepted (key may be string or symbol)
+    # - should_authenticate_check: a proc which should accept a rack env as an argument, 
+    #   and return true if the request should be authenticated; false if not. if the result 
+    #   from this is false, the request is passed to the app with no authentication performed.
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
         if should_authenticate?(env)
@@ -20,13 +29,22 @@ module MAuth
           @app.call(env)
         end
       end
+
+      # whether the request needs to be authenticated 
       def should_authenticate?(env)
         @config['should_authenticate_check'] ? @config['should_authenticate_check'].call(env) : true
       end
+
+      # response when the request is inauthentic. responds with status 401 Unauthorized and a 
+      # message. 
       def response_for_inauthentic_request(env)
         body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Unauthorized']
         [401, {'Content-Type' => 'text/plain'}, body]
       end
+
+      # response when the authenticity of the request cannot be determined, due to 
+      # a problem communicating with the MAuth service. responds with a status of 500 and
+      # a message. 
       def response_for_unable_to_authenticate(env)
         body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Could not determine request authenticity']
         [500, {'Content-Type' => 'text/plain'}, body]
@@ -40,6 +58,7 @@ module MAuth
       end
     end
 
+    # signs outgoing responses 
     class ResponseSigner < MAuth::Middleware
       def call(env)
         unsigned_response = @app.call(env)
