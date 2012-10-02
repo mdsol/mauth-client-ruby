@@ -187,8 +187,6 @@ module MAuth
           authenticate!(object)
           true
         rescue InauthenticError
-          logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
-          $!.message.split("\n").each{|l| logger.error "\t#{l}" }
           false
         end
       end
@@ -199,6 +197,14 @@ module MAuth
         time_valid!(object)
         token_valid!(object)
         signature_valid!(object)
+      rescue InauthenticError
+        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
+        $!.message.split("\n").each{|l| logger.error "\t#{l}" }
+        raise
+      rescue UnableToAuthenticateError
+        logger.error "Unable to authenticate with MAuth. encountered error:"
+        $!.message.split("\n").each{|l| logger.error "\t#{l}" }
+        raise
       end
 
       private
