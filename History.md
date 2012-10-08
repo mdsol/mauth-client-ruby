@@ -1,5 +1,12 @@
 # MAuth-Client History
 
+## 2.4.0
+
+- colorized output from the mauth-client CLI 
+- improved method documentation 
+- fix default null logger on windows where /dev/null is not available 
+- improve error logging
+
 ## 2.3.0
 
 - when authentication headers are missing, the previous message ("No x-mws-time present") is replaced by the somewhat 
