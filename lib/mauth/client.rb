@@ -187,8 +187,6 @@ module MAuth
           authenticate!(object)
           true
         rescue InauthenticError
-          logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
-          $!.message.split("\n").each{|l| logger.error "\t#{l}" }
           false
         end
       end
@@ -199,6 +197,14 @@ module MAuth
         time_valid!(object)
         token_valid!(object)
         signature_valid!(object)
+      rescue InauthenticError
+        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
+        $!.message.split("\n").each{|l| logger.error "\t#{l}" }
+        raise
+      rescue UnableToAuthenticateError
+        logger.error "Unable to authenticate with MAuth. encountered error:"
+        $!.message.split("\n").each{|l| logger.error "\t#{l}" }
+        raise
       end
 
       private
@@ -284,9 +290,8 @@ module MAuth
                 @cache[app_uuid] = ExpirableSecurityToken.new(security_token, Time.now)
               end
             elsif response.status==404
-              @mauth_client.logger.error("mAuth service responded with 404 looking up public key for #{app_uuid}")
               # signing with a key mAuth doesn't know about is considered inauthentic 
-              raise InauthenticError
+              raise InauthenticError, "mAuth service responded with 404 looking up public key for #{app_uuid}"
             else
               @mauth_client.send(:mauth_service_response_error, response)
             end
