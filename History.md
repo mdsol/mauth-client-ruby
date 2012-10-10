@@ -4,6 +4,7 @@
 
 - colorized output from the mauth-client CLI 
 - add --content-type option to CLI
+- CLI rescues and prints MAuth errors instead of them bubbling up to the interpreter
 - improved method documentation 
 - fix default null logger on windows where /dev/null is not available 
 - improve error logging
