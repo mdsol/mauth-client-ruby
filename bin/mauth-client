@@ -31,6 +31,9 @@ opt_parser = OptionParser.new do |opts|
   opts.on("--[no-]color", "Color the output (defaults to color if the output device is a TTY)") do |v|
     $options[:color] = v
   end
+  opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
+    $options[:content_type] = v
+  end
 end
 opt_parser.parse!
 abort(opt_parser.help) unless (2..3).include?(ARGV.size)
@@ -143,7 +146,6 @@ end
 # CONFIGURE THE FARADAY CONNECTION 
 
 connection = Faraday.new do |builder|
-  builder.use FaradayMiddleware::EncodeJson
   builder.use MAuth::Faraday::MAuthClientUserAgent, "MAuth-Client CLI"
   builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
   if $options[:authenticate_response]
@@ -153,12 +155,23 @@ connection = Faraday.new do |builder|
   builder.adapter Faraday.default_adapter
 end
 
-httpmethod = ARGV.first.downcase
-args = ARGV[1..-1]
-unless %w(OPTIONS GET HEAD POST PUT DELETE TRACE CONNECT PATCH).map(&:downcase).include?(httpmethod)
+httpmethod, url, body = *ARGV
+
+unless Faraday::Connection::METHODS.map{|m| m.to_s.downcase }.include?(httpmethod.downcase)
   abort "Unrecognized HTTP method given: #{httpmethod}\n\n" + opt_parser.help
+end
+
+headers = {}
+if $options[:content_type]
+  headers['Content-Type'] = $options[:content_type]
+else
+  if body
+    # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to 
+    # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes. 
+    headers['Content-Type'] = 'application/json'
+  end
 end
 
 # OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
 
-response = connection.send httpmethod, *args
+response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
