@@ -1,12 +1,13 @@
 # rcov generated
-coverage
+/coverage
 
 # rdoc generated
-rdoc
+/rdoc
 
 # yard generated
-doc
-.yardoc
+/doc
+/.yardoc
 
 # bundler
-.bundle
+/.bundle
+/Gemfile.lock
