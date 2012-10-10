@@ -174,4 +174,16 @@ end
 
 # OH LOOK IT'S FINALLY ACTUALLY CONNECTING TO SOMETHING
 
-response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
+begin
+  response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
+rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError => e
+  if $options[:color].nil? ? STDERR.tty? : $options[:color]
+    class_color = Term::ANSIColor.method(e.is_a?(MAuth::InauthenticError) ? :intense_red : :intense_yellow)
+    message_color = Term::ANSIColor.method(e.is_a?(MAuth::InauthenticError) ? :red : :yellow)
+  else
+    class_color = proc{|s| s }
+    message_color = proc{|s| s }
+  end
+  STDERR.puts(class_color.call(e.class.to_s))
+  STDERR.puts(message_color.call(e.message))
+end
