@@ -3,6 +3,7 @@
 ## 2.4.0
 
 - colorized output from the mauth-client CLI 
+- add --content-type option to CLI
 - improved method documentation 
 - fix default null logger on windows where /dev/null is not available 
 - improve error logging
