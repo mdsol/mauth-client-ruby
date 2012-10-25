@@ -2,6 +2,7 @@ require 'uri'
 require 'openssl'
 require 'base64'
 require 'json'
+require 'yaml'
 
 require 'mauth/core_ext'
 require 'mauth/autoload'
@@ -18,6 +19,77 @@ module MAuth
       def version
         version_file = File.join(root, 'VERSION')
         File.exists?(version_file) ? File.read(version_file).chomp : "?"
+      end
+
+      # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in 
+      # standard places. all of which is overridable by options in case some defaults do not apply. 
+      #
+      # options (may be symbols or strings) - any or all may be omitted where your usage conforms to the defaults. 
+      # - root: the path relative to which this method looks for configuration yaml files. defaults to Rails.root 
+      #   if ::Rails is defined, otherwise ENV['RAILS_ROOT'], ENV['RACK_ROOT'], ENV['APP_ROOT'], or '.'
+      # - environment: the environment, pertaining to top-level keys of the configuration yaml files. by default, 
+      #   tries Rails.environment, ENV['RAILS_ENV'], and ENV['RACK_ENV'], and falls back to 'development' if none 
+      #   of these are set. 
+      # - mauth_config - MAuth configuration. defaults to load this from a yaml file (see mauth_config_yml option) 
+      #   which is assumed to be keyed with the environment at the root. if this is specified, no yaml file is 
+      #   loaded, and the given config is passed through with any other defaults applied. at the moment, the only 
+      #   other default is to set the logger. 
+      # - mauth_config_yml - specifies where a mauth configuration yaml file can be found. by default checks 
+      #   ENV['MAUTH_CONFIG_YML'] or a file 'config/mauth.yml' relative to the root.
+      # - logger - by default checks ::Rails.logger 
+      def default_config(options={})
+        options = options.stringify_symbol_keys
+
+        # find the app_root (relative to which we look for yaml files). note that this 
+        # is different than MAuth::Client.root, the root of the mauth-client library. 
+        app_root = options['root'] || begin
+          if Object.const_defined?('Rails') && ::Rails.respond_to?(:root) && ::Rails.root
+            Rails.root
+          else
+            ENV['RAILS_ROOT'] || ENV['RACK_ROOT'] || ENV['APP_ROOT'] || '.'
+          end
+        end
+
+        # find the environment (with which yaml files are keyed) 
+        env = options['environment'] || begin
+          if Object.const_defined?('Rails') && ::Rails.respond_to?(:environment)
+            Rails.environment
+          else
+            ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+          end
+        end
+
+        # find mauth config, given on options, or in a file at 
+        # ENV['MAUTH_CONFIG_YML'] or config/mauth.yml in the app_root 
+        mauth_config = options['mauth_config'] || begin
+          mauth_config_yml = options['mauth_config_yml']
+          mauth_config_yml ||= ENV['MAUTH_CONFIG_YML']
+          default_loc = 'config/mauth.yml'
+          default_yml = File.join(app_root, default_loc)
+          mauth_config_yml ||= default_yml if File.exists?(default_yml)
+          if mauth_config_yml && File.exists?(mauth_config_yml)
+            whole_config = YAML.load_file(mauth_config_yml)
+            errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
+            whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
+          else
+            raise MAuth::Client::ConfigurationError, "could not find mauth config yaml file. this file may be " +
+              "placed in #{default_loc}, specified with the mauth_config_yml option, or specified with the " +
+              "MAUTH_CONFIG_YML environment variable."
+          end
+        end
+
+        unless mauth_config.key?('logger')
+          # the logger. Rails.logger if it exists, otherwise, no logger 
+          mauth_config['logger'] = options['logger'] || begin
+            if Object.const_defined?('Rails') && ::Rails.respond_to?(:logger)
+              Rails.logger
+            else
+              # any other default loggers to try? maybe dump to STDERR by default? 
+            end
+          end
+        end
+
+        mauth_config
       end
     end
   end
@@ -53,6 +125,8 @@ module MAuth
   # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as 
   # appropriate) 
   class Client
+    class ConfigurationError < StandardError; end
+
     MWS_TOKEN = 'MWS'
 
     # new client with the given App UUID and public key. config may include the following (all 
@@ -85,7 +159,8 @@ module MAuth
       when OpenSSL::PKey::RSA
         given_config['private_key']
       else
-        raise ArgumentError, "unrecognized value given for 'private_key' - this may be a String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
+        raise MAuth::Client::ConfigurationError, "unrecognized value given for 'private_key' - this may be a " +
+          "String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
       end
       @config['app_uuid'] = given_config['app_uuid']
       @config['mauth_baseurl'] = given_config['mauth_baseurl']
@@ -124,10 +199,10 @@ module MAuth
       @config['app_uuid']
     end
     def mauth_baseurl
-      @config['mauth_baseurl'] || raise("no configured mauth_baseurl!")
+      @config['mauth_baseurl'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_baseurl!")
     end
     def mauth_api_version
-      @config['mauth_api_version'] || raise("no configured mauth_api_version!")
+      @config['mauth_api_version'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_api_version!")
     end
     def private_key
       @config['private_key']
