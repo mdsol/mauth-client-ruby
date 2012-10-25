@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
   s.bindir = 'bin'
-  s.executables = 'mauth-client'
+  s.executables = ['mauth-client', 'mauth-proxy']
 
   s.add_dependency 'json'
   s.add_dependency 'faraday', '~> 0.7'
