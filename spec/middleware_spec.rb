@@ -55,6 +55,7 @@ describe MAuth::Rack::RequestAuthenticator do
     mw.mauth_client.should_receive(:authentic?).and_return(false)
     @rack_app.should_not_receive(:call)
     status, headers, body = mw.call({'REQUEST_METHOD' => 'HEAD'})
+    assert_equal 'Unauthorized'.length.to_s, headers["Content-Length"]
     assert_equal 401, status
     assert_equal [], body
   end
