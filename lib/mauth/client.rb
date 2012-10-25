@@ -2,6 +2,7 @@ require 'uri'
 require 'openssl'
 require 'base64'
 require 'json'
+require 'yaml'
 
 require 'mauth/core_ext'
 require 'mauth/autoload'
