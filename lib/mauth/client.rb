@@ -146,7 +146,7 @@ module MAuth
       message = "mAuth service responded with #{response.status}: #{response.body}"
       logger.error(message)
       error = UnableToAuthenticateError.new(message)
-      error.mauth_service_response = response || response_error
+      error.mauth_service_response = response
       raise error
     end
 
