@@ -4,6 +4,26 @@ require 'logger'
 
 describe MAuth::Client do
   describe '.default_config' do
+    def with_env(tmp_env)
+      begin
+        orig_env = ENV.to_hash.dup
+        ENV.update(tmp_env)
+        yield
+      ensure
+        ENV.replace(orig_env)
+      end
+    end
+
+    def with_rails(rails_stuff)
+      require 'ostruct'
+      begin
+        Object.const_set(:Rails, OpenStruct.new(rails_stuff))
+        yield
+      ensure
+        Object.send(:remove_const, :Rails)
+      end
+    end
+
     it 'guesses everything' do
       Dir.chdir('spec/config_root') do
         MAuth::Client.default_config['app_uuid'].should == 'NORMAL-DEVELOPMENT'
@@ -73,26 +93,6 @@ describe MAuth::Client do
         with_rails(:logger => logger) do
           MAuth::Client.default_config['logger'].should == logger
         end
-      end
-    end
-
-    def with_env(tmp_env)
-      begin
-        orig_env = ENV.to_hash.dup
-        ENV.update(tmp_env)
-        yield
-      ensure
-        ENV.replace(orig_env)
-      end
-    end
-
-    def with_rails(rails_stuff)
-      require 'ostruct'
-      begin
-        Object.const_set(:Rails, OpenStruct.new(rails_stuff))
-        yield
-      ensure
-        Object.send(:remove_const, :Rails)
       end
     end
   end
