@@ -32,7 +32,7 @@ module MAuth
       request_env['rack.input'].rewind
       request_headers = {}
       request_env.each do |k,v|
-        if k =~ /\AHTTP_/
+        if k =~ /\AHTTP_/ && !%w(HTTP_HOST).include?(k)
           name = $'
           request_headers[name] = v
         end
