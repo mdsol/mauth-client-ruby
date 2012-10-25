@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
+require 'faraday'
 require 'mauth/rack'
 require 'mauth/fake/rack'
 require 'mauth/faraday'
@@ -120,7 +121,23 @@ describe MAuth::Faraday::ResponseAuthenticator do
       res = mw.call({})
     end
   end
+
+  it 'is usable via the name mauth_response_authenticator' do
+    # if this doesn't error, that's fine; means it looked up the middleware and is using it
+    Faraday::Connection.new do |conn|
+      conn.response :mauth_response_authenticator
+      conn.adapter Faraday.default_adapter
+    end
+  end
 end
 describe MAuth::Faraday::RequestSigner do
   include_examples MAuth::Middleware
+
+  it 'is usable via the name mauth_request_signer' do
+    # if this doesn't error, that's fine; means it looked up the middleware and is using it
+    Faraday::Connection.new do |conn|
+      conn.request :mauth_request_signer
+      conn.adapter Faraday.default_adapter
+    end
+  end
 end
