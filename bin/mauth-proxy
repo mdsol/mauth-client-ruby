@@ -46,7 +46,7 @@ module MAuth
   end
 end
 
-target_uri = ARGV.pop
+target_uri = ARGV.pop || abort("Usage: mauth-proxy [rack options] <target URI>")
 
 rack_server_options = Rack::Server::Options.new.parse!(ARGV)
 
