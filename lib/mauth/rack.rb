@@ -30,6 +30,13 @@ module MAuth
         end
       end
 
+      # discards the body if REQUEST_METHOD is HEAD. sets the Content-Length. 
+      def handle_head(env)
+        status, headers, body = *yield
+        headers["Content-Length"] = body.map(&::Rack::Utils.method(:bytesize)).inject(0, &:+).to_s
+        [status, headers, env['REQUEST_METHOD'].downcase == 'head' ? [] : body]
+      end
+
       # whether the request needs to be authenticated 
       def should_authenticate?(env)
         @config['should_authenticate_check'] ? @config['should_authenticate_check'].call(env) : true
@@ -38,16 +45,18 @@ module MAuth
       # response when the request is inauthentic. responds with status 401 Unauthorized and a 
       # message. 
       def response_for_inauthentic_request(env)
-        body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Unauthorized']
-        [401, {'Content-Type' => 'text/plain'}, body]
+        handle_head(env) do
+          [401, {'Content-Type' => 'text/plain'}, ['Unauthorized']]
+        end
       end
 
       # response when the authenticity of the request cannot be determined, due to 
       # a problem communicating with the MAuth service. responds with a status of 500 and
       # a message. 
       def response_for_unable_to_authenticate(env)
-        body = env['REQUEST_METHOD'].downcase == 'head' ? [] : ['Could not determine request authenticity']
-        [500, {'Content-Type' => 'text/plain'}, body]
+        handle_head(env) do
+          [500, {'Content-Type' => 'text/plain'}, ['Could not determine request authenticity']]
+        end
       end
     end
 
