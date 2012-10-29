@@ -2,6 +2,8 @@
 
 ## 2.5.0
 
+- MAuth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests 
+  and requests which it is unable to authenticate
 - MAuth::Client.default_config
 - mauth-proxy executable
 - Faraday middlewares are registered with Faraday
