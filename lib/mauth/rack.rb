@@ -46,7 +46,8 @@ module MAuth
       # message. 
       def response_for_inauthentic_request(env)
         handle_head(env) do
-          [401, {'Content-Type' => 'text/plain'}, ['Unauthorized']]
+          body = {'errors' => {'mauth' => ['Unauthorized']}}
+          [401, {'Content-Type' => 'application/json'}, [JSON.pretty_generate(body)]]
         end
       end
 
@@ -55,7 +56,8 @@ module MAuth
       # a message. 
       def response_for_unable_to_authenticate(env)
         handle_head(env) do
-          [500, {'Content-Type' => 'text/plain'}, ['Could not determine request authenticity']]
+          body = {'errors' => {'mauth' => ['Could not determine request authenticity']}}
+          [500, {'Content-Type' => 'application/json'}, [JSON.pretty_generate(body)]]
         end
       end
     end
