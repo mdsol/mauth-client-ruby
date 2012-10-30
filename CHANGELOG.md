@@ -1,5 +1,15 @@
 # MAuth-Client History
 
+## 2.5.0
+
+- MAuth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests 
+  and requests which it is unable to authenticate
+- added MAuth::Client.default_config method
+- added mauth-proxy executable
+- Faraday middlewares are registered with Faraday
+- Rack middleware correctly handles Content-Length with HEAD requests
+- MAuth::Client raises MAuth::Client::ConfigurationError instead of ArgumentError or RuntimeError as appropriate
+
 ## 2.4.0
 
 - colorized output from the mauth-client CLI 
