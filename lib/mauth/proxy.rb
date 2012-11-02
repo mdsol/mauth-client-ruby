@@ -3,7 +3,18 @@ require 'faraday'
 require 'rack'
 
 module MAuth
+  # MAuth::Proxy is a simple Rack application to take incoming requests, sign them with MAuth, and 
+  # proxy them to a target URI. the responses from the target may be authenticated, with MAuth 
+  # (and are by default).
   class Proxy
+    # target_uri is the base relative to which requests are made. 
+    #
+    # options:
+    # - :authenticate_responses - boolean, default true. whether responses will be authenticated. 
+    #   if this is true and an inauthentic response is encountered, then MAuth::InauthenticError 
+    #   will be raised.
+    # - :mauth_config - configuration passed to MAuth::Client.new (see its doc). default is 
+    #   MAuth::Client.default_config
     def initialize(target_uri, options={})
       @target_uri = target_uri
       @options = options
