@@ -48,6 +48,8 @@ end
 
 target_uri = ARGV.pop || abort("Usage: mauth-proxy [rack options] <target URI>")
 
+authenticate_responses = !ARGV.delete('--no-authenticate')
+
 rack_server_options = Rack::Server::Options.new.parse!(ARGV)
 
 # for security, this rack server will only accept local connections, so override Host 
@@ -56,7 +58,7 @@ rack_server_options = Rack::Server::Options.new.parse!(ARGV)
 # this means that the '-o' / '--host' option to Rack::Server::Options is ignored. 
 rack_server_options[:Host] = "127.0.0.1"
 
-rack_server_options[:app] = MAuth::Proxy.new(target_uri)
+rack_server_options[:app] = MAuth::Proxy.new(target_uri, :authenticate_responses => authenticate_responses)
 
 mauth_proxy_server = Rack::Server.new(rack_server_options)
 mauth_proxy_server.start
