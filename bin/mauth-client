@@ -90,7 +90,7 @@ class FaradayCurlVOutputter < FaradayOutputter
   # if $options[:color] is set, respects that; otherwise, applies color if the output device is a tty. 
   def self.color(name, *color_args)
     define_method(name) do |arg|
-      if $options[:color].nil? ? @outdev.tty? : $options[:color]
+      if color?
         color_args.inject(arg) do |result, color_arg|
           Term::ANSIColor.send(color_arg, result)
         end
@@ -136,6 +136,11 @@ class FaradayCurlVOutputter < FaradayOutputter
         @outdev.puts "#{response('<')} #{response_body(line)}"
       end
     end
+  end
+
+  # whether to use color
+  def color?
+    $options[:color].nil? ? @outdev.tty? : $options[:color]
   end
 end
 
