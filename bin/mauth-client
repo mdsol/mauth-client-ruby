@@ -15,7 +15,13 @@ require 'term/ansicolor'
 
 require 'optparse'
 
-$options = {:authenticate_response => true, :verbose => true, :color => nil}
+# $options default values
+$options = {
+  :authenticate_response => true,
+  :verbose => true,
+  :color => nil,
+  :no_ssl_verify => false,
+}
 opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
@@ -33,6 +39,9 @@ opt_parser = OptionParser.new do |opts|
   end
   opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
     $options[:content_type] = v
+  end
+  opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
+    $options[:no_ssl_verify] = true
   end
 end
 opt_parser.parse!
@@ -140,8 +149,11 @@ class FaradayCurlVOutputter < FaradayOutputter
 end
 
 # CONFIGURE THE FARADAY CONNECTION 
-
-connection = Faraday.new do |builder|
+faraday_options = {}
+if $options[:no_ssl_verify]
+  faraday_options[:ssl] = {:verify => false}
+end
+connection = Faraday.new(faraday_options) do |builder|
   builder.use MAuth::Faraday::MAuthClientUserAgent, "MAuth-Client CLI"
   builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
   if $options[:authenticate_response]
