@@ -1,5 +1,13 @@
 # MAuth-Client History
 
+## 2.6.0
+
+- CLI option --no-ssl-verify disables SSL verification
+- Syntax highlighting with CodeRay colorizes request and response bodies of recognized media types
+- MAuth::Proxy class now lives in lib, in mauth/proxy, and may be used as a rack application
+- mauth-proxy executable recognizes --no-authenticate option for responses
+- MAuth::Proxy bugfix usage of REQUEST_URI
+
 ## 2.5.0
 
 - MAuth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests 
