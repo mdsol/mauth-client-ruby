@@ -1,6 +1,6 @@
 # MAuth-Client History
 
-## 2.6.0
+## v2.6.0
 
 - CLI option --no-ssl-verify disables SSL verification
 - Syntax highlighting with CodeRay colorizes request and response bodies of recognized media types
@@ -8,7 +8,7 @@
 - mauth-proxy executable recognizes --no-authenticate option for responses
 - MAuth::Proxy bugfix usage of REQUEST_URI; use Rack::Request#fullpath instead
 
-## 2.5.0
+## v2.5.0
 
 - MAuth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests 
   and requests which it is unable to authenticate
@@ -18,7 +18,7 @@
 - Rack middleware correctly handles Content-Length with HEAD requests
 - MAuth::Client raises MAuth::Client::ConfigurationError instead of ArgumentError or RuntimeError as appropriate
 
-## 2.4.0
+## v2.4.0
 
 - colorized output from the mauth-client CLI 
 - add --content-type option to CLI
@@ -27,7 +27,7 @@
 - fix default null logger on windows where /dev/null is not available 
 - improve error logging
 
-## 2.3.0
+## v2.3.0
 
 - when authentication headers are missing, the previous message ("No x-mws-time present") is replaced by the somewhat 
   more informative "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
@@ -37,7 +37,7 @@
 - middleware MAuth::Rack::RequestAuthenticationFaker for testing 
 - more and better specs 
 
-## v2.2.0:
+## v2.2.0
 
 - fixes an issue where requests which have a body and are not PUT or POST were not being correctly signed in rack 
   middleware 
