@@ -6,7 +6,7 @@
 - Syntax highlighting with CodeRay colorizes request and response bodies of recognized media types
 - MAuth::Proxy class now lives in lib, in mauth/proxy, and may be used as a rack application
 - mauth-proxy executable recognizes --no-authenticate option for responses
-- MAuth::Proxy bugfix usage of REQUEST_URI
+- MAuth::Proxy bugfix usage of REQUEST_URI; use Rack::Request#fullpath instead
 
 ## 2.5.0
 
