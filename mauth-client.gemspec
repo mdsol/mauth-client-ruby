@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'faraday', '~> 0.7'
   s.add_dependency 'faraday_middleware'
   s.add_dependency 'term-ansicolor'
+  s.add_dependency 'coderay'
   s.add_development_dependency('shoulda', [">= 0"])
   s.add_development_dependency('rake')
   s.add_development_dependency('rspec', '~> 2.7.0')
