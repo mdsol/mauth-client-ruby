@@ -42,7 +42,7 @@ module MAuth
           request_headers[name] = v
         end
       end
-      response = @connection.run_request(request_method, request.path, request_body, request_headers)
+      response = @connection.run_request(request_method, request.fullpath, request_body, request_headers)
       response_headers = response.headers.reject do |name, value|
         %w(Content-Length Transfer-Encoding).map(&:downcase).include?(name.downcase)
       end
