@@ -113,7 +113,6 @@ class FaradayCurlVOutputter < FaradayOutputter
   color :response_status, :bold, :green
   color :response_header
   color :response_blankline, :intense_green, :bold
-  color :response_body
 
   def call(request_env)
     @outdev.puts "#{info('*')} #{info_body("connect to #{request_env[:url].host} on port #{request_env[:url].port}")}"
@@ -133,7 +132,7 @@ class FaradayCurlVOutputter < FaradayOutputter
       end
       @outdev.puts "#{response_blankline  ('<')} "
       (response_env[:body] || '').split("\n", -1).each do |line|
-        @outdev.puts "#{response('<')} #{response_body(line)}"
+        @outdev.puts "#{response('<')} #{line}"
       end
     end
   end
