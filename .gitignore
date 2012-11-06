@@ -11,3 +11,6 @@
 # bundler
 /.bundle
 /Gemfile.lock
+
+# logging (tests)
+/log
