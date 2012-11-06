@@ -5,7 +5,6 @@
 /rdoc
 
 # yard generated
-/doc
 /.yardoc
 
 # bundler
