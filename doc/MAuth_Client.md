@@ -10,7 +10,7 @@ and responses, and middlewares for Rack and Faraday which leverage the client's 
 Use the bundler gem. Add the following to your `Gemfile` in your global environment:
 
 ```
-gem 'mauth-client', :git => "git@github.com:mdsol/mauth-client.git", :tag => 'v2.6.0'
+gem 'mauth-client', :git => "git@github.com:mdsol/mauth-client.git", :tag => 'v2.6.1'
 ```
 
 Or, you may download the gem from https://github.com/mdsol/mauth-client/downloads and install it normally (that is, 
