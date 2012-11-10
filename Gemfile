@@ -1,6 +1,9 @@
 source "http://rubygems.org"
 gemspec
 
+gem 'debugger'
+gem 'uuidtools'
+gem 'rake'
 gem 'rspec', '~> 2.7.0'
 gem 'timecop', '~> 0.3.5'
 gem 'rack-test'
