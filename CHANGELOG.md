@@ -1,5 +1,10 @@
 # MAuth-Client History
 
+## v2.6.1
+
+- Imported documentation from Medinet into the project's doc directory 
+- Add Shamus
+
 ## v2.6.0
 
 - CLI option --no-ssl-verify disables SSL verification
