@@ -18,9 +18,9 @@ without bundler) with `gem install <downloaded filename>`
 
 ## Configuration
 
-MAuth is typically configured by a yaml file, [mauth.yml](mauth.yml.md) - see its page for more documentation. This 
-is simply loaded and passed to either middleware or directly to a MAuth::Client instance. See the documentation for 
-[MAuth::Client#initialize][] (link requires Medidata network or VPN) for more details of what it accepts. Usually 
+MAuth is typically configured by a yaml file, [mauth.yml](file.mauth.yml.html) - see its page for more documentation. 
+This is simply loaded and passed to either middleware or directly to a MAuth::Client instance. See the documentation 
+for [MAuth::Client#initialize][] (link requires Medidata network or VPN) for more details of what it accepts. Usually 
 you will want:
 
 ```ruby

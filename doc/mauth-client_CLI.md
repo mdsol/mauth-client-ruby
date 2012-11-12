@@ -6,12 +6,12 @@ responses.
 ## Installation
 
 The mauth-client CLI is part of the MAuth Client gem, which can be installed per the section __Installation__ in the 
-[MAuth Client](MAuth_Client.md#installation) page. Short version: add it to your Gemfile and `bundle install`, or 
-download the gem and `gem install` it. 
+[MAuth Client](file.MAuth_Client.html#installation) page. Short version: add it to your Gemfile and 
+`bundle install`, or download the gem and `gem install` it. 
 
 ## Configuration
 
-The CLI is configured with a [mauth.yml](mauth.yml.md) file - see its page for instructions. 
+The CLI is configured with a [mauth.yml](file.mauth.yml.html) file - see its page for instructions. 
 
 The mauth-client CLI tool looks for mauth.yml configuration in several places:
 

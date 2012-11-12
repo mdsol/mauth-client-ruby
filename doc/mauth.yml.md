@@ -67,8 +67,8 @@ common: &common
 You will load mauth.yml, merge in any other configuration that is needed for your usage, and pass the config along to 
 instantiate a `MAuth::Client` or a middleware. 
 
-See the [MAuth Client](MAuth_Client.md) page for more detail. 
+See the [MAuth Client](file.MAuth_Client.html) page for more detail. 
 
 ## Usage in MAuth-Client CLI tool
 
-See __Configuration__ in the [MAuth-Client CLI Tool](mauth-client_CLI.md#configuration) page.
+See __Configuration__ in the [MAuth-Client CLI Tool](file.mauth-client_CLI.html#configuration) page.
