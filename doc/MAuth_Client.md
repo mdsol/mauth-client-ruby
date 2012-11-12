@@ -20,8 +20,7 @@ without bundler) with `gem install <downloaded filename>`
 
 MAuth is typically configured by a yaml file, [mauth.yml](file.mauth.yml.html) - see its page for more documentation. 
 This is simply loaded and passed to either middleware or directly to a MAuth::Client instance. See the documentation 
-for [MAuth::Client#initialize][] (link requires Medidata network or VPN) for more details of what it accepts. Usually 
-you will want:
+for [MAuth::Client#initialize][] for more details of what it accepts. Usually you will want:
 
 ```ruby
 mauth_config = MAuth::Client.default_config
@@ -42,7 +41,7 @@ be able to sign your responses without an app_uuid and private key, so `MAuth::R
 The `mauth_baseurl` is required in mauth.yml. So is the `mauth_api_version` option. These tell the MAuth Client where 
 and how to communicate with the MAuth service. See the [MAuth medinet page] for version information.
 
-[MAuth::Client#initialize]: https://columbo-portal-current.s3.amazonaws.com/mauth/mauth-client-design/MAuth/Client.html#initialize-instance_method
+[MAuth::Client#initialize]: MAuth/Client.html#initialize-instance_method
 [MAuth::Client.default_config]: TODO
 [MAuth medinet page]: https://sites.google.com/a/mdsol.com/knowledgebase/home/departments/engineering/on-demand-portfolio/services/core-services/mauth
 

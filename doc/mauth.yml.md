@@ -2,10 +2,9 @@
 
 The conventional way to configure MAuth-Client for your project is a is a YAML file which lives in your project at 
 `config/mauth.yml`. It is keyed on environment, and for the most part its contents are passed directly to instantiate 
-an MAuth::Client. See the documentation for [MAuth::Client#initialize][] (link requires 
-Medidata network or VPN) for more details of what it accepts. 
+an MAuth::Client. See the documentation for [MAuth::Client#initialize][] for more details of what it accepts. 
 
-[MAuth::Client#initialize]: https://columbo-portal-current.s3.amazonaws.com/mauth/mauth-client-design/MAuth/Client.html#initialize-instance_method
+[MAuth::Client#initialize]: MAuth/Client.html#initialize-instance_method
 
 Note: __PRIVATE KEYS MUST NOT BE COMMITTED INTO YOUR GIT REPOSITORY NOR PUSHED TO GITHUB.__
 
