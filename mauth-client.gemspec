@@ -24,15 +24,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'faraday_middleware', '~> 0.8'
   s.add_dependency 'term-ansicolor', '~> 1.0'
   s.add_dependency 'coderay', '~> 1.0'
-  s.add_development_dependency('shoulda', [">= 0"])
-  s.add_development_dependency('rake')
-  s.add_development_dependency('rspec', '~> 2.7.0')
-  s.add_development_dependency('timecop', '0.3.5')
-  s.add_development_dependency('rack-test')
-  if (RUBY_VERSION.split('.').map(&:to_i) <=> [1, 9]) >= 0
-    s.add_development_dependency('simplecov')
-    s.add_development_dependency('simplecov-gem-adapter')
-  else
-    s.add_development_dependency('rcov')
-  end
+  s.add_dependency 'rack', '~> 1.4'
 end

@@ -7,6 +7,9 @@
 # yard generated
 /.yardoc
 
+# shamus
+/columbo
+
 # bundler
 /.bundle
 /Gemfile.lock

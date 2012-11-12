@@ -1,0 +1,3 @@
+--main doc/MAuth_Client.md
+--files doc/**/*.md
+lib/**/*.rb
