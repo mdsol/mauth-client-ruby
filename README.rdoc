@@ -1,6 +1,6 @@
 = mauth-client
 
-Documentation lives at https://columbo.imedidata.com/docs/mauth_client/current/design/index.html
+Documentation lives at https://columbo.imedidata.com/docs/mauthclient/current/design/index.html
 
 == Contributing to mauth-client
  
