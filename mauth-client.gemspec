@@ -25,4 +25,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'term-ansicolor', '~> 1.0'
   s.add_dependency 'coderay', '~> 1.0'
   s.add_dependency 'rack', '~> 1.4'
+  s.add_dependency 'dice_bag', '~> 0.6'
 end

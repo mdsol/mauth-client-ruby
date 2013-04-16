@@ -1,0 +1,1 @@
+<%= configured.mauth_private_key || generate_private_key %>
