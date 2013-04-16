@@ -6,6 +6,7 @@ require 'yaml'
 
 require 'mauth/core_ext'
 require 'mauth/autoload'
+require 'mauth/dice_bag/mauth_templates'
 
 module MAuth
   class Client

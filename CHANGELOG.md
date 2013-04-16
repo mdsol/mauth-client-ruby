@@ -1,5 +1,10 @@
 # MAuth-Client History
 
+## v2.6.2
+
+- Added templates for dice_bag, now rake config:generate_all will create
+  mauth config files when you include this gem.
+
 ## v2.6.1
 
 - Imported documentation from Medinet into the project's doc directory 
