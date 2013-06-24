@@ -55,9 +55,7 @@ module MAuth
 
       if @browser_proxy
         target_uri = request_env["REQUEST_URI"]
-
-        unsigned_request = @target_uris.select {|u| target_uri.start_with? u}.empty?
-        connection = unsigned_request ? @unsigned_connection : @signer_connection
+        connection = @target_uris.any? { |u| target_uri.start_with? u} ? @signer_connection :  @unsigned_connection
         response = connection.run_request(request_method, target_uri, request_body, request_headers)
       else
         response = @connection.run_request(request_method, request.fullpath, request_body, request_headers)
