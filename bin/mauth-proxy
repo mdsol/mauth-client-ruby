@@ -9,16 +9,11 @@ require 'rack'
 authenticate_responses = !ARGV.delete('--no-authenticate')
 browser_proxy = !(ARGV.delete('--browser_proxy').nil?)
 
-if browser_proxy
-  target_uri = ARGV
-else
-  target_uri = ARGV.pop
-
-end
+target_uri = browser_proxy ? ARGV : ARGV.pop
 
 if !target_uri || target_uri.empty?
   abort("Usage: mauth-proxy [rack options] --browser_proxy [--no-authenticate] <target URI> <target URI> ...\n" +
-        "or: mauth-proxy [rack options] <target URI>")
+    "or: mauth-proxy [rack options] <target URI>")
 end
 
 rack_server_options = Rack::Server::Options.new.parse!(ARGV)

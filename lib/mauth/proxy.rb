@@ -29,7 +29,7 @@ module MAuth
           end
           builder.adapter ::Faraday.default_adapter
         end
-        @unsigned_connection = ::Faraday.new(nil) do |builder|
+        @unsigned_connection = ::Faraday.new do |builder|
           builder.adapter ::Faraday.default_adapter
         end
       else # hard-wired mode

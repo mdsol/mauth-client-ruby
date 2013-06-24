@@ -13,7 +13,7 @@ request.
 The intent is to allow users to point any HTTP or REST client they care to use at a service which authenticates with 
 MAuth, without the client needing to know how to generate MAuth signatures or authenticate MAuth-signed responses. 
 
-The proxy has two modes: single-target and browser proxy mode. In broser proxy mode, it can be configured as a HTTP
+The proxy has two modes: single-target and browser proxy mode. In browser proxy mode, it can be configured as a HTTP
 proxy in a browser and will direct the requests to any URL in the request while signing requests to URLs that are listed
 in the command line. In single-target mode, all requests will be directed to the server specified in the command line.
 
@@ -52,7 +52,7 @@ The last command-line argument MUST be a target URI to which requests will be fo
 The `--no-authenticate` option disables response authentication from the target service.
 
 The `--browser_proxy` option switches to browser proxy mode and is intended to be used when the proxy is used in
-conjunction with a web broser that is set to use this proxy.
+conjunction with a web browser that is set to use this proxy.
 
 All other options are passed along to rack. Available options can be viewed by running rackup -h, and are also listed 
 below:
