@@ -167,7 +167,7 @@ module MAuth
       @config['mauth_baseurl'] = given_config['mauth_baseurl']
       @config['mauth_api_version'] = given_config['mauth_api_version']
       @config['logger'] = given_config['logger'] || begin
-        if Object.const_defined?('Rails')
+        if Object.const_defined?('Rails') && Rails.logger
           Rails.logger
         else
           require 'logger'
