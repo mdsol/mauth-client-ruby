@@ -1,5 +1,9 @@
 # MAuth-Client History
 
+## v2.6.3
+
+- Fixed bug where nil Rails.logger prevented a logger from being built.
+
 ## v2.6.2
 
 - Added templates for dice_bag, now rake config:generate_all will create
