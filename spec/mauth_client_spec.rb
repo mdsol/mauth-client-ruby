@@ -36,6 +36,17 @@ describe MAuth::Client do
       Object.send(:remove_const, 'Rails')
     end
 
+    it 'builds a logger if Rails is defined, but Rails.logger is nil' do
+      Object.const_set('Rails', Object.new)
+      def (::Rails).logger
+        nil
+      end
+      logger = mock('logger')
+      ::Logger.stub(:new).with(anything).and_return(logger)
+      assert_equal logger, MAuth::Client.new.logger
+      Object.send(:remove_const, 'Rails')
+    end
+
     it 'initializes with app_uuid' do
       uuid = "40e19273-6a43-41d1-ba71-71cbb1b69d35"
       [{:app_uuid => uuid}, {'app_uuid' => uuid}].each do |config|
