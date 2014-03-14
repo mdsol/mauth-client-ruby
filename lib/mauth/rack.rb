@@ -1,5 +1,6 @@
 require 'mauth/middleware'
 require 'mauth/request_and_response'
+require 'rack/utils'
 
 module MAuth
   module Rack

@@ -194,6 +194,22 @@ describe MAuth::Client do
           signed_request = @signing_mc.signed(request)
           assert @authenticating_mc.authentic?(signed_request)
         end
+        # Note:  We need this feature because some web servers (e.g. nginx) unescape 
+        # URIs in PATH_INFO before sending them along to the served applications.  This added to the
+        # fact that Euresource percent-encodes just about everything in the path except '/' leads to 
+        # this somewhat odd test.
+        it "considers a request to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
+          # imagine what are on the requester's side now...
+          path = '/v1/users/pjones+1@mdsol.com'
+          signed_path = CGI.escape(path).gsub!('%2F','/') # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
+          request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
+          signed_request = @signing_mc.signed(request)
+          
+          # now that we've signed the request, image it goes to nginx where it gets percent-decoded
+          decoded_signed_request = signed_request.clone
+          decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
+          assert @authenticating_mc.authentic?(decoded_signed_request)
+        end
         it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signing_mc = MAuth::Client.new(:private_key => @signing_key, :app_uuid => 'nope')

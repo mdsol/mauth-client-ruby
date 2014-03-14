@@ -310,7 +310,19 @@ module MAuth
     module LocalAuthenticator
       private
       def signature_valid!(object)
-        expected = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
+        # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
+        # all of them.  In particular, Euresource is percent-encoding all special characters save for '/'.
+        # Also, unfortunately, Nginx is unencodes URIs before sending them off to served applications, though
+        # other web servers (particularly those we typically use for local testing) do not.  The various forms
+        # of the expected string to sign are meant to cover the main cases.
+        # TODO:  Revisit and simply this unfortunate situation.
+        expected_no_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
+        
+        object_for_euresource_style_reencoding = object.clone
+        object_for_euresource_style_reencoding.attributes_for_signing[:request_url] = CGI.escape(object_for_euresource_style_reencoding.attributes_for_signing[:request_url])
+        object_for_euresource_style_reencoding.attributes_for_signing[:request_url].gsub!('%2F','/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
+        expected_euresource_style_reencoding = object_for_euresource_style_reencoding.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
+        
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
@@ -318,7 +330,7 @@ module MAuth
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
         # TODO: time-invariant comparison instead of #== ? 
-        unless expected == actual
+        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
       end
