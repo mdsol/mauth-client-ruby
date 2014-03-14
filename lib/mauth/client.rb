@@ -312,7 +312,7 @@ module MAuth
       def signature_valid!(object)
         # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
         # all of them.  In particular, Euresource is percent-encoding all special characters save for '/'.
-        # Also, unfortunately, Nginx is unencodes URIs before sending them off to served applications, though
+        # Also, unfortunately, Nginx unencodes URIs before sending them off to served applications, though
         # other web servers (particularly those we typically use for local testing) do not.  The various forms
         # of the expected string to sign are meant to cover the main cases.
         # TODO:  Revisit and simplify this unfortunate situation.
