@@ -1,4 +1,8 @@
 # MAuth-Client History
+## v2.6.4
+
+- Less restrictive rack versioning to allow for more consumers.
+- Allow verification even if intermediate web servers unescape URLs.
 
 ## v2.6.3
 
