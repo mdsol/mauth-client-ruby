@@ -323,11 +323,11 @@ module MAuth
         expected_no_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
         
         # do a simple percent reencoding variant of the path
-        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri)
+        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
         expected_for_percent_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
         
         # do a moderately complex Euresource-style reencoding of the path
-        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri)
+        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
         object.attributes_for_signing[:request_url].gsub!('%2F','/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
         expected_euresource_style_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
         
