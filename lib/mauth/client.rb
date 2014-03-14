@@ -315,13 +315,24 @@ module MAuth
         # Also, unfortunately, Nginx is unencodes URIs before sending them off to served applications, though
         # other web servers (particularly those we typically use for local testing) do not.  The various forms
         # of the expected string to sign are meant to cover the main cases.
-        # TODO:  Revisit and simply this unfortunate situation.
+        # TODO:  Revisit and simplify this unfortunate situation.
+        
+        original_request_uri = object.attributes_for_signing[:request_url]
+        
+        # craft an expected string-to-sign with doing any percent-encoding 
         expected_no_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
         
-        object_for_euresource_style_reencoding = object.clone
-        object_for_euresource_style_reencoding.attributes_for_signing[:request_url] = CGI.escape(object_for_euresource_style_reencoding.attributes_for_signing[:request_url])
-        object_for_euresource_style_reencoding.attributes_for_signing[:request_url].gsub!('%2F','/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
-        expected_euresource_style_reencoding = object_for_euresource_style_reencoding.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
+        # do a simple percent reencoding variant of the path
+        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri)
+        expected_for_percent_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
+        
+        # do a moderately complex Euresource-style reencoding of the path
+        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri)
+        object.attributes_for_signing[:request_url].gsub!('%2F','/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
+        expected_euresource_style_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid) 
+        
+        # reset the object original request_uri, just in case we need it again
+        object.attributes_for_signing[:request_url] = original_request_uri
         
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
@@ -330,7 +341,7 @@ module MAuth
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
         # TODO: time-invariant comparison instead of #== ? 
-        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual
+        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
       end
