@@ -319,7 +319,7 @@ module MAuth
         
         original_request_uri = object.attributes_for_signing[:request_url]
         
-        # craft an expected string-to-sign with doing any percent-encoding 
+        # craft an expected string-to-sign without doing any percent-encoding 
         expected_no_reencoding = object.string_to_sign(:time => object.x_mws_time, :app_uuid => object.signature_app_uuid)
         
         # do a simple percent reencoding variant of the path
