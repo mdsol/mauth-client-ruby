@@ -205,7 +205,7 @@ describe MAuth::Client do
             request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
             signed_request = @signing_mc.signed(request)
           
-            # now that we've signed the request, image it goes to nginx where it gets percent-decoded
+            # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
             decoded_signed_request = signed_request.clone
             decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
             assert @authenticating_mc.authentic?(decoded_signed_request)
@@ -219,7 +219,7 @@ describe MAuth::Client do
             request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
             signed_request = @signing_mc.signed(request)
           
-            # now that we've signed the request, image it goes to nginx where it gets percent-decoded
+            # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
             decoded_signed_request = signed_request.clone
             decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
             assert @authenticating_mc.authentic?(decoded_signed_request)
