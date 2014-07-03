@@ -37,6 +37,13 @@ module MAuth
           builder.adapter ::Faraday.default_adapter
         end
       end
+      @persistent_headers = {}
+      if options[:headers] && options[:headers].include?(':')
+        options[:headers].split(',').each do |cur|
+          key, value = cur.split(':')
+          @persistent_headers[key] = value
+        end
+      end
     end
 
     def call(request_env)
@@ -52,7 +59,7 @@ module MAuth
           request_headers[name] = v
         end
       end
-
+      request_headers.merge!(@persistent_headers)
       if @browser_proxy
         target_uri = request_env["REQUEST_URI"]
         connection = @target_uris.any? { |u| target_uri.start_with? u} ? @signer_connection :  @unsigned_connection

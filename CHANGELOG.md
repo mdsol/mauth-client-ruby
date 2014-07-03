@@ -1,4 +1,7 @@
 # MAuth-Client History
+## v2.6.5
+- ability to pass custom headers into mauth-client and mauth-proxy
+
 ## v2.6.4
 
 - Less restrictive rack versioning to allow for more consumers.

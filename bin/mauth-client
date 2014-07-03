@@ -40,6 +40,9 @@ opt_parser = OptionParser.new do |opts|
   opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
     $options[:content_type] = v
   end
+  opts.on("-H", "--header LINE", "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value'}") do |v|
+    $options[:additional_headers] = v
+  end
   opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
     $options[:no_ssl_verify] = true
   end
@@ -223,6 +226,13 @@ else
     # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to 
     # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes. 
     headers['Content-Type'] = 'application/json'
+  end
+end
+
+if $options[:additional_headers]
+  $options[:additional_headers].split(',').each do |cur|
+    key, value = cur.split(':')
+    headers[key] = value
   end
 end
 
