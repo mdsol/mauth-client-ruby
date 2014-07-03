@@ -40,7 +40,7 @@ opt_parser = OptionParser.new do |opts|
   opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
     $options[:content_type] = v
   end
-  opts.on("-H", "--header LINE", "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value'}") do |v|
+  opts.on("-H", "--header LINE", "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value') do |v|
     $options[:additional_headers] = v
   end
   opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
