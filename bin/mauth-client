@@ -22,6 +22,8 @@ $options = {
   :color => nil,
   :no_ssl_verify => false,
 }
+
+additional_headers = []
 opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
@@ -41,11 +43,12 @@ opt_parser = OptionParser.new do |opts|
     $options[:content_type] = v
   end
   opts.on("-H", "--header LINE", "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value") do |v|
-    $options[:additional_headers] = v
+    additional_headers << v
   end
   opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
     $options[:no_ssl_verify] = true
   end
+  $options[:additional_headers] =additional_headers
 end
 opt_parser.parse!
 abort(opt_parser.help) unless (2..3).include?(ARGV.size)
@@ -230,7 +233,7 @@ else
 end
 
 if $options[:additional_headers]
-  $options[:additional_headers].split(',').each do |cur|
+  $options[:additional_headers].each do |cur|
     key, value = cur.split(':')
     headers[key] = value
   end

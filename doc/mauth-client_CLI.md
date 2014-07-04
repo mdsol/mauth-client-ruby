@@ -41,6 +41,7 @@ Usage: mauth-client [options] <verb> <url> [body]
     -t, --content-type CONTENT-TYPE  Sets the Content-Type header of the request
         --no-ssl-verify              Disables SSL verification - use cautiously!
     -H, --header Line                accepts a json string of additional headers to included. IE 'accepts: application/json'
+                                     you can add this multiple times one for each header
 ```
 
 Examples:

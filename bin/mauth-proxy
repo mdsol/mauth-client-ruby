@@ -6,13 +6,15 @@ require 'rubygems'
 require 'mauth/proxy'
 require 'rack'
 
-header = nil
+headers = []
 headers_index = ARGV.find_index('--header')
-if headers_index
-  headers = ARGV[headers_index + 1]
-  ARGV.delete('--header')
-  ARGV.delete(headers)
+while(headers_index) do
+  headers << ARGV[headers_index + 1]
+  ARGV.delete_at(headers_index + 1)
+  ARGV.delete_at(headers_index)
+  headers_index = ARGV.find_index('--header')
 end
+
 authenticate_responses = !ARGV.delete('--no-authenticate')
 browser_proxy = !(ARGV.delete('--browser_proxy').nil?)
 

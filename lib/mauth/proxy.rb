@@ -38,8 +38,8 @@ module MAuth
         end
       end
       @persistent_headers = {}
-      if options[:headers] && options[:headers].include?(':')
-        options[:headers].split(',').each do |cur|
+      if options[:headers]
+        options[:headers].each do |cur|
           key, value = cur.split(':')
           @persistent_headers[key] = value
         end
