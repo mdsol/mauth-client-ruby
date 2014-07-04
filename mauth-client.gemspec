@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   # be consumed by more apps.
   s.add_dependency 'json', '~> 1.7'
   s.add_dependency 'faraday', '~> 0.7'
-  s.add_dependency 'faraday_middleware', '~> 0.8'
+  s.add_dependency 'faraday_middleware', '~> 0.8.8'
   s.add_dependency 'term-ansicolor', '~> 1.0'
   s.add_dependency 'coderay', '~> 1.0'
   s.add_dependency 'rack'
