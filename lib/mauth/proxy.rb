@@ -41,7 +41,7 @@ module MAuth
       if options[:headers]
         options[:headers].each do |cur|
           key, value = cur.split(':')
-          @persistent_headers[key] = value
+          @persistent_headers[key.strip] = value.strip
         end
       end
     end
