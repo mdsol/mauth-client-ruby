@@ -1,6 +1,8 @@
 # MAuth-Client History
-## v2.6.5
+## v2.7.0
 - ability to pass custom headers into mauth-client and mauth-proxy
+- Upgraded to use newest version of Faraday Middleware
+- faraday_options now only get merged to the request (previously got merged into everything)
 
 ## v2.6.4
 

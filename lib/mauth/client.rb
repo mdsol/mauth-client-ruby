@@ -3,7 +3,6 @@ require 'openssl'
 require 'base64'
 require 'json'
 require 'yaml'
-
 require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/dice_bag/mauth_templates'
@@ -176,7 +175,10 @@ module MAuth
           ::Logger.new(File.open(null_device, File::WRONLY))
         end
       end
-      @config['faraday_options'] = {:timeout => 1, :open_timeout => 1}.merge(given_config['faraday_options'] || {})
+
+      request_config = {:timeout => 1, :open_timeout => 1}
+      request_config.merge!(given_config['faraday_options']) if given_config['faraday_options']
+      @config['faraday_options'] = {:request => request_config} || {}
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false 
       if given_config.key?('authenticator')
