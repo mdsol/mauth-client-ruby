@@ -40,6 +40,7 @@ module MAuth
       @persistent_headers = {}
       if options[:headers]
         options[:headers].each do |cur|
+          raise "Headers must be in the format of [key]:[value]" if not cur =~  / ?\w+ ?:[ ]*?\w+ ?/
           key, value = cur.split(':')
           @persistent_headers[key.strip] = value.strip
         end

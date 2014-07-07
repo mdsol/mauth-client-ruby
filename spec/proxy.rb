@@ -39,5 +39,12 @@ describe MAuth::Proxy do
       expect(double.headers["Content-type"]).to eq("text/jordi")
       expect(double.headers["Accepts"]).to eq("text/jordi")
     end
+
+    it 'raises an error if the header format is wrong' do
+      double = FakeConnection.new
+      Faraday.stub(:new).and_return(double)
+      expect{MAuth::Proxy.new(url, :headers => ["Content-type= text/jordi"])
+      }.to raise_error("Headers must be in the format of [key]:[value]")
+    end
   end
 end
