@@ -54,7 +54,8 @@ The `--no-authenticate` option disables response authentication from the target 
 The `--browser_proxy` option switches to browser proxy mode and is intended to be used when the proxy is used in
 conjunction with a web browser that is set to use this proxy.
 
-The `--header` option will add a consistent set of headers to every request format is "key: value". can be added multiple times
+The `--header` Accepts a [key]:[value] header definition to include, e.g. -h "Accept:application/json". 
+Can be used multiple times for multiple headers
 
 All other options are passed along to rack. Available options can be viewed by running rackup -h, and are also listed 
 below:
