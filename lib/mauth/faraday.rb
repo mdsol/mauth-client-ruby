@@ -1,10 +1,10 @@
 require 'mauth/middleware'
 require 'mauth/request_and_response'
 
-if Faraday.respond_to?(:register_middleware)
-  Faraday.register_middleware(:request,  :mauth_request_signer => proc { MAuth::Faraday::RequestSigner })
-  Faraday.register_middleware(:response, :mauth_response_authenticator => proc { MAuth::Faraday::ResponseAuthenticator })
-end
+
+Faraday::Request.register_middleware(:mauth_request_signer => proc { MAuth::Faraday::RequestSigner })
+Faraday::Response.register_middleware(:mauth_response_authenticator => proc { MAuth::Faraday::ResponseAuthenticator })
+
 
 module MAuth
   module Faraday

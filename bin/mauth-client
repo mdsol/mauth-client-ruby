@@ -22,6 +22,8 @@ $options = {
   :color => nil,
   :no_ssl_verify => false,
 }
+
+additional_headers = []
 opt_parser = OptionParser.new do |opts|
   opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
 
@@ -40,9 +42,13 @@ opt_parser = OptionParser.new do |opts|
   opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
     $options[:content_type] = v
   end
+  opts.on("-H", "--header LINE", "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value") do |v|
+    additional_headers << v
+  end
   opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
     $options[:no_ssl_verify] = true
   end
+  $options[:additional_headers] =additional_headers
 end
 opt_parser.parse!
 abort(opt_parser.help) unless (2..3).include?(ARGV.size)
@@ -223,6 +229,14 @@ else
     # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to 
     # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes. 
     headers['Content-Type'] = 'application/json'
+  end
+end
+
+if $options[:additional_headers]
+  $options[:additional_headers].each do |cur|
+    raise "Headers must be in the format of [key]:[value]" unless cur.include?(':')
+    key, throw_away ,value = cur.partition(':')
+    headers[key] = value
   end
 end
 
