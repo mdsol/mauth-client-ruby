@@ -46,5 +46,13 @@ describe MAuth::Proxy do
       expect{MAuth::Proxy.new(url, :headers => ["Content-type= text/jordi"])
       }.to raise_error("Headers must be in the format of [key]:[value]")
     end
+
+    it 'supports multiple :' do
+      double = FakeConnection.new
+      Faraday.stub(:new).and_return(double)
+      mp = MAuth::Proxy.new(url, :headers => ["Expiry-time: 3/6/1981 12:01.00"])
+      mp.call(env)
+      expect(double.headers["Expiry-time"]).to eq("3/6/1981 12:01.00")
+    end
   end
 end

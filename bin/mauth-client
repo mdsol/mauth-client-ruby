@@ -235,7 +235,7 @@ end
 if $options[:additional_headers]
   $options[:additional_headers].each do |cur|
     raise "Headers must be in the format of [key]:[value]" unless cur.include?(':')
-    key, value = cur.split(':')
+    key, throw_away ,value = cur.partition(':')
     headers[key] = value
   end
 end

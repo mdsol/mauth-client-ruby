@@ -41,7 +41,7 @@ module MAuth
       if options[:headers]
         options[:headers].each do |cur|
           raise "Headers must be in the format of [key]:[value]" unless cur.include?(':')
-          key, value = cur.split(':')
+          key, throw_away, value = cur.partition(':')
           @persistent_headers[key.strip] = value.strip
         end
       end
