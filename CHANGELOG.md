@@ -3,6 +3,7 @@
 - ability to pass custom headers into mauth-client and mauth-proxy
 - Upgraded to use newest version of Faraday Middleware
 - faraday_options now only get merged to the request (previously got merged into everything)
+- syntax highlighting in hale+json output
 
 ## v2.6.4
 
