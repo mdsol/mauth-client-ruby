@@ -14,7 +14,7 @@ module MAuth
     # (rather than switching to this fake one), as all this does is add those keys to the request env. 
     class RequestAuthenticationFaker < MAuth::Rack::RequestAuthenticator
       class << self
-        def is_authenic?
+        def is_authentic?
           @is_authentic.nil? ? true : @is_authentic
         end
         def authentic=(is_auth = true)
@@ -25,7 +25,7 @@ module MAuth
       def call(env)
         retval = if should_authenticate?(env)
           mauth_request = MAuth::Rack::Request.new(env)
-          if self.class.is_authenic?
+          if self.class.is_authentic?
             @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
           else
             response_for_inauthentic_request(env)
