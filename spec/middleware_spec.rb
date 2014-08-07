@@ -75,14 +75,51 @@ describe MAuth::Rack::RequestAuthenticationFaker do
     @res = [200, {}, ['hello world']]
     @rack_app = proc{|env| @res }
   end
-  it 'does not call check authenticity for any request' do
+  
+  it 'does not call check authenticity for any request by default' do
     mw = described_class.new(@rack_app)
     env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
     mw.mauth_client.should_not_receive(:authentic?)
     @rack_app.should_receive(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(@res)
     status, headers, body = mw.call(env)
-    expect(200).to eq(status)
-    expect(['hello world']).to eq(body)
+    expect(status).to eq(200)
+    expect(body).to eq(['hello world'])
+  end
+  
+  it 'calls the app when the request is set to be authentic' do
+    described_class.authentic = true    
+    mw = described_class.new(@rack_app)
+    env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+    @rack_app.stub(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(@res)
+    status, headers, body = mw.call(env)
+    expect(status).to eq(200)
+    expect(body).to eq(['hello world'])
+  end
+  
+  it 'does not call the app when the request is set to be inauthentic' do
+    described_class.authentic = false    
+    mw = described_class.new(@rack_app)
+    env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+    status, headers, body = mw.call(env)
+    @rack_app.should_not_receive(:call)
+  end
+  
+  it 'returns appropriate responses when the request is set to be inauthentic' do
+    described_class.authentic = false    
+    mw = described_class.new(@rack_app)
+    env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+    status, headers, body = mw.call(env)
+    expect(status).to eq(401)
+  end
+
+  it 'after an inauthentic request, the next request is authentic by default' do
+    described_class.authentic = false    
+    mw = described_class.new(@rack_app)
+    env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+    status, headers, body = mw.call(env)
+    expect(status).to eq(401)
+    status, headers, body = mw.call(env)
+    expect(status).to eq(200)
   end
 end
 
