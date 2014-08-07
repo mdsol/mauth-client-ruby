@@ -2,22 +2,44 @@ require 'mauth/rack'
 
 module MAuth
   module Rack
-    # this middleware bypasses actual authentication (it does not invoke mauth_client.authentic?) and 
-    # calls the app, claiming that the request was authenticated. this is for testing environments where 
-    # you do not wish to rely on a mauth service for making requests.
+    # This middleware bypasses actual authentication (it does not invoke mauth_client.authentic?).  It 
+    # instead uses a class attr method (is_authenic?) to determine if the request should be deemed authentic or not. 
+    # Requests are authentic by default and RequestAuthenticationFaker.authentic = false must be called
+    # BEFORE EACH REQUEST in order to make a request inauthentic.
+    # 
+    # This is for testing environments where you do not wish to rely on a mauth service for making requests.
     #
-    # note that if your application does not use env['mauth.app_uuid'] or env['mauth.authentic'] then it 
+    # Note that if your application does not use env['mauth.app_uuid'] or env['mauth.authentic'] then it 
     # may be simpler to simply omit the request authentication middleware entirely in your test environment 
     # (rather than switching to this fake one), as all this does is add those keys to the request env. 
     class RequestAuthenticationFaker < MAuth::Rack::RequestAuthenticator
+      class << self
+        def is_authenic?
+          @is_authentic.nil? ? true : @is_authentic
+        end
+        def authentic=(is_auth = true)
+          @is_authentic = is_auth
+        end
+      end  
+      
       def call(env)
-        if should_authenticate?(env)
+        retval = if should_authenticate?(env)
           mauth_request = MAuth::Rack::Request.new(env)
-          @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
+          if self.class.is_authenic?
+            @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
+          else
+            response_for_inauthentic_request(env)
+          end
         else
           @app.call(env)
         end
+        
+        # ensure that the next request is marked authenic unless the consumer of this middleware explicitly deems otherwise
+        self.class.authentic = true
+        
+        retval
       end
+      
     end
   end
 end
