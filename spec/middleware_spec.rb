@@ -82,8 +82,8 @@ describe MAuth::Rack::RequestAuthenticationFaker do
     mw.mauth_client.should_not_receive(:authentic?)
     @rack_app.should_receive(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(@res)
     status, headers, body = mw.call(env)
-    expect(200).to eq(status)
-    expect(['hello world']).to eq(body)
+    expect(status).to eq(200)
+    expect(body).to eq(['hello world'])
   end
   
   it 'calls the app when the request is set to be authentic' do
@@ -92,8 +92,8 @@ describe MAuth::Rack::RequestAuthenticationFaker do
     env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
     @rack_app.stub(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(@res)
     status, headers, body = mw.call(env)
-    expect(200).to eq(status)
-    expect(['hello world']).to eq(body)
+    expect(status).to eq(200)
+    expect(body).to eq(['hello world'])
   end
   
   it 'does not call the app when the request is set to be inauthentic' do
@@ -109,7 +109,7 @@ describe MAuth::Rack::RequestAuthenticationFaker do
     mw = described_class.new(@rack_app)
     env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
     status, headers, body = mw.call(env)
-    expect(401).to eq(status)
+    expect(status).to eq(401)
   end
 
   it 'after an inauthentic request, the next request is authentic by default' do
@@ -117,9 +117,9 @@ describe MAuth::Rack::RequestAuthenticationFaker do
     mw = described_class.new(@rack_app)
     env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
     status, headers, body = mw.call(env)
-    expect(401).to eq(status)
+    expect(status).to eq(401)
     status, headers, body = mw.call(env)
-    expect(200).to eq(status)
+    expect(status).to eq(200)
   end
 end
 
