@@ -179,6 +179,7 @@ module MAuth
       request_config = {:timeout => 1, :open_timeout => 1}
       request_config.merge!(given_config['faraday_options']) if given_config['faraday_options']
       @config['faraday_options'] = {:request => request_config} || {}
+      @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false 
       if given_config.key?('authenticator')
@@ -212,6 +213,9 @@ module MAuth
     end
     def faraday_options
       @config['faraday_options']
+    end
+    def ssl_certs_path
+      @config['ssl_certs_path']
     end
     def assert_private_key(err)
       unless private_key
@@ -404,6 +408,7 @@ module MAuth
         def signed_mauth_connection
           require 'faraday'
           require 'mauth/faraday'
+          @mauth_client.faraday_options.merge!(ssl: { ca_path: @mauth_client.ssl_certs_path }) if @mauth_client.ssl_certs_path
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
