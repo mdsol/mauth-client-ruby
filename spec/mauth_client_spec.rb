@@ -189,7 +189,7 @@ describe MAuth::Client do
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
           signed_request.stub(:signature_app_uuid).and_return(nil)
           @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator")
-          expect{ @authenticating_mc.authentic?(signed_request) }.to raise_error(MAuth::UnableToSignError)
+          @authenticating_mc.authentic?(signed_request) rescue nil
         end
       end
     end
