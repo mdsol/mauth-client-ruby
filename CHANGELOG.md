@@ -1,4 +1,8 @@
 # MAuth-Client History
+## v2.7.2
+
+- Added logging of mauth app_uuid of requester and requestee on each request
+
 ## v2.7.0
 - ability to pass custom headers into mauth-client and mauth-proxy
 - Upgraded to use newest version of Faraday Middleware

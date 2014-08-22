@@ -261,6 +261,7 @@ module MAuth
       # takes an incoming request or response object, and returns whether 
       # the object is authentic according to its signature. 
       def authentic?(object)
+        log_authentication_request(object)
         begin
           authenticate!(object)
           true
@@ -286,6 +287,14 @@ module MAuth
       end
 
       private
+      # Note:  This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
+      def log_authentication_request(object)
+        object_app_uuid = object.signature_app_uuid || '[none provided]'
+        logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}"
+      rescue # don't let a failed attempt to log disrupt the rest of the action
+        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{$!}"
+      end
+      
       def authentication_present!(object)
         if object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/
           raise InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
