@@ -171,6 +171,27 @@ describe MAuth::Client do
         signed_request = @signing_mc.signed(request)
         expect{ @authenticating_mc.authentic?(signed_request) }.to raise_error(MAuth::UnableToAuthenticateError)
       end
+      
+      describe 'logging requester and requestee' do
+        before do
+          @authenticating_mc.stub(:client_app_uuid).and_return('authenticator')
+        end
+        
+        it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
+          request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+          signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
+          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator")
+          @authenticating_mc.authentic?(signed_request)
+        end
+        
+        it 'says when the mauth app uuid is not provided in the request' do
+          request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+          signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
+          signed_request.stub(:signature_app_uuid).and_return(nil)
+          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator")
+          expect{ @authenticating_mc.authentic?(signed_request) }.to raise_error(MAuth::UnableToSignError)
+        end
+      end
     end
 
     describe MAuth::Client::LocalAuthenticator do
