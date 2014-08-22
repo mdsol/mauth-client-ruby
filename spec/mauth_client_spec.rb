@@ -180,7 +180,7 @@ describe MAuth::Client do
         it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
-          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator")
+          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator.")
           @authenticating_mc.authentic?(signed_request)
         end
         
@@ -188,7 +188,7 @@ describe MAuth::Client do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
           signed_request.stub(:signature_app_uuid).and_return(nil)
-          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator")
+          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator.")
           @authenticating_mc.authentic?(signed_request) rescue nil
         end
         

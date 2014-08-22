@@ -290,7 +290,7 @@ module MAuth
       # Note:  This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
-        logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}"
+        logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}."
       rescue # don't let a failed attempt to log disrupt the rest of the action
         logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{$!}"
       end
