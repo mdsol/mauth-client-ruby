@@ -292,7 +292,7 @@ module MAuth
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}"
       rescue # don't let a failed attempt to log disrupt the rest of the action
-        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because {$!}"
+        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{$!}"
       end
       
       def authentication_present!(object)

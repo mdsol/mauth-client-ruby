@@ -191,6 +191,14 @@ describe MAuth::Client do
           @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator")
           @authenticating_mc.authentic?(signed_request) rescue nil
         end
+        
+        it 'logs an error when trying to log but getting an exception instead' do
+          request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
+          signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
+          signed_request.stub(:signature_app_uuid).and_raise('uh oh')
+          @authenticating_mc.logger.should_receive(:error).with("Mauth-client failed to log information about its attempts to authenticate the current request because uh oh")
+          @authenticating_mc.authentic?(signed_request) rescue nil
+        end
       end
     end
 
