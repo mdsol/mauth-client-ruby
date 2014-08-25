@@ -55,6 +55,14 @@ describe MAuth::Client do
       end
     end
 
+    it 'initializes with ssl_cert_path' do
+      ssl_certs_path = 'ssl/certs/path'
+      [{:ssl_certs_path => ssl_certs_path}, {'ssl_certs_path' => ssl_certs_path}].each do |config|
+        mc = MAuth::Client.new(config)
+        expect(ssl_certs_path).to eq(mc.ssl_certs_path)
+      end
+    end
+
     it 'initializes with private key' do
       key = OpenSSL::PKey::RSA.generate(2048)
       [{:private_key => key}, {'private_key' => key}, {:private_key => key.to_s}, {'private_key' => key.to_s}].each do |config|
