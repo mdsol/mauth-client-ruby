@@ -174,7 +174,7 @@ class FaradayCurlVOutputter < FaradayOutputter
     :html => ['text/html'],
     :java => [],
     :java_script => ['application/javascript', 'text/javascript', 'application/x-javascript'],
-    :json => ['application/json', 'application/vnd.hale+json'],
+    :json => ['application/json', %r(\Aapplication/.*\+json\z)],
     :php => [],
     :python => ['text/x-python'],
     :ruby => [],
