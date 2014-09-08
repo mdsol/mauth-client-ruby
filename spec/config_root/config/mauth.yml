@@ -6,3 +6,7 @@ production:
   mauth_baseurl: https://mauth.imedidata.com
   mauth_api_version: v1
   app_uuid: NORMAL-PRODUCTION
+test:
+  mauth_baseurl: https://mauth.imedidata.com
+  mauth_api_version: v1
+  app_uuid: NORMAL-DEVELOPMENT

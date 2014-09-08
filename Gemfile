@@ -15,4 +15,5 @@ platform :mri_18 do
   gem 'rcov'
 end
 gem 'shamus', :git => 'git@github.com:mdsol/shamus.git', :tag => '0.9.5'
+gem 'kender', '~> 0.2.5'
 gem 'nokogiri'
