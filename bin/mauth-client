@@ -174,7 +174,7 @@ class FaradayCurlVOutputter < FaradayOutputter
     :html => ['text/html'],
     :java => [],
     :java_script => ['application/javascript', 'text/javascript', 'application/x-javascript'],
-    :json => ['application/json', 'application/vnd.hale+json'],
+    :json => ['application/json', %r(\Aapplication/.*\+json\z)],
     :php => [],
     :python => ['text/x-python'],
     :ruby => [],
@@ -193,6 +193,13 @@ class FaradayCurlVOutputter < FaradayOutputter
       coderay_scanner = CodeRayForMediaTypes.reject{|k,v| !v.any?{|type| type === media_type} }.keys.first
       if coderay_scanner
         require 'coderay'
+        if coderay_scanner == :json
+          body = begin
+            JSON.pretty_generate(JSON.parse(body))
+          rescue JSON::ParserError
+            body
+          end
+        end
         body = CodeRay.scan(body, coderay_scanner).encode(:terminal)
       end
     end
