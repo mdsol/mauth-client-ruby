@@ -1,7 +1,7 @@
 # MAuth-Client History
-## 1-1-stable
+## 2-8-stable
 
-- Added an ssl_certs_path options to support JRuby applications
+- Added an ssl_certs_path option to support JRuby applications
 
 ## v2.7.2
 
