@@ -1,4 +1,8 @@
 # MAuth-Client History
+## 2-8-stable
+
+- Added an ssl_certs_path option to support JRuby applications
+
 ## v2.7.2
 
 - Added logging of mauth app_uuid of requester and requestee on each request
