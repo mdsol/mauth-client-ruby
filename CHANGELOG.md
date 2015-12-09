@@ -2,6 +2,7 @@
 ## 2-8-stable
 
 - Added an ssl_certs_path option to support JRuby applications
+- Updated dice templates to ensure `rake config` raises an error in production env if required variables are missing.
 
 ## v2.7.2
 

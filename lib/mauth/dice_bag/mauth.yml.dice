@@ -1,7 +1,9 @@
+<%= warning.as_yaml_comment %>
+
 common: &common
-  mauth_baseurl: <%= configured.mauth_base_url || 'http://localhost:7000' %>
+  mauth_baseurl: <%= configured.mauth_base_url! || 'http://localhost:7000' %>
   mauth_api_version: v1
-  app_uuid: <%= configured.mauth_app_uuid || 'fb17460e-9868-11e1-8399-0090f5ccb4d3' %>
+  app_uuid: <%= configured.mauth_app_uuid! || 'fb17460e-9868-11e1-8399-0090f5ccb4d3' %>
   private_key_file: config/mauth_key
 
 production:
