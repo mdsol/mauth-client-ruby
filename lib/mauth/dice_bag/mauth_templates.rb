@@ -7,3 +7,13 @@ class MauthTemplate < DiceBag::AvailableTemplates
     end
   end
 end
+
+class MauthInitializerTemplate < DiceBag::AvailableTemplates
+  def templates_location
+    'config/initializers'
+  end
+
+  def templates
+    [File.join(File.dirname(__FILE__), 'mauth.rb.dice')] if Object.const_defined?('Rails')
+  end
+end
