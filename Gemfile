@@ -1,19 +1,17 @@
-source "http://rubygems.org"
-gemspec
+source 'https://rubygems.org'
 
-gem 'debugger'
-gem 'uuidtools'
-gem 'rake'
-gem 'rspec', '~> 2.13.0'
-gem 'timecop', '~> 0.3.5'
-gem 'rack-test'
-platform :mri_19 do
-  gem 'simplecov'
-  gem 'simplecov-gem-adapter'
+group :test do
+  gem 'uuidtools'
+  gem 'rack-test'
+
+  gem 'shamus', git: 'git@github.com:mdsol/shamus.git', tag: '0.11.2'
+  gem 'kender', '~> 0.2.5'
+  gem 'nokogiri'
+
+  gem 'byebug'
+  gem 'simplecov', '~> 0.10.0'
+  gem 'timecop', '~> 0.8.0'
 end
-platform :mri_18 do
-  gem 'rcov'
-end
-gem 'shamus', :git => 'git@github.com:mdsol/shamus.git', :tag => '0.9.5'
-gem 'kender', '~> 0.2.5'
-gem 'nokogiri'
+
+# Specify your gem's dependencies in mauth-client.gemspec
+gemspec

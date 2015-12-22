@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'mauth/client'
+require 'spec_helper'
 require 'faraday'
 
 describe MAuth::Client do
@@ -20,9 +19,9 @@ describe MAuth::Client do
         mc = MAuth::Client.new(config_key.to_s => value)
         # check the accessor method
         expect(value).to eq(mc.send(config_key))
-        # set with a symbol 
+        # set with a symbol
         mc = MAuth::Client.new(config_key.to_s => value)
-        # check the accossor method 
+        # check the accossor method
         expect(value).to eq(mc.send(config_key))
       end
     end
@@ -41,8 +40,8 @@ describe MAuth::Client do
       def (::Rails).logger
         nil
       end
-      logger = mock('logger')
-      ::Logger.stub(:new).with(anything).and_return(logger)
+      logger = double('logger')
+      allow(::Logger).to receive(:new).with(anything).and_return(logger)
       expect(logger).to eq(MAuth::Client.new.logger)
       Object.send(:remove_const, 'Rails')
     end
@@ -67,7 +66,7 @@ describe MAuth::Client do
       key = OpenSSL::PKey::RSA.generate(2048)
       [{:private_key => key}, {'private_key' => key}, {:private_key => key.to_s}, {'private_key' => key.to_s}].each do |config|
         mc = MAuth::Client.new(config)
-        # can't directly compare the OpenSSL::PKey::RSA instances 
+        # can't directly compare the OpenSSL::PKey::RSA instances
         expect(key.class).to eq(mc.private_key.class)
         expect(key.to_s).to eq(mc.private_key.to_s)
       end
@@ -129,7 +128,7 @@ describe MAuth::Client do
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i + time_offset)
           message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
           if authentic
-            expect(@authenticating_mc.authentic?(signed_request)).to be_true, message
+            expect(@authenticating_mc.authentic?(signed_request)).to be_truthy, message
           else
             expect {@authenticating_mc.authenticate!(signed_request)}.to(
               raise_error(MAuth::InauthenticError, /Time verification failed for .*\. .* not within 300 of/), message)
@@ -164,47 +163,47 @@ describe MAuth::Client do
       end
       [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
         it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
-          @test_faraday.stub(:get).and_raise(error_klass.new(''))
-          @test_faraday.stub(:post).and_raise(error_klass.new(''))
+          allow(@test_faraday).to receive(:get).and_raise(error_klass.new(''))
+          allow(@test_faraday).to receive(:post).and_raise(error_klass.new(''))
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
           expect{@authenticating_mc.authentic?(signed_request)}.to raise_error(MAuth::UnableToAuthenticateError)
         end
       end
       it "raises UnableToAuthenticate if mauth errors" do
-        @stubs.instance_eval{ @stack.clear } #HAX 
-        @stubs.get("/mauth/v1/security_tokens/#{@app_uuid}.json") { [500, {}, []] } # for the local authenticator 
-        @stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator 
+        @stubs.instance_eval{ @stack.clear } #HAX
+        @stubs.get("/mauth/v1/security_tokens/#{@app_uuid}.json") { [500, {}, []] } # for the local authenticator
+        @stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator
         request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
         signed_request = @signing_mc.signed(request)
         expect{ @authenticating_mc.authentic?(signed_request) }.to raise_error(MAuth::UnableToAuthenticateError)
       end
-      
+
       describe 'logging requester and requestee' do
         before do
-          @authenticating_mc.stub(:client_app_uuid).and_return('authenticator')
+          allow(@authenticating_mc).to receive(:client_app_uuid).and_return('authenticator')
         end
-        
+
         it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
-          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator.")
+          expect(@authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator.")
           @authenticating_mc.authentic?(signed_request)
         end
-        
+
         it 'says when the mauth app uuid is not provided in the request' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
-          signed_request.stub(:signature_app_uuid).and_return(nil)
-          @authenticating_mc.logger.should_receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator.")
+          allow(signed_request).to receive(:signature_app_uuid).and_return(nil)
+          expect(@authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator.")
           @authenticating_mc.authentic?(signed_request) rescue nil
         end
-        
+
         it 'logs an error when trying to log but getting an exception instead' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
-          signed_request.stub(:signature_app_uuid).and_raise('uh oh')
-          @authenticating_mc.logger.should_receive(:error).with("Mauth-client failed to log information about its attempts to authenticate the current request because uh oh")
+          allow(signed_request).to receive(:signature_app_uuid).and_raise('uh oh')
+          expect(@authenticating_mc.logger).to receive(:error).with("Mauth-client failed to log information about its attempts to authenticate the current request because uh oh")
           @authenticating_mc.authentic?(signed_request) rescue nil
         end
       end
@@ -222,17 +221,17 @@ describe MAuth::Client do
               stub.get("/mauth/v1/security_tokens/#{@app_uuid}.json") { [200, {}, JSON.generate({'security_token' => {'public_key_str' => @signing_key.public_key.to_s}})] }
             end
           end
-          ::Faraday.stub(:new).and_return(@test_faraday)
+          allow(::Faraday).to receive(:new).and_return(@test_faraday)
         end
         include_examples MAuth::Client::Authenticator
         it 'considers an authentically-signed request to be authentic' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
-          expect(@authenticating_mc.authentic?(signed_request)).to be_true
+          expect(@authenticating_mc.authentic?(signed_request)).to be_truthy
         end
-        # Note:  We need this feature because some web servers (e.g. nginx) unescape 
+        # Note:  We need this feature because some web servers (e.g. nginx) unescape
         # URIs in PATH_INFO before sending them along to the served applications.  This added to the
-        # fact that Euresource percent-encodes just about everything in the path except '/' leads to 
+        # fact that Euresource percent-encodes just about everything in the path except '/' leads to
         # this somewhat odd test.
         it "considers a request to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
           ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
@@ -240,25 +239,25 @@ describe MAuth::Client do
             signed_path = CGI.escape(path).gsub!('%2F','/') # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
             request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
             signed_request = @signing_mc.signed(request)
-          
+
             # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
             decoded_signed_request = signed_request.clone
             decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-            expect(@authenticating_mc.authentic?(decoded_signed_request)).to be_true
+            expect(@authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
           end
         end
-        # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded 
+        # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded
         it "considers a request to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
           ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
             # imagine what are on the requester's side now...
             signed_path = CGI.escape(path)
             request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
             signed_request = @signing_mc.signed(request)
-          
+
             # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
             decoded_signed_request = signed_request.clone
             decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-            expect(@authenticating_mc.authentic?(decoded_signed_request)).to be_true
+            expect(@authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
           end
         end
         it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
@@ -266,19 +265,19 @@ describe MAuth::Client do
           signing_mc = MAuth::Client.new(:private_key => @signing_key, :app_uuid => 'nope')
           @stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
           signed_request = signing_mc.signed(request)
-          expect(@authenticating_mc.authentic?(signed_request)).to be_false
+          expect(@authenticating_mc.authentic?(signed_request)).to be_falsey
         end
         it "considers a request with a bad signature to be inauthentic" do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
           signed_request.headers['X-MWS-Authentication'] = "MWS #{@app_uuid}:wat"
-          expect(@authenticating_mc.authentic?(signed_request)).to be_false
+          expect(@authenticating_mc.authentic?(signed_request)).to be_falsey
         end
         it "considers a request that has been tampered with to be inauthentic" do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
           signed_request.attributes_for_signing[:verb] = 'DELETE'
-          expect(@authenticating_mc.authentic?(signed_request)).to be_false
+          expect(@authenticating_mc.authentic?(signed_request)).to be_falsey
         end
       end
     end
@@ -294,20 +293,20 @@ describe MAuth::Client do
             builder.adapter(:test, stubs)
           end
           @stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }
-          ::Faraday.stub(:new).and_return(@test_faraday)
+          allow(::Faraday).to receive(:new).and_return(@test_faraday)
         end
         include_examples MAuth::Client::Authenticator
         it 'considers a request to be authentic if mauth reports it so' do
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
-          expect(@authenticating_mc.authentic?(signed_request)).to be_true
+          expect(@authenticating_mc.authentic?(signed_request)).to be_truthy
         end
         it 'considers a request to be inauthentic if mauth reports it so' do
-          @stubs.instance_eval{ @stack.clear } #HAX 
+          @stubs.instance_eval{ @stack.clear } #HAX
           @stubs.post('/mauth/v1/authentication_tickets.json') { [412, {}, []] }
           request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
           signed_request = @signing_mc.signed(request)
-          expect(@authenticating_mc.authentic?(signed_request)).to be_false
+          expect(@authenticating_mc.authentic?(signed_request)).to be_falsey
         end
       end
     end
