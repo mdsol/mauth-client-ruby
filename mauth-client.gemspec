@@ -19,13 +19,16 @@ Gem::Specification.new do |s|
   s.bindir = 'bin'
   s.executables = ['mauth-client', 'mauth-proxy']
 
-  # TODO:  remove or attenuate version dependencies wherever possible so mauth-client can 
+  # TODO:  remove or attenuate version dependencies wherever possible so mauth-client can
   # be consumed by more apps.
-  s.add_dependency 'json', '~> 1.7'
   s.add_dependency 'faraday', '~> 0.7'
   s.add_dependency 'faraday_middleware', '~> 0.9'
   s.add_dependency 'term-ansicolor', '~> 1.0'
   s.add_dependency 'coderay', '~> 1.0'
   s.add_dependency 'rack'
   s.add_dependency 'dice_bag', '>= 0.9', '< 2.0'
+
+  s.add_development_dependency 'bundler', '~> 1.10'
+  s.add_development_dependency 'rake', '~> 10.0'
+  s.add_development_dependency 'rspec', '~> 3.4.0'
 end

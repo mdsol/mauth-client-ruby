@@ -1,23 +1,10 @@
-require 'rubygems'
-require 'bundler'
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
 require 'kender/tasks'
 
-begin
-  Bundler.setup(:default, :development)
-rescue Bundler::BundlerError => e
-  $stderr.puts e.message
-  $stderr.puts "Run `bundle install` to install missing gems"
-  exit e.status_code
-end
-require 'rake'
+RSpec::Core::RakeTask.new(:rspec)
 
-task :default => :test
-
-namespace :test do
-  require 'rspec/core/rake_task'
-  RSpec::Core::RakeTask.new(:rspec)
-end
-task :test => 'test:rspec'
+task default: :spec
 
 task :shamus do
   STDOUT.puts 'Generating validation documents'

@@ -58,8 +58,8 @@ describe 'Local Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'GET')
       get '/'
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if POST request is properly signed" do
@@ -67,8 +67,8 @@ describe 'Local Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'POST', :body => 'blah')
       post '/', "blah"
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if PUT request is properly signed" do
@@ -76,8 +76,8 @@ describe 'Local Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'PUT', :body => 'blah')
       put '/', "blah"
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if DELETE request is properly signed" do
@@ -85,8 +85,8 @@ describe 'Local Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'DELETE')
       delete '/'
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
 
     it "should return 200 if DELETE request with a body is properly signed" do
@@ -94,8 +94,8 @@ describe 'Local Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'DELETE', :body => 'go away')
       delete '/', 'go away'
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
   end
   
@@ -103,7 +103,7 @@ describe 'Local Authentication with Rack-Mauth' do
     it "should return 401 if incorrect signature" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'GETTY')
       get '/'
-      last_response.status.should == 401
+      expect(last_response.status).to eq(401)
     end
     
     it "should return 401 if client's app_uuid is unknown to MAuth" do
@@ -116,7 +116,7 @@ describe 'Local Authentication with Rack-Mauth' do
       )
       merge_signed_headers(bad_app_mauth_client, :request_url => '/', :verb => 'GET')
       get '/'
-      last_response.status.should == 401
+      expect(last_response.status).to eq(401)
     end
     
   end
@@ -124,20 +124,20 @@ describe 'Local Authentication with Rack-Mauth' do
   describe "MAuth is down" do
     it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
       begin
-        ::Faraday.stub_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday
+        allow(::Faraday).to receive_message_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday
         merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
         get '/'
-        last_response.status.should == 500
+        expect(last_response.status).to eq(500)
       end
     end
     
     it "should return 200 if MAuth is not responding but public key for app has already been cached by rack-mauth" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
-      ::Faraday.stub_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+      allow(::Faraday).to receive_message_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
-      last_response.status.should == 200
+      expect(last_response.status).to eq(200)
     end
   end
 end
@@ -163,8 +163,8 @@ describe 'Remote Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if POST request is properly signed" do
@@ -172,8 +172,8 @@ describe 'Remote Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "POST", :body => "blah")
       post '/', "blah"
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if PUT request is properly signed" do
@@ -181,8 +181,8 @@ describe 'Remote Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "PUT", :body => "blah")
       put '/', "blah"
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
     
     it "should return 200 if DELETE request is properly signed" do
@@ -190,8 +190,8 @@ describe 'Remote Authentication with Rack-Mauth' do
       #This is not the normal state of affairs
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "DELETE")
       delete '/'
-      last_response.should be_ok
-      last_response.body.should == 'Hello World'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq('Hello World')
     end
   end
   
@@ -199,7 +199,7 @@ describe 'Remote Authentication with Rack-Mauth' do
     it "should return 401 if incorrect signature" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GETTY")
       get '/'
-      last_response.status.should == 401
+      expect(last_response.status).to eq(401)
     end
     
     it "should return 401 if client's app_uuid is unknown to MAuth" do
@@ -212,17 +212,17 @@ describe 'Remote Authentication with Rack-Mauth' do
       )
       merge_signed_headers(bad_app_mauth_client, :request_url => '/', :verb => 'GET')
       get '/'
-      last_response.status.should == 401
+      expect(last_response.status).to eq(401)
     end
   end
   
   describe "MAuth is down" do
     it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
       begin
-        ::Faraday.stub_chain(:new, :post).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+        allow(::Faraday).to receive_message_chain(:new, :post).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
         merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
         get '/'
-        last_response.status.should == 500
+        expect(last_response.status).to eq(500)
       end
     end
   end

@@ -1,4 +1,11 @@
 # MAuth-Client History
+
+## v3.0.0
+- drop support for ruby 1.x
+
+## v2.9.0
+- add a dice template for mauth initializer
+
 ## 2-8-stable
 
 - Added an ssl_certs_path option to support JRuby applications
