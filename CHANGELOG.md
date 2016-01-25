@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v3.0.2
+- always pass a private key to the `ensure_is_private_key` method
+
 ## v3.0.1
 - use `ensure_is_private_key` in the `mauth_key` template
 
