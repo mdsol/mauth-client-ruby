@@ -1,9 +1,13 @@
 # Generated lovingly by hand
 # -*- encoding: utf-8 -*-
+lib = File.expand_path('../lib/', __FILE__)
+$:.unshift lib unless $:.include?(lib)
+
+require 'mauth/version'
 
 Gem::Specification.new do |s|
   s.name = %q{mauth-client}
-  s.version = File.read('VERSION').chomp
+  s.version = MAuth::VERSION
 
   s.authors = ["Matthew Szenher", "Aaron Suggs", "Geoffrey Ducharme", "Ethan"]
   s.summary = %q{Sign and authenticate requests and responses with mAuth authentication.}

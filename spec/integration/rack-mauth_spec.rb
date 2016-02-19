@@ -17,10 +17,8 @@ PRIVATE_KEY = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2GhmijLqVmuT2D7H
 PUBLIC_KEY = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA2GhmijLqVmuT2D7H0wLfq4LIJ6fpHMyl5Tz1mytNz4/pa0fIzxab\nMDBpC9hhLkzNUPoOFcI9Cz2aEIW+HHqkxCcifmqXEF5MlQz1OHJYKKFXvEPuWNlI\nLCtCiRosw5xwZDrVntufPhsUWTTiHpG9VHdK79VnUVD65yA8f9ma9Gwsx9/ARpet\nEpzttm+183nY6adGytmK32F8l58DmGyV5lGHcouyhddMwLD2VDJm6hlMqlN7Jrn7\nYdzcHCWrUUkan7zwlS/d/AGN9gjFHKa6dJvyTAONTD4s2SHNifhv79eeu1AzNlTI\nb9X0ZgRPPRh/6NfVLsmj6ScVloW2Bf7VHQIDAQAB\n-----END RSA PUBLIC KEY-----\n"
 
 require 'logger'
-require 'fileutils'
-logdir = MAuth::Client.root, 'log'
-FileUtils.mkdir_p logdir
-TESTLOG = ::Logger.new(File.open(File.join(logdir, 'test.log'), 'w').tap{|f| f.sync=true })
+require 'tempfile'
+TESTLOG = ::Logger.new(File.open(Tempfile.new('mauth_test_log').tap{ |f| f.sync=true }))
 
 TEST_MAUTH_CLIENT = MAuth::Client.new(
   :mauth_baseurl => MAUTH_BASE_URL,
