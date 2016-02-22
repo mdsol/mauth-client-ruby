@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v3.1.0
+- Updated `mauth.rb.dice` template to use `MAuth::Client.default_config` method and store the config in `MAUTH_CONF` constant
+
 ## v3.0.2
 - always pass a private key to the `ensure_is_private_key` method
 

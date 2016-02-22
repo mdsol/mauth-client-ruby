@@ -1,18 +1,12 @@
 <%= warning.as_yaml_comment %>
 
-mauth_yaml_file = File.join(Rails.root, 'config/mauth.yml')
-if File.exist?(mauth_yaml_file)
-  config = Rails.application.config
-  mauth_conf = YAML.load_file(mauth_yaml_file)[Rails.env]
-  require 'mauth/rack'
-  # ResponseSigner OPTIONAL; only use if you are registered in mauth service
-  config.middleware.use MAuth::Rack::ResponseSigner, mauth_conf
-  if Rails.env.test? || Rails.env.development?
-    require 'mauth/fake/rack'
-    config.middleware.use MAuth::Rack::RequestAuthenticationFaker, mauth_conf
-  else
-    config.middleware.use MAuth::Rack::RequestAuthenticatorNoAppStatus, mauth_conf
-  end
-elsif Rails.env.production?
-  raise IOError.new("mauth-client must be enabled and configured in production")
+MAUTH_CONF = MAuth::Client.default_config
+require 'mauth/rack'
+# ResponseSigner OPTIONAL; only use if you are registered in mauth service
+Rails.application.config.middleware.insert_after Rack::Runtime, MAuth::Rack::ResponseSigner, MAUTH_CONF
+if Rails.env.test? || Rails.env.development?
+  require 'mauth/fake/rack'
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticationFaker, MAUTH_CONF
+else
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticatorNoAppStatus, MAUTH_CONF
 end
