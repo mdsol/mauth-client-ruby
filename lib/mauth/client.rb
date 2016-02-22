@@ -10,17 +10,6 @@ require 'mauth/dice_bag/mauth_templates'
 module MAuth
   class Client
     class << self
-      # the root of the MAuth-Client library 
-      def root
-        File.expand_path('../..', File.dirname(__FILE__))
-      end
-
-      # the MAuth::Client library's current version 
-      def version
-        version_file = File.join(root, 'VERSION')
-        File.exists?(version_file) ? File.read(version_file).chomp : "?"
-      end
-
       # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in 
       # standard places. all of which is overridable by options in case some defaults do not apply. 
       #

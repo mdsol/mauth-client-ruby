@@ -72,7 +72,7 @@ module MAuth
         @agent_base = agent_base
       end
       def call(request_env)
-        agent = "#{@agent_base} (MAuth-Client: #{MAuth::Client.version}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+        agent = "#{@agent_base} (MAuth-Client: #{MAuth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
         request_env[:request_headers]['User-Agent'] ||= agent
         @app.call(request_env)
       end
