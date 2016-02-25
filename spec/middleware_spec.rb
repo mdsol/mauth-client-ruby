@@ -175,3 +175,22 @@ describe MAuth::Faraday::RequestSigner do
     end
   end
 end
+
+describe MAuth::Faraday::MAuthClientUserAgent do
+  class FakeApp
+    def call(env)
+    end
+  end
+  let(:agent_base) { 'Sallust' }
+  let(:app) { FakeApp.new }
+  let(:middleware) { described_class.new(app, agent_base) }
+
+  it 'sets the User-Agent request header' do
+    request_headers = {}
+    request_env = {}
+    request_env[:request_headers] = request_headers
+    middleware.call(request_env)
+    expected = "#{agent_base} (MAuth-Client: #{MAuth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+    expect(request_headers['User-Agent']).to eq(expected)
+  end
+end

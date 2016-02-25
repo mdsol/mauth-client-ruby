@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v3.1.1
+- Properly require version file. Solves exception with the Faraday middleware.
+
 ## v3.1.0
 - Updated `mauth.rb.dice` template to use `MAuth::Client.default_config` method and store the config in `MAUTH_CONF` constant
 
