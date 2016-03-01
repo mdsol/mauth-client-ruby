@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v3.1.2
+- Fixed bug in Faraday call, not to raise exception when adding authenticate information to response.
+
 ## v3.1.1
 - Properly require version file. Solves exception with the Faraday middleware.
 
