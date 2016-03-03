@@ -132,7 +132,11 @@ describe MAuth::Faraday::ResponseAuthenticator do
     @faraday_app = proc do |env|
       res = Object.new
       def res.on_complete
-        yield({:status => 200, :response_headers => {'x-mws-authentication' => 'MWS foo:bar'}, :body => 'hello world'})
+        response_env = Faraday::Env.new
+        response_env[:status] = 200
+        response_env[:response_headers] = { 'x-mws-authentication' => 'MWS foo:bar' }
+        response_env[:body] = 'hello world'
+        yield(response_env)
       end
       res
     end
