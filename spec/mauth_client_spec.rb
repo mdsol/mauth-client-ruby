@@ -72,7 +72,6 @@ describe MAuth::Client do
         expect(key.to_s).to eq(mc.private_key.to_s)
       end
     end
-
   end
 
   require 'mauth/request_and_response'

@@ -1,5 +1,9 @@
 # MAuth-Client History
 
+## v3.1.3
+- Increased the default timeout when fetching keys from MAuth from 1 second to 10 seconds
+- Properly honor faraday_options: timeout in mauth.yml for faraday < 0.9
+
 ## v3.1.2
 - Fixed bug in Faraday call, not to raise exception when adding authenticate information to response.
 
