@@ -164,8 +164,8 @@ module MAuth
         end
       end
 
-      request_config = { timeout: 1, open_timeout: 1 }
-      request_config.merge!(given_config['faraday_options']) if given_config['faraday_options']
+      request_config = { timeout: 11, open_timeout: 11 }
+      request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
 
@@ -224,6 +224,14 @@ module MAuth
       error = UnableToAuthenticateError.new(message)
       error.mauth_service_response = response
       raise error
+    end
+
+    # Changes all keys in the top level of the hash to symbols.  Does not affect nested hashes inside this one.
+    def symbolize_keys(hash)
+      hash.keys.each do |key|
+        hash[(key.to_sym rescue key) || key] = hash.delete(key)
+      end
+      hash
     end
 
     # methods to sign requests and responses. part of MAuth::Client
