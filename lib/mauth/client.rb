@@ -164,7 +164,7 @@ module MAuth
         end
       end
 
-      request_config = { timeout: 11, open_timeout: 11 }
+      request_config = { timeout: 10, open_timeout: 10 }
       request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
