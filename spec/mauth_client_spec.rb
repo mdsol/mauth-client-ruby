@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'faraday'
+require 'mauth/client'
 
 describe MAuth::Client do
   describe '#initialize' do
@@ -214,7 +215,6 @@ describe MAuth::Client do
         before do
           @authenticating_mc = MAuth::Client.new(:mauth_baseurl => 'http://whatever', :mauth_api_version => 'v1', :private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => 'authenticator')
           expect(@authenticating_mc).to be_kind_of(MAuth::Client::LocalAuthenticator)
-          require 'faraday'
           stubs = @stubs = Faraday::Adapter::Test::Stubs.new
           @test_faraday = ::Faraday.new do |builder|
             builder.adapter(:test, stubs) do |stub|
@@ -280,6 +280,21 @@ describe MAuth::Client do
           expect(@authenticating_mc.authentic?(signed_request)).to be_falsey
         end
       end
+      describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
+        describe '#signed_mauth_connection' do
+          it 'properly sets the timeouts on the faraday connection' do
+            config = {
+              'private_key' => OpenSSL::PKey::RSA.generate(2048), 
+              'faraday_options' => {'timeout' => '23', 'open_timeout' => '18'},
+              'mauth_baseurl' => 'https://mauth.imedidata.net'
+            }
+            mc = MAuth::Client.new(config)
+            connection = MAuth::Client::LocalAuthenticator::SecurityTokenCacher.new(mc).send(:signed_mauth_connection)
+            expect(connection.options[:timeout]).to eq('23')
+            expect(connection.options[:open_timeout]).to eq('18')
+          end
+        end
+      end
     end
 
     describe MAuth::Client::RemoteRequestAuthenticator do
@@ -287,7 +302,6 @@ describe MAuth::Client do
         before do
           @authenticating_mc = MAuth::Client.new(:mauth_baseurl => 'http://whatever', :mauth_api_version => 'v1')
           expect(@authenticating_mc).to be_kind_of(MAuth::Client::RemoteRequestAuthenticator)
-          require 'faraday'
           stubs = @stubs = Faraday::Adapter::Test::Stubs.new
           @test_faraday = ::Faraday.new do |builder|
             builder.adapter(:test, stubs)
