@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v3.1.4
+- Use String#bytesize method instead of Rack::Utils' one, which was removed in Rack 2.0
+
 ## v3.1.3
 - Increased the default timeout when fetching keys from MAuth from 1 second to 10 seconds
 - Properly honor faraday_options: timeout in mauth.yml for faraday < 0.9
