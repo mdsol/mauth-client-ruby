@@ -5,9 +5,9 @@ require 'rack/test'
 # NOTE:  In order for these tests to pass, the APP_UUID and PUBLIC_KEY given below must exist as a security token
 # in the persistent store of the specified MAUTH_BASE_URL
 #
-# if this is not already the case, you can ask devops to do this. 
+# if this is not already the case, you can ask devops to do this.
 #
-# if you are accessing mauth yourself, you can add this app to mauth by pasting into a rails 
+# if you are accessing mauth yourself, you can add this app to mauth by pasting into a rails
 # console the lines below for PUBLIC_KEY and APP_UUID, and then running:
 #
 # SecurityToken.create!(:app_uuid => APP_UUID, :public_key_str => PUBLIC_KEY, :app_name => 'testing hands off')
@@ -18,7 +18,7 @@ PUBLIC_KEY = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA2GhmijLqVmuT2D7H0wLfq4
 
 require 'logger'
 require 'tempfile'
-TESTLOG = ::Logger.new(File.open(Tempfile.new('mauth_test_log').tap{ |f| f.sync=true }))
+TESTLOG = ::Logger.new(Tempfile.new('mauth_test_log').tap { |f| f.sync = true })
 
 TEST_MAUTH_CLIENT = MAuth::Client.new(
   :mauth_baseurl => MAUTH_BASE_URL,
@@ -38,7 +38,7 @@ describe 'Local Authentication with Rack-Mauth' do
 
   def app
     mini_app = lambda { |env| [200, {'Content-Type' => 'text/plain'}, ["Hello World"]] }
-    
+
     config = {
       :mauth_baseurl => MAUTH_BASE_URL,
       :private_key => PRIVATE_KEY,
@@ -59,7 +59,7 @@ describe 'Local Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if POST request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -68,7 +68,7 @@ describe 'Local Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if PUT request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -77,7 +77,7 @@ describe 'Local Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if DELETE request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -96,14 +96,14 @@ describe 'Local Authentication with Rack-Mauth' do
       expect(last_response.body).to eq('Hello World')
     end
   end
-  
+
   describe "improper information provided by client" do
     it "should return 401 if incorrect signature" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => 'GETTY')
       get '/'
       expect(last_response.status).to eq(401)
     end
-    
+
     it "should return 401 if client's app_uuid is unknown to MAuth" do
       bad_app_mauth_client = MAuth::Client.new(
         :mauth_baseurl => MAUTH_BASE_URL,
@@ -116,9 +116,9 @@ describe 'Local Authentication with Rack-Mauth' do
       get '/'
       expect(last_response.status).to eq(401)
     end
-    
+
   end
-  
+
   describe "MAuth is down" do
     it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
       begin
@@ -128,11 +128,11 @@ describe 'Local Authentication with Rack-Mauth' do
         expect(last_response.status).to eq(500)
       end
     end
-    
+
     it "should return 200 if MAuth is not responding but public key for app has already been cached by rack-mauth" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
-      allow(::Faraday).to receive_message_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+      allow(::Faraday).to receive_message_chain(:new, :get).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
       get '/'
       expect(last_response.status).to eq(200)
@@ -145,7 +145,7 @@ describe 'Remote Authentication with Rack-Mauth' do
 
   def app
     mini_app = lambda { |env| [200, {'Content-Type' => 'text/plain'}, ["Hello World"]] }
-    
+
     config = {
       :mauth_baseurl => MAUTH_BASE_URL,
       :mauth_api_version => 'v1',
@@ -164,7 +164,7 @@ describe 'Remote Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if POST request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -173,7 +173,7 @@ describe 'Remote Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if PUT request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -182,7 +182,7 @@ describe 'Remote Authentication with Rack-Mauth' do
       expect(last_response).to be_ok
       expect(last_response.body).to eq('Hello World')
     end
-    
+
     it "should return 200 if DELETE request is properly signed" do
       #Note, in this case, client making call to app has same private key as app
       #This is not the normal state of affairs
@@ -192,14 +192,14 @@ describe 'Remote Authentication with Rack-Mauth' do
       expect(last_response.body).to eq('Hello World')
     end
   end
-  
+
   describe "improper information provided by client" do
     it "should return 401 if incorrect signature" do
       merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GETTY")
       get '/'
       expect(last_response.status).to eq(401)
     end
-    
+
     it "should return 401 if client's app_uuid is unknown to MAuth" do
       bad_app_mauth_client = MAuth::Client.new(
         :mauth_baseurl => MAUTH_BASE_URL,
@@ -213,11 +213,11 @@ describe 'Remote Authentication with Rack-Mauth' do
       expect(last_response.status).to eq(401)
     end
   end
-  
+
   describe "MAuth is down" do
     it "should return 500 if MAuth is not responding and public key for app hasn't already been cached by rack-mauth" do
       begin
-        allow(::Faraday).to receive_message_chain(:new, :post).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday 
+        allow(::Faraday).to receive_message_chain(:new, :post).and_raise(::Faraday::Error::ConnectionFailed.new("bad")) # this will change if rack-mauth stops using faraday
         merge_signed_headers(TEST_MAUTH_CLIENT, :request_url => '/', :verb => "GET")
         get '/'
         expect(last_response.status).to eq(500)

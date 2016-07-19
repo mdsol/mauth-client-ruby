@@ -34,7 +34,7 @@ module MAuth
       # discards the body if REQUEST_METHOD is HEAD. sets the Content-Length.
       def handle_head(env)
         status, headers, body = *yield
-        headers["Content-Length"] = body.map(&::Rack::Utils.method(:bytesize)).inject(0, &:+).to_s
+        headers["Content-Length"] = body.map(&:bytesize).inject(0, &:+).to_s
         [status, headers, env['REQUEST_METHOD'].casecmp('head').zero? ? [] : body]
       end
 
