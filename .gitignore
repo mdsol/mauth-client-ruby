@@ -1,18 +1,8 @@
-# rcov generated
+.bundle
+.yardoc
+
 /coverage
-
-# rdoc generated
-/rdoc
-
-# yard generated
-/.yardoc
-
-# shamus
-/columbo
-
-# bundler
-/.bundle
-/Gemfile.lock
-
-# logging (tests)
+/doc
 /log
+
+/Gemfile.lock

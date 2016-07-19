@@ -1,0 +1,8 @@
+imedidata:
+  host: https://innovate.imedidata.com
+
+mauth:
+  mauth_baseurl: https://mauth-innovate.imedidata.com
+  mauth_api_version: v1
+  app_uuid: <APP UUID>
+  private_key_file: ./mauth_key

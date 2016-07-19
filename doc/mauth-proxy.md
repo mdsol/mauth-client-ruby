@@ -2,20 +2,16 @@
 
 ## Overview
 
-mauth-proxy is a command-line tool to forward requests to a service, signing each one with a MAuth signature and 
-verifying responses from the service. 
+mauth-proxy is a command-line tool to forward requests to a service, signing each one with a MAuth signature and verifying responses from the service.
 
-mauth-proxy wraps a Rack server, which listens on localhost (external connections are not allowed, for security). 
-mauth-proxy takes each request, signs it with a specified MAuth configuration, and makes a request to the given 
-service. The response from the service is authenticated with MAuth, and is returned as the response to the original 
-request. 
+mauth-proxy wraps a Rack server, which listens on localhost (external connections are not allowed, for security).
+mauth-proxy takes each request, signs it with a specified MAuth configuration, and makes a request to the given service.
+The response from the service is authenticated with MAuth, and is returned as the response to the original request.
 
-The intent is to allow users to point any HTTP or REST client they care to use at a service which authenticates with 
-MAuth, without the client needing to know how to generate MAuth signatures or authenticate MAuth-signed responses. 
+The intent is to allow users to point any HTTP or REST client they care to use at a service which authenticates with MAuth, without the client needing to know how to generate MAuth signatures or authenticate MAuth-signed responses.
 
-The proxy has two modes: single-target and browser proxy mode. In browser proxy mode, it can be configured as a HTTP
-proxy in a browser and will direct the requests to any URL in the request while signing requests to URLs that are listed
-in the command line. In single-target mode, all requests will be directed to the server specified in the command line.
+The proxy has two modes: single-target and browser proxy mode. In browser proxy mode, it can be configured as a HTTP proxy in a browser and will direct the requests to any URL in the request while signing requests to URLs that are listed in the command line.
+In single-target mode, all requests will be directed to the server specified in the command line.
 
 ## Usage
 
@@ -24,11 +20,8 @@ Single target mode:
 $ bundle exec mauth-proxy -p 3452 https://eureka.imedidata.com/
 ```
 
-This will launch a rack server, listening on port 3452. When a request is made to this server on a particular path -
-say `http://localhost:3452/v1/apis`, then mauth-proxy will make a mauth-signed request to
-`https://eureka.imedidata.com/v1/apis`, then authenticate the response and return that response to the original
-request.
-
+This will launch a rack server, listening on port 3452.
+When a request is made to this server on a particular path - say `http://localhost:3452/v1/apis`, then mauth-proxy will make a mauth-signed request to `https://eureka.imedidata.com/v1/apis`, then authenticate the response and return that response to the original request.
 
 Browser proxy mode:
 ```
@@ -40,25 +33,19 @@ If the beginning of the requested URL matches one of the URLs you specified, it 
 
 
 ## Options
-The location of the mauth configuration is guessed as config/mauth.yml, or may be specified with the 
-`MAUTH_CONFIG_YML` environment variable. e.g.:
 
-```
-$ MAUTH_CONFIG_YML=~/myproject/config/mauth.yml bundle exec mauth-proxy -p 3452 https://eureka.imedidata.com/
-```
+The location of the mauth configuration can be specified or infered automatically, see the [MAuth-Client CLI Tool doc](./mauth-client_CLI.md#configuration) for more details.
 
-The last command-line argument MUST be a target URI to which requests will be forwarded. 
+The last command-line argument MUST be a target URI to which requests will be forwarded.
 
 The `--no-authenticate` option disables response authentication from the target service.
 
-The `--browser_proxy` option switches to browser proxy mode and is intended to be used when the proxy is used in
-conjunction with a web browser that is set to use this proxy.
+The `--browser_proxy` option switches to browser proxy mode and is intended to be used when the proxy is used in conjunction with a web browser that is set to use this proxy.
 
-The `--header` Accepts a [key]:[value] header definition to include, e.g. -h "Accept:application/json". 
-Can be used multiple times for multiple headers
+The `--header` Accepts a [key]:[value] header definition to include, e.g. -h "Accept:application/json". It can be used multiple times for multiple headers.
 
-All other options are passed along to rack. Available options can be viewed by running rackup -h, and are also listed 
-below:
+All other options are passed along to rack.
+Available options can be viewed by running rackup -h, and are also listed below:
 
 ```
 Ruby options:

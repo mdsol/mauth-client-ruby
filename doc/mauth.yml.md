@@ -1,12 +1,17 @@
 # mauth.yml
 
-The conventional way to configure MAuth-Client for your project is a is a YAML file which lives in your project at 
-`config/mauth.yml`. It is keyed on environment, and for the most part its contents are passed directly to instantiate 
-an MAuth::Client. See the documentation for [MAuth::Client#initialize][] for more details of what it accepts. 
+The conventional way to configure MAuth-Client for your project is through a YAML file which lives in your project at `config/mauth.yml`.
+It is keyed on environment, and for the most part its contents are passed directly to instantiate an MAuth::Client.
+See the documentation for [MAuth::Client#initialize](../lib/mauth/client.rb) for more details of what it accepts.
 
-[MAuth::Client#initialize]: MAuth/Client.html#initialize-instance_method
+## Generating keys
 
-Note: __PRIVATE KEYS MUST NOT BE COMMITTED INTO YOUR GIT REPOSITORY NOR PUSHED TO GITHUB.__
+To generate a private key (`mauth_key`) and its public counterpart (`mauth_key.pub`) run:
+
+```
+openssl genrsa -out mauth_key 2048
+openssl rsa -in mauth_key -pubout -out mauth_key.pub
+```
 
 ## Format
 
@@ -24,6 +29,7 @@ common: &common
     SIY2exfsy7Y8NoOnBPlGiXKhgaF21T8kqV9C7R6OAuP0U6CgMJnINx/UjozvBENH
     Ux45QdvRd6vai8nHp7AgV7rr55SxXAZVgATll84uBUpfpmC6YK/j
     -----END RSA PRIVATE KEY-----
+
 production:
   <<: *common
 development:
@@ -32,7 +38,7 @@ test:
   <<: *common
 ```
 
-Optionally you can load the private key from a file: 
+Optionally you can load the private key from a file:
 
 ```yaml
 common: &common
@@ -40,34 +46,28 @@ common: &common
   mauth_api_version: v1
   app_uuid: 123we997-0333-44d8-8fCf-5dd555c5bd51
   private_key_file: config/my_mauth_private.key
+
+production:
+  <<: *common
+development:
+  <<: *common
+test:
+  <<: *common
 ```
 
-### Keys:
+## Configuration options
 
-- `private_key` - See Generating Keypairs for MAuth for instructions on generation. Required for signing and for 
-  authenticating responses. may be omitted if only remote authentication of requests is being performed. __PRIVATE 
-  KEYS MUST NOT BE COMMITTED INTO YOUR GIT REPOSITORY NOR PUSHED TO GITHUB.__
-- `private_key_file`  - May be used instead of private_key; mauth-client will load the file instead. 
-- `app_uuid` - Required in the same circumstances where a private_key is required. If you are working in your local 
-  computer and need a personal app_uuid please send a request to devops@mdsol.com, including your public key 
-  ([Generating Keypairs for MAuth][]).
-- `mauth_baseurl` - required if authenticating (but not for signing). needed for local authentication to retrieve 
-  public keys; needed for remote authentication. There are 2 authoritative values for `mauth_baseurl`:
-  - `https://mauth-innovate.imedidata.com` to be used for all non-production services and clients, including local 
-    development.
-  - `https://mauth.imedidata.com` to be used only for all production services and clients.
-- `mauth_api_version` - Required for authentication, but not for signing. only `v1` exists / is supported as of 
-  this writing.
-
-[Generating Keypairs for MAuth]: https://sites.google.com/a/mdsol.com/knowledgebase/home/departments/engineering/on-demand-portfolio/services/core-services/mauth/mauth-client/generating-keypairs-for-mauth
+- `private_key` - Required for signing and for authenticating responses. May be omitted if only remote authentication of requests is being performed.
+- `private_key_file` - May be used instead of `private_key`, mauth-client will load the file instead.
+- `app_uuid` - Required in the same circumstances where a `private_key` is required.
+- `mauth_baseurl` - Required for authentication but not for signing. Needed for local authentication to retrieve public keys and for remote authentication. Usually this is `https://mauth.imedidata.com` for production.
+- `mauth_api_version` - Required for authentication but not for signing. only `v1` exists as of this writing.
 
 ## Usage in your application
 
-You will load mauth.yml, merge in any other configuration that is needed for your usage, and pass the config along to 
-instantiate a `MAuth::Client` or a middleware. 
+Load mauth.yml, merge in any other configuration that is needed for your usage, and pass the config along to instantiate a `MAuth::Client` or a middleware.
+See the [README](../README.md) for more detail.
 
-See the [MAuth Client](file.MAuth_Client.html) page for more detail. 
+## Usage in MAuth-Client executables (mauth-client, mauth-proxy)
 
-## Usage in MAuth-Client CLI tool
-
-See __Configuration__ in the [MAuth-Client CLI Tool](file.mauth-client_CLI.html#configuration) page.
+See the [MAuth-Client CLI Tool doc](./mauth-client_CLI.md#configuration).
