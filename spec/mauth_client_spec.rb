@@ -284,7 +284,7 @@ describe MAuth::Client do
         describe '#signed_mauth_connection' do
           it 'properly sets the timeouts on the faraday connection' do
             config = {
-              'private_key' => OpenSSL::PKey::RSA.generate(2048), 
+              'private_key' => OpenSSL::PKey::RSA.generate(2048),
               'faraday_options' => {'timeout' => '23', 'open_timeout' => '18'},
               'mauth_baseurl' => 'https://mauth.imedidata.net'
             }
