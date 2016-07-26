@@ -2,7 +2,7 @@
 .yardoc
 
 /coverage
-/doc
+/yardoc
 /log
 
 /Gemfile.lock

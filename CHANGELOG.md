@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v4.0.0
+- Open source and publish this gem on rubygems.org, no functionality changes
+
 ## v3.1.4
 - Use String#bytesize method instead of Rack::Utils' one, which was removed in Rack 2.0
 

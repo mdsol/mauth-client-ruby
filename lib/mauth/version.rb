@@ -1,3 +1,3 @@
 module MAuth
-  VERSION = '3.1.4'.freeze
+  VERSION = '4.0.0'.freeze
 end

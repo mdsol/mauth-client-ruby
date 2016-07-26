@@ -3,6 +3,8 @@
 This gem consists of MAuth::Client, a class to manage the information needed to both sign and authenticate requests
 and responses, and middlewares for Rack and Faraday which leverage the client's capabilities.
 
+MAuth Client exists in a variety of languages (.Net, Go, Java etc.), see the [implementations list](doc/implementations.md) for more info.
+
 ## Installation
 
 Add this line to your application's Gemfile:
