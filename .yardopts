@@ -1,3 +1,4 @@
 --main README.md
 --files doc/**/*.md
 lib/**/*.rb
+--output-dir ./yardoc
