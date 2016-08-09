@@ -1,4 +1,5 @@
 # MAuth Client
+[![Build Status](https://travis-ci.org/mdsol/mauth-client-ruby.svg)](https://travis-ci.org/mdsol/mauth-client-ruby)
 
 This gem consists of MAuth::Client, a class to manage the information needed to both sign and authenticate requests
 and responses, and middlewares for Rack and Faraday which leverage the client's capabilities.
