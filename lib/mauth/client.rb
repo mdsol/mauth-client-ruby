@@ -7,6 +7,7 @@ require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/dice_bag/mauth_templates'
 require 'mauth/version'
+require 'erb'
 
 module MAuth
   class Client
@@ -351,6 +352,10 @@ module MAuth
         object.attributes_for_signing[:request_url].gsub!('%2F', '/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
         expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
+        #And do yet another reencoding
+        object.attributes_for_signing[:request_url] = ERB::Util.url_encode(CGI.unescape(original_request_uri.to_s)).gsub('%2F', '/')
+        complex_query_encoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+
         # reset the object original request_uri, just in case we need it again
         object.attributes_for_signing[:request_url] = original_request_uri
 
@@ -361,7 +366,7 @@ module MAuth
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
         # TODO: time-invariant comparison instead of #== ?
-        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
+        unless [expected_no_reencoding, expected_euresource_style_reencoding, expected_for_percent_reencoding, complex_query_encoding].include? actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
       end
