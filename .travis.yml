@@ -3,11 +3,15 @@ cache: bundler
 sudo: false
 
 rvm:
-  - 2.1.10
   - 2.2.5
   - 2.3.1
 
 env:
   - MAUTH_CONFIG_YML=`pwd`/spec/config_root/config/mauth.yml
+
+matrix:
+  include:
+  - rvm: 2.1.10
+    gemfile: gemfiles/ruby_2.1.gemfile
 
 script: "bundle exec rspec"

@@ -58,7 +58,7 @@ module MAuth
           default_yml = File.join(app_root, default_loc)
           mauth_config_yml ||= default_yml if File.exist?(default_yml)
           if mauth_config_yml && File.exist?(mauth_config_yml)
-            whole_config = YAML.load_file(mauth_config_yml)
+            whole_config = ConfigFile.load(mauth_config_yml)
             errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
             whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
           else
@@ -79,6 +79,23 @@ module MAuth
 
         mauth_config
       end
+    end
+  end
+
+  class ConfigFile
+    GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
+    @config = {}
+
+    def self.load(path)
+      unless File.exist?(path)
+        raise "File #{path} not found. Please visit #{GITHUB_URL} for details."
+      end
+
+      @config[path] ||= YAML.load_file(path)
+      unless @config[path]
+        raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
+      end
+      @config[path]
     end
   end
 end

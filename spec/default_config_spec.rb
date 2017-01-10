@@ -4,13 +4,14 @@ require 'logger'
 
 describe MAuth::Client do
   describe '.default_config' do
+    before do
+      MAuth::ConfigFile.instance_variable_set(:@config, {})
+    end
+
     def with_env(tmp_env)
       begin
-        orig_env = ENV.to_hash.dup
-        ENV.update(tmp_env)
+        stub_const("ENV", ENV.to_hash.merge(tmp_env))
         yield
-      ensure
-        ENV.replace(orig_env)
       end
     end
 

@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v4.0.2
+- Store the config data to not load the config file multiple times
+
 ## v4.0.1
 - Open source and publish this gem on rubygems.org, no functionality changes
 
