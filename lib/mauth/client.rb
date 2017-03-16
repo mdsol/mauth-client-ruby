@@ -365,7 +365,8 @@ module MAuth
 
         # do a moderately complex Euresource-style reencoding of the path
         object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        object.attributes_for_signing[:request_url].gsub!('%2F', '/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
+        # decode forward slash and octothorpes back into characters like Euresource does
+        object.attributes_for_signing[:request_url].gsub!(/\w+/, '%2F' => '/', '%23' => '#')
         expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # reset the object original request_uri, just in case we need it again
