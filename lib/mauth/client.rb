@@ -365,7 +365,10 @@ module MAuth
 
         # do a moderately complex Euresource-style reencoding of the path
         object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        # decode forward slash and octothorpes back into characters like Euresource does
+
+        # RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
+        #   and number sign "#" as component delimiters. Since these are valid URI components,
+        #   they are decoded back into characters here to avoid signature invalidation
         object.attributes_for_signing[:request_url].gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#")
         expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
