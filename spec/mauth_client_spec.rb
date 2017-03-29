@@ -236,7 +236,7 @@ describe MAuth::Client do
         it "considers a request to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
           ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
             # imagine what are on the requester's side now...
-            signed_path = CGI.escape(path).gsub!('%2F','/') # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
+            signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
             request = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
             signed_request = @signing_mc.signed(request)
 

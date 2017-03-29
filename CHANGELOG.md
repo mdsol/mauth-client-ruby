@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v4.0.3
+- Updated signature to decode number sign (#) in requests
+
 ## v4.0.2
 - Store the config data to not load the config file multiple times
 

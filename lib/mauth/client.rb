@@ -364,8 +364,7 @@ module MAuth
         expected_for_percent_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # do a moderately complex Euresource-style reencoding of the path
-        object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        object.attributes_for_signing[:request_url].gsub!('%2F', '/') # ...and then 'simply' decode the %2F's back into /'s, just like Euresource kind of does!
+        object.attributes_for_signing[:request_url] = euresource_escape(original_request_uri.to_s)
         expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # reset the object original request_uri, just in case we need it again
@@ -381,6 +380,13 @@ module MAuth
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
+      end
+
+      # Note: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
+      #   and number sign "#" as component delimiters. Since these are valid URI components,
+      #   they are decoded back into characters here to avoid signature invalidation
+      def euresource_escape(str)
+        CGI.escape(str).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
       end
 
       def retrieve_public_key(app_uuid)
