@@ -272,6 +272,8 @@ module MAuth
       def signature(object, attributes = {})
         assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
+        puts "signing attributes #{attributes}"
+        puts "sig = #{Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).delete("\n")}"
         signature = Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).delete("\n")
       end
     end
@@ -481,6 +483,7 @@ module MAuth
           'request_time' => object.x_mws_time,
           'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || '')
         }
+        puts "authenticating #{authentication_ticket}"
         begin
           response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", "authentication_ticket" => authentication_ticket)
         rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError
