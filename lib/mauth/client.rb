@@ -272,7 +272,7 @@ module MAuth
       def signature(object, attributes = {})
         assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
-        puts "signing attributes #{attributes}"
+        puts "signing #{object.string_to_sign(attributes)}"
         puts "sig = #{Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).delete("\n")}"
         signature = Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).delete("\n")
       end
