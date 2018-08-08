@@ -377,6 +377,10 @@ module MAuth
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
         # TODO: time-invariant comparison instead of #== ?
+        puts "actual = #{actual}"
+        puts "expected_no_reencoding = #{expected_no_reencoding}"
+        puts "expected_euresource_style_reencoding = #{expected_euresource_style_reencoding}"
+        puts "expected_for_percent_reencoding = #{expected_for_percent_reencoding}"
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
