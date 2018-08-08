@@ -20,6 +20,7 @@ module MAuth
         raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
       string = self.class::SIGNATURE_COMPONENTS.map { |k| attributes_for_signing[k].to_s }.join("\n")
+      puts "components to sign #{string}"
       Digest::SHA512.hexdigest(string)
     end
 
