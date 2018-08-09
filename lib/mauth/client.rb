@@ -355,7 +355,7 @@ module MAuth
         # other web servers (particularly those we typically use for local testing) do not.  The various forms
         # of the expected string to sign are meant to cover the main cases.
         # TODO:  Revisit and simplify this unfortunate situation.
-
+        puts "verifying attrs #{object.attributes_for_signing}"
         original_request_uri = object.attributes_for_signing[:request_url]
 
         # craft an expected string-to-sign without doing any percent-encoding
