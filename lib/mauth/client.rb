@@ -373,6 +373,7 @@ module MAuth
         object.attributes_for_signing[:request_url] = original_request_uri
 
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+        puts "verifying remote pubkey = #{pubkey.to_s}"
         begin
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
         rescue OpenSSL::PKey::PKeyError
