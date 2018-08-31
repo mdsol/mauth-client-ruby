@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v4.0.2
+- Restore original behavior in the proxy of forwarding of headers that begin with HTTP_ (except for HTTP_HOST) but removing the HTTP_.
+
 ## v4.0.1
 - Open source and publish this gem on rubygems.org, no functionality changes
 
