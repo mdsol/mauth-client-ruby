@@ -13,8 +13,8 @@
 
 To run tests, first run `bundle install`.
 
-Next, run the tests with an appropriate mauth config file, typically this is done by passing the provided one using an environment variable:
+Next, run the tests:
 
 ```
-MAUTH_CONFIG_YML=`pwd`/spec/config_root/config/mauth.yml bundle exec rspec
+bundle exec rspec
 ```

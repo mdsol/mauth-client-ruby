@@ -3,11 +3,20 @@ cache: bundler
 sudo: false
 
 rvm:
-  - 2.1.10
-  - 2.2.5
-  - 2.3.1
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
 
-env:
-  - MAUTH_CONFIG_YML=`pwd`/spec/config_root/config/mauth.yml
+matrix:
+  include:
+  - rvm: 2.1.10
+    gemfile: gemfiles/ruby_2.1.gemfile
+
+# https://github.com/travis-ci/travis-ci/issues/8978
+before_install:
+  - gem update --system
+  - gem install bundler # https://github.com/travis-ci/travis-ci/issues/9383
+  - bundle --version
 
 script: "bundle exec rspec"
