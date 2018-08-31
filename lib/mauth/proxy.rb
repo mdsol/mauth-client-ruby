@@ -55,8 +55,8 @@ module MAuth
       request_env['rack.input'].rewind
       request_headers = {}
       request_env.each do |k, v|
-        if k.start_with?('HTTP_') && !%w(HTTP_HOST).include?(k)
-          name = $'
+        if k.start_with?('HTTP_') && k != 'HTTP_HOST'
+          name = k.sub(/\AHTTP_/, '')
           request_headers[name] = v
         end
       end

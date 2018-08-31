@@ -1,5 +1,8 @@
 # MAuth-Client History
 
+## v4.0.4
+- Restore original behavior in the proxy of forwarding of headers that begin with HTTP_ (except for HTTP_HOST) but removing the HTTP_.
+
 ## v4.0.3
 - Updated signature to decode number sign (#) in requests
 
