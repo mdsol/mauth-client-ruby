@@ -1,6 +1,6 @@
 .bundle
 .yardoc
-
+.idea/**/
 /coverage
 /yardoc
 /log

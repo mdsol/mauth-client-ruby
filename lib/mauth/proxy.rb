@@ -56,7 +56,7 @@ module MAuth
       request_headers = {}
       request_env.each do |k, v|
         if k.start_with?('HTTP_') && !%w(HTTP_HOST).include?(k)
-          name = $'
+          name = k
           request_headers[name] = v
         end
       end
