@@ -20,3 +20,12 @@ before_install:
   - bundle --version
 
 script: "bundle exec rspec"
+deploy:
+  provider: rubygems
+  gem: mauth-client
+  api_key:
+    secure: J0aPDp4+Ev2L+ZDcgpF+hAG95S4IsD6pCiDRxDWnrk79P5hq1rXoD3S39ANyqtQEQqkoVjsgoSP5JLi420aL2lYj7mhvaEOty9fK+flwUhI4nw+Gztm7EKNDNX8WKvk4fl4Zc7noIeI0uyes867hDjRQfyYvUuma7aK5H9NWzNUV9Q+KrVAoneVDGnNydxwkuuIpOFdjbVQgNpxVhVBV7Q4OLsB1KtWB9lptMwhqnyqZKex7JZ+37sojaj3oVT5ijrnAm+bR1QO1hGIOwuBako2iz+MBZHPccM4BEFsZme/7olypxv0JfeCuhqDnH1VWIFh6IZRDeLnZuX3qOhkdx4HLwxB//5O5+iapK0wh1zbnLvXqkE1dalUHyaZzStKH9xchIWl5I77Ica232OJYrpj9hhroae0p3VARF0IoZceKaH8NnMpq+nBAW4REcWrqPpe9xkRLDTNibkpaAy08vGOF2kPZkWw4lfkVBM1+wjY2xDn6wJ7VgQ1BeosbeTXbmny2TUeI22beihn894tzpCPPHiTRvKu0lV3jBfeoOAXzE333PrGm3zF9MDhg+1/iBwXVhdoOwEwBPQ/3Hu37xJn0AfRneni4StYnIkZ1Ur9Vub03J/3C3Aw6it99rQSWvC+2PzHqQhsG22VprvxlozFe1jFzdqKgvDkbkn44ltI=
+  on:
+    tags: true
+    repo: mdsol/mauth-client-ruby
+    condition: "$TRAVIS_RUBY_VERSION == 2.5.1"
