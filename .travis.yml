@@ -3,23 +3,12 @@ cache: bundler
 sudo: false
 
 rvm:
-  - 2.2.10
   - 2.3.7
   - 2.4.4
   - 2.5.1
 
-matrix:
-  include:
-  - rvm: 2.1.10
-    gemfile: gemfiles/ruby_2.1.gemfile
+script: bundle exec rspec
 
-# https://github.com/travis-ci/travis-ci/issues/8978
-before_install:
-  - gem update --system
-  - gem install bundler # https://github.com/travis-ci/travis-ci/issues/9383
-  - bundle --version
-
-script: "bundle exec rspec"
 deploy:
   provider: rubygems
   gem: mauth-client

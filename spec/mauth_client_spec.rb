@@ -1,8 +1,11 @@
 require 'spec_helper'
 require 'faraday'
 require 'mauth/client'
+require 'securerandom'
 
 describe MAuth::Client do
+  let(:app_uuid) { SecureRandom.uuid }
+
   describe '#initialize' do
     it 'initializes without config' do
       mc = MAuth::Client.new
@@ -91,14 +94,15 @@ describe MAuth::Client do
 
   describe '#signed' do
     before { @request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
+
     it 'adds X-MWS-Time and X-MWS-Authentication headers when signing' do
-      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => UUIDTools::UUID.random_create.to_s)
+      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid)
       signed_request = mc.signed(@request)
       expect(signed_request.headers.keys).to include('X-MWS-Authentication')
       expect(signed_request.headers.keys).to include('X-MWS-Time')
     end
     it "can't sign without a private key" do
-      mc = MAuth::Client.new(:app_uuid => UUIDTools::UUID.random_create.to_s)
+      mc = MAuth::Client.new(:app_uuid => app_uuid)
       expect{mc.signed(@request)}.to raise_error(MAuth::UnableToSignError)
     end
     it "can't sign without an app uuid" do
@@ -106,9 +110,10 @@ describe MAuth::Client do
       expect{mc.signed(@request)}.to raise_error(MAuth::UnableToSignError)
     end
   end
+
   describe '#signed_headers' do
     it 'returns a hash with X-MWS-Time and X-MWS-Authentication headers' do
-      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => UUIDTools::UUID.random_create.to_s)
+      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid)
       signed_headers = mc.signed_headers(TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom'))
       expect(signed_headers.keys).to include('X-MWS-Authentication')
       expect(signed_headers.keys).to include('X-MWS-Time')

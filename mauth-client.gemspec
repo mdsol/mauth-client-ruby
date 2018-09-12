@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Client for signing and authentication of requests and responses with mAuth authentication. Includes middleware for Rack and Faraday for incoming and outgoing requests and responses.'
   spec.homepage      = 'https://github.com/mdsol/mauth-client-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 2.1.0'
+  spec.required_ruby_version = '>= 2.3.0'
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = 'exe'
@@ -27,11 +27,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'bundler', '~> 1.10'
   spec.add_development_dependency 'byebug'
-  spec.add_development_dependency 'kender', '~> 0.4'
-  spec.add_development_dependency 'rack-test', '~> 0.6.3'
-  spec.add_development_dependency 'rake', '~> 10.0'
-  spec.add_development_dependency 'rspec', '~> 3.4'
-  spec.add_development_dependency 'simplecov', '~> 0.12.0'
-  spec.add_development_dependency 'timecop', '~> 0.8.1'
-  spec.add_development_dependency 'uuidtools', '~> 2.1.5'
+  spec.add_development_dependency 'rack-test', '~> 1.1.0'
+  spec.add_development_dependency 'rake', '~> 12.0'
+  spec.add_development_dependency 'rspec', '~> 3.8'
+  spec.add_development_dependency 'simplecov', '~> 0.16'
+  spec.add_development_dependency 'timecop', '~> 0.9'
 end
