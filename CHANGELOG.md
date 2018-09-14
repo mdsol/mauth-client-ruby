@@ -1,4 +1,6 @@
-# MAuth-Client History
+## v4.1.0
+- Drop support for Ruby < 2.3.0
+- Update development dependencies
 
 ## v4.0.4
 - Restore original behavior in the proxy of forwarding of headers that begin with HTTP_ (except for HTTP_HOST) but removing the HTTP_.
