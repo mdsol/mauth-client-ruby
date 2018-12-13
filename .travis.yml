@@ -6,7 +6,15 @@ rvm:
   - 2.4.4
   - 2.5.1
 
-script: bundle exec rspec
+install:
+  - bundle install --jobs=3 --retry=3
+  - |-
+    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_install.sh | bash -s -- -b $TRAVIS_BUILD_DIR
+
+script:
+  - bundle exec rspec
+  - |-
+    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_run.sh | bash -s -- -b $TRAVIS_BUILD_DIR
 
 deploy:
   provider: rubygems
