@@ -2,9 +2,14 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.3.7
-  - 2.4.4
-  - 2.5.1
+  - 2.3.8
+  - 2.4.6
+  - 2.5.5
+  - 2.6.3
+
+before_install:
+  - gem update --system -N > /dev/null && echo "Rubygems version $(gem --version)"
+  - gem install bundler --force -N -v=2.0.1 && bundle --version
 
 install:
   - bundle install --jobs=3 --retry=3
@@ -24,4 +29,4 @@ deploy:
   on:
     tags: true
     repo: mdsol/mauth-client-ruby
-    condition: "$TRAVIS_RUBY_VERSION == 2.5.1"
+    condition: "$TRAVIS_RUBY_VERSION == 2.6.3"
