@@ -1,3 +1,6 @@
+## v4.1.1
+- User warning level instead of error level for logs about missing mauth header.
+
 ## v4.1.0
 - Drop support for Ruby < 2.3.0
 - Update development dependencies

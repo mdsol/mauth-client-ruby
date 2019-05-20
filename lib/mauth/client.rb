@@ -116,6 +116,11 @@ module MAuth
   class InauthenticError < StandardError
   end
 
+  # Used when the incoming request does not contain any mAuth related information
+  class MauthNotPresent < StandardError
+  end
+
+
   # required information for signing was missing
   class UnableToSignError < StandardError
   end
@@ -299,13 +304,17 @@ module MAuth
         time_valid!(object)
         token_valid!(object)
         signature_valid!(object)
-      rescue InauthenticError
-        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
-        $!.message.split("\n").each { |l| logger.error "\t#{l}" }
+      rescue MauthNotPresent => e
+        logger.warn "mAuth signature authentication failed for #{object.class}."
+        logger.warn e.message
         raise
-      rescue UnableToAuthenticateError
+      rescue InauthenticError => e
+        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
+        logger.error e.message
+        raise
+      rescue UnableToAuthenticateError => e
         logger.error "Unable to authenticate with MAuth. encountered error:"
-        $!.message.split("\n").each { |l| logger.error "\t#{l}" }
+        logger.error e.message
         raise
       end
 
@@ -321,7 +330,7 @@ module MAuth
 
       def authentication_present!(object)
         if object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/
-          raise InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
+          raise MauthNotPresent, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
         end
       end
 

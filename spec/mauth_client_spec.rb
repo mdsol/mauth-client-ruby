@@ -155,7 +155,7 @@ describe MAuth::Client do
         signed_request = @signing_mc.signed(request)
         signed_request.headers.delete('X-MWS-Authentication')
         expect{@authenticating_mc.authenticate!(signed_request)}.to raise_error(
-          MAuth::InauthenticError,
+          MAuth::MauthNotPresent,
           "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank.")
       end
       it "considers a request with a bad MWS token to be inauthentic" do
