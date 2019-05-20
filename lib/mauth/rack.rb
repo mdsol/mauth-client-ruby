@@ -73,6 +73,7 @@ module MAuth
     # signs outgoing responses
     class ResponseSigner < MAuth::Middleware
       def call(env)
+        # TODO get the protocol version here and then use it to sign
         unsigned_response = @app.call(env)
         signed_response = mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response))
         signed_response.status_headers_body
@@ -93,7 +94,12 @@ module MAuth
           env['rack.input'].rewind
           body = env['rack.input'].read
           env['rack.input'].rewind
-          { verb: env['REQUEST_METHOD'], request_url: env['PATH_INFO'], body: body }
+          {
+            verb: env['REQUEST_METHOD'],
+            request_url: env['PATH_INFO'],
+            body: body,
+            query_string: env['QUERY_STRING']
+          }
         end
       end
 
@@ -103,6 +109,14 @@ module MAuth
 
       def x_mws_authentication
         @env['HTTP_X_MWS_AUTHENTICATION']
+      end
+
+      def mcc_time
+        @env['HTTP_MCC_TIME']
+      end
+
+      def mcc_authentication
+        @env['HTTP_MCC_AUTHENTICATION']
       end
     end
 
