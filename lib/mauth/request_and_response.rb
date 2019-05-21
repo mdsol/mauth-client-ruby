@@ -13,8 +13,8 @@ module MAuth
     # attributes for signing, which are themselves taken from #attributes_for_signing and
     # the given argument more_attributes
 
-    # The string to sign for V1 protocol will be (where LF is line feed character)
-    # For requests:
+    # the string to sign for V1 protocol will be (where LF is line feed character)
+    # for requests:
     #   string_to_sign =
     #     http_verb + <LF> +
     #     resource_url_path (no host, port or query string; first "/" is included) + <LF> +
@@ -22,7 +22,7 @@ module MAuth
     #     app_uuid + <LF> +
     #     current_seconds_since_epoch + <LF> +
     #
-    # For responses:
+    # for responses:
     #   string_to_sign =
     #     status_code_string + <LF> +
     #     response_body_digest + <LF> +
@@ -39,8 +39,8 @@ module MAuth
       Digest::SHA512.hexdigest(string)
     end
 
-    # The string to sign for V2 protocol will be (where LF is line feed character)
-    # For requests:
+    # the string to sign for V2 protocol will be (where LF is line feed character)
+    # for requests:
     #   string_to_sign =
     #     http_verb + <LF> +
     #     resource_url_path (no host, port or query string; first "/" is included) + <LF> +
@@ -49,7 +49,7 @@ module MAuth
     #     current_seconds_since_epoch + <LF> +
     #     encoded_query_params
     #
-    # For responses:
+    # for responses:
     #   string_to_sign =
     #     status_code_string + <LF> +
     #     response_body_digest + <LF> +
@@ -58,11 +58,10 @@ module MAuth
     def string_to_sign_v2(more_attributes)
       attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
 
-      # where to make the digest of the body? shouldn't be here because we have to
-      # call string to sign thrice and that's wasted hash power
-      # is this or equals dumb?
+      # lazy instantiation of request body digest to avoid hashing request bodies
+      # three times because we call string to sign three times.
       attributes_for_signing[:request_body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body])
-      attributes_for_signing[:encoded_query_params] ||= encode_query_string(attributes_for_signing[:query_string])
+      attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string])
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attributes_for_signing.dig(key)
@@ -81,7 +80,7 @@ module MAuth
 
     # todo how to handle array query params -> do rack and faraday handle them in the same way?
 
-    # Sorts query string parameters by codepoint, uri encodes keys and values,
+    # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
     def encode_query_string(q_string)
       q_string.split('&').sort.map do |part|
@@ -90,8 +89,9 @@ module MAuth
       end.join('&')
     end
 
-    # Percent encodes special characters, preserving character encoding, and
-    # encoding spaces as %20%
+    # percent encodes special characters, preserving character encoding
+    # identical to CGI.escape except it does not escape ~ and encodes spaces as %20%
+    # QUESTION should just use CGI.escape then gsub?
     def uri_escape(string)
       encoding = string.encoding
       string.b.gsub(/([^a-zA-Z0-9_.~-]+)/) do |m|
