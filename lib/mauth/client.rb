@@ -305,16 +305,13 @@ module MAuth
         token_valid!(object)
         signature_valid!(object)
       rescue MauthNotPresent => e
-        logger.warn "mAuth signature authentication failed for #{object.class}."
-        logger.warn e.message
+        logger.warn "mAuth signature not present. Exception: #{e.message}"
         raise
       rescue InauthenticError => e
-        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
-        logger.error e.message
+        logger.error "mAuth signature authentication failed. Exception: #{e.message}"
         raise
       rescue UnableToAuthenticateError => e
-        logger.error "Unable to authenticate with MAuth. encountered error:"
-        logger.error e.message
+        logger.error "Unable to authenticate with MAuth. Exception: #{e.message}"
         raise
       end
 
