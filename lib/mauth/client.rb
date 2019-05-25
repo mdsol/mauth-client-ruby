@@ -293,7 +293,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError
+        rescue InauthenticError, MauthNotPresent
           false
         end
       end
@@ -305,13 +305,13 @@ module MAuth
         token_valid!(object)
         signature_valid!(object)
       rescue MauthNotPresent => e
-        logger.warn "mAuth signature not present. Exception: #{e.message}"
+        logger.warn "mAuth signature not present on #{object.class}. Exception: #{e.message}"
         raise
       rescue InauthenticError => e
-        logger.error "mAuth signature authentication failed. Exception: #{e.message}"
+        logger.error "mAuth signature authentication failed for #{object.class}. Exception: #{e.message}"
         raise
       rescue UnableToAuthenticateError => e
-        logger.error "Unable to authenticate with MAuth. Exception: #{e.message}"
+        logger.error "Unable to authenticate with MAuth for #{object.class}. Exception: #{e.message}"
         raise
       end
 
@@ -321,8 +321,6 @@ module MAuth
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}."
-      rescue # don't let a failed attempt to log disrupt the rest of the action
-        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{$!}"
       end
 
       def authentication_present!(object)
@@ -333,15 +331,15 @@ module MAuth
 
       def time_valid!(object, now = Time.now)
         if object.x_mws_time.nil?
-          raise InauthenticError, "Time verification failed for #{object.class}. No x-mws-time present."
+          raise InauthenticError, "Time verification failed. No x-mws-time present."
         elsif !(-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - object.x_mws_time.to_i)
-          raise InauthenticError, "Time verification failed for #{object.class}. #{object.x_mws_time} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
+          raise InauthenticError, "Time verification failed. #{object.x_mws_time} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
         end
       end
 
       def token_valid!(object)
         unless object.signature_token == MWS_TOKEN
-          raise InauthenticError, "Token verification failed for #{object.class}. Expected #{MWS_TOKEN.inspect}; token was #{object.signature_token}"
+          raise InauthenticError, "Token verification failed. Expected #{MWS_TOKEN.inspect}; token was #{object.signature_token}"
         end
       end
     end

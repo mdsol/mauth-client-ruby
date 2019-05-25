@@ -137,7 +137,7 @@ describe MAuth::Client do
             expect(@authenticating_mc.authentic?(signed_request)).to be_truthy, message
           else
             expect {@authenticating_mc.authenticate!(signed_request)}.to(
-              raise_error(MAuth::InauthenticError, /Time verification failed for .*\. .* not within 300 of/), message)
+              raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/), message)
           end
         end
       end
@@ -147,7 +147,7 @@ describe MAuth::Client do
         signed_request.headers.delete('X-MWS-Time')
         expect{@authenticating_mc.authenticate!(signed_request)}.to raise_error(
                                                                         MAuth::InauthenticError,
-                                                                        /Time verification failed for .*\. No x-mws-time present\./
+                                                                        /Time verification failed\. No x-mws-time present\./
                                                                     )
       end
       it "considers a request with no X-MWS-Authentication to be inauthentic" do
@@ -164,7 +164,7 @@ describe MAuth::Client do
           signed_request = @signing_mc.signed(request)
           signed_request.headers['X-MWS-Authentication'] = signed_request.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
             expect{@authenticating_mc.authenticate!(signed_request)}.to raise_error(
-              MAuth::InauthenticError, /Token verification failed for .*\. Expected "MWS"; token was .*/)
+              MAuth::InauthenticError, /Token verification failed\. Expected "MWS"; token was .*/)
         end
       end
       [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
@@ -202,14 +202,6 @@ describe MAuth::Client do
           signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
           allow(signed_request).to receive(:signature_app_uuid).and_return(nil)
           expect(@authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator.")
-          @authenticating_mc.authentic?(signed_request) rescue nil
-        end
-
-        it 'logs an error when trying to log but getting an exception instead' do
-          request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom')
-          signed_request = @signing_mc.signed(request, :time => Time.now.to_i)
-          allow(signed_request).to receive(:signature_app_uuid).and_raise('uh oh')
-          expect(@authenticating_mc.logger).to receive(:error).with("Mauth-client failed to log information about its attempts to authenticate the current request because uh oh")
           @authenticating_mc.authentic?(signed_request) rescue nil
         end
       end
