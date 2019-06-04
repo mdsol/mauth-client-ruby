@@ -3,6 +3,15 @@ require 'faraday'
 require 'mauth/client'
 require 'securerandom'
 
+# edge cases for specs
+# -> unencoded equals in value
+# -> empty string
+# -> extended utf8 chars
+# -> special chars
+# -> ks w no vs
+# -> ks w multiple vs and starting with extended chars sort by codepoint
+# -> sort by codepoint of key then value
+
 describe MAuth::Client do
   let(:app_uuid) { SecureRandom.uuid }
 
@@ -90,33 +99,115 @@ describe MAuth::Client do
     def x_mws_authentication
       headers['X-MWS-Authentication']
     end
+    def mcc_authentication
+      headers['MCC-Authentication']
+    end
+    def mcc_time
+      headers['MCC-Time']
+    end
   end
 
   describe '#signed' do
-    before { @request = TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
+    let(:request) { TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
+    let(:client) { MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid) }
 
-    it 'adds X-MWS-Time and X-MWS-Authentication headers when signing' do
-      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid)
-      signed_request = mc.signed(@request)
+    it 'adds only X-MWS-Time and X-MWS-Authentication headers when signing with v1 override' do
+      signed_request = client.signed(request, v1_only_override: true)
       expect(signed_request.headers.keys).to include('X-MWS-Authentication')
       expect(signed_request.headers.keys).to include('X-MWS-Time')
+      expect(signed_request.headers.keys).not_to include('MCC-Authentication')
+      expect(signed_request.headers.keys).not_to include('MCC-Time')
     end
+
+    it 'adds only MCC-Time and MCC-Authentication headers when signing with v2 override' do
+      signed_request = client.signed(request, v2_only_override: true)
+      expect(signed_request.headers.keys).to include('MCC-Authentication')
+      expect(signed_request.headers.keys).to include('MCC-Time')
+      expect(signed_request.headers.keys).not_to include('X-MWS-Authentication')
+      expect(signed_request.headers.keys).not_to include('X-MWS-Time')
+    end
+
+    context 'when the SIGN_REQUESTS_WITH_ONLY_V2 flag is true' do
+      before do
+        ENV['SIGN_REQUESTS_WITH_ONLY_V2'] = 'true'
+      end
+
+      after do
+        ENV['SIGN_REQUESTS_WITH_ONLY_V2'] = nil
+      end
+
+      it 'adds only MCC-Time and MCC-Authentication headers when signing' do
+        signed_request = client.signed(request)
+        expect(signed_request.headers.keys).to include('MCC-Authentication')
+        expect(signed_request.headers.keys).to include('MCC-Time')
+        expect(signed_request.headers.keys).not_to include('X-MWS-Authentication')
+        expect(signed_request.headers.keys).not_to include('X-MWS-Time')
+      end
+    end
+
+    it 'by default adds X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers when signing' do
+      signed_request = client.signed(request)
+      expect(signed_request.headers.keys).to include('X-MWS-Authentication')
+      expect(signed_request.headers.keys).to include('X-MWS-Time')
+      expect(signed_request.headers.keys).to include('MCC-Authentication')
+      expect(signed_request.headers.keys).to include('MCC-Time')
+    end
+
     it "can't sign without a private key" do
       mc = MAuth::Client.new(:app_uuid => app_uuid)
-      expect{mc.signed(@request)}.to raise_error(MAuth::UnableToSignError)
+      expect{mc.signed(request)}.to raise_error(MAuth::UnableToSignError)
     end
+
     it "can't sign without an app uuid" do
       mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048))
-      expect{mc.signed(@request)}.to raise_error(MAuth::UnableToSignError)
+      expect{mc.signed(request)}.to raise_error(MAuth::UnableToSignError)
     end
   end
 
   describe '#signed_headers' do
-    it 'returns a hash with X-MWS-Time and X-MWS-Authentication headers' do
-      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid)
-      signed_headers = mc.signed_headers(TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom'))
+    let(:client) { MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048), :app_uuid => app_uuid) }
+    let(:request) { TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
+
+    it 'returns only X-MWS-Time and X-MWS-Authentication headers when called with v1 override' do
+      signed_headers = client.signed_headers(request, v1_only_override: true)
       expect(signed_headers.keys).to include('X-MWS-Authentication')
       expect(signed_headers.keys).to include('X-MWS-Time')
+      expect(signed_headers.keys).not_to include('MCC-Authentication')
+      expect(signed_headers.keys).not_to include('MCC-Time')
+    end
+
+    it 'returns only MCC-Time and MCC-Authentication headers when called with v2 override' do
+      signed_headers = client.signed_headers(request, v2_only_override: true)
+      expect(signed_headers.keys).to include('MCC-Authentication')
+      expect(signed_headers.keys).to include('MCC-Time')
+      expect(signed_headers.keys).not_to include('X-MWS-Authentication')
+      expect(signed_headers.keys).not_to include('X-MWS-Time')
+    end
+
+    context 'when the SIGN_REQUESTS_WITH_ONLY_V2 flag is true' do
+      before do
+        ENV['SIGN_REQUESTS_WITH_ONLY_V2'] = 'true'
+      end
+
+      after do
+        ENV['SIGN_REQUESTS_WITH_ONLY_V2'] = nil
+      end
+
+      it 'returns only MCC-Time and MCC-Authentication headers when signing' do
+        signed_headers = client.signed_headers(request)
+        expect(signed_headers.keys).to include('MCC-Authentication')
+        expect(signed_headers.keys).to include('MCC-Time')
+        expect(signed_headers.keys).not_to include('X-MWS-Authentication')
+        expect(signed_headers.keys).not_to include('X-MWS-Time')
+      end
+    end
+
+    it 'by default returns X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers' do
+      signed_headers = client.signed_headers(request)
+      expect(signed_headers.keys).to include('X-MWS-Authentication')
+      expect(signed_headers.keys).to include('X-MWS-Time')
+      expect(signed_headers.keys).to include('MCC-Authentication')
+      expect(signed_headers.keys).to include('MCC-Time')
     end
   end
 
