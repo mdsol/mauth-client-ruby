@@ -25,6 +25,8 @@ module MAuth
             end
           rescue MAuth::UnableToAuthenticateError
             response_for_unable_to_authenticate(env)
+          rescue MAuth::MissingV2Error
+            response_for_missing_v2(env)
           end
         else
           @app.call(env)
@@ -61,6 +63,18 @@ module MAuth
           [500, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
       end
+
+      # response when the requests includes V1 headers but does not include V2
+      # headers and the AUTHENTICATE_WITH_ONLY_V2 flag is set.
+      def response_for_missing_v2(env)
+        handle_head(env) do
+          body = {
+            'type' => 'errors:mauth:missing_v2',
+            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly'
+          }
+          [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
+        end
+      end
     end
 
     # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status
@@ -70,12 +84,20 @@ module MAuth
       end
     end
 
-    # signs outgoing responses
+    # signs outgoing responses with only the protocol used to sign the request.
     class ResponseSigner < MAuth::Middleware
       def call(env)
-        # TODO get the protocol version here and then use it to sign
+        # QUESTION does instaniate a new request object, rather than doing a check for the headers here, add too much overhead?
+        versioned_token = MAuth::Rack::Request.new(env).signature_token
         unsigned_response = @app.call(env)
-        signed_response = mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response))
+
+        signed_response =
+          if versioned_token == MAuth::Client::MWSV2_TOKEN
+            mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response), v2_only_override: true)
+          else
+            mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response), v1_only_override: true)
+          end
+
         signed_response.status_headers_body
       end
     end
