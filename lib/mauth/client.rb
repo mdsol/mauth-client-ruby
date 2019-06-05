@@ -116,6 +116,11 @@ module MAuth
   class InauthenticError < StandardError
   end
 
+  # Used when the incoming request does not contain any mAuth related information
+  class MauthNotPresent < StandardError
+  end
+
+
   # required information for signing was missing
   class UnableToSignError < StandardError
   end
@@ -288,7 +293,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError
+        rescue InauthenticError, MauthNotPresent
           false
         end
       end
@@ -299,13 +304,14 @@ module MAuth
         time_valid!(object)
         token_valid!(object)
         signature_valid!(object)
-      rescue InauthenticError
-        logger.error "mAuth signature authentication failed for #{object.class}. encountered error:"
-        $!.message.split("\n").each { |l| logger.error "\t#{l}" }
+      rescue MauthNotPresent => e
+        logger.warn "mAuth signature not present on #{object.class}. Exception: #{e.message}"
         raise
-      rescue UnableToAuthenticateError
-        logger.error "Unable to authenticate with MAuth. encountered error:"
-        $!.message.split("\n").each { |l| logger.error "\t#{l}" }
+      rescue InauthenticError => e
+        logger.error "mAuth signature authentication failed for #{object.class}. Exception: #{e.message}"
+        raise
+      rescue UnableToAuthenticateError => e
+        logger.error "Unable to authenticate with MAuth for #{object.class}. Exception: #{e.message}"
         raise
       end
 
@@ -315,27 +321,25 @@ module MAuth
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}."
-      rescue # don't let a failed attempt to log disrupt the rest of the action
-        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{$!}"
       end
 
       def authentication_present!(object)
         if object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/
-          raise InauthenticError, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
+          raise MauthNotPresent, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
         end
       end
 
       def time_valid!(object, now = Time.now)
         if object.x_mws_time.nil?
-          raise InauthenticError, "Time verification failed for #{object.class}. No x-mws-time present."
+          raise InauthenticError, "Time verification failed. No x-mws-time present."
         elsif !(-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - object.x_mws_time.to_i)
-          raise InauthenticError, "Time verification failed for #{object.class}. #{object.x_mws_time} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
+          raise InauthenticError, "Time verification failed. #{object.x_mws_time} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
         end
       end
 
       def token_valid!(object)
         unless object.signature_token == MWS_TOKEN
-          raise InauthenticError, "Token verification failed for #{object.class}. Expected #{MWS_TOKEN.inspect}; token was #{object.signature_token}"
+          raise InauthenticError, "Token verification failed. Expected #{MWS_TOKEN.inspect}; token was #{object.signature_token}"
         end
       end
     end
