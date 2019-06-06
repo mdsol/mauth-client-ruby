@@ -3,6 +3,9 @@
 - Change request signing to sign with both V1 and V2 protocols by default.
 - Update log message for authentication request to include protocol version used.
 
+## v4.1.1
+- Use warning level instead of error level for logs about missing mauth header.
+
 ## v4.1.0
 - Drop support for Ruby < 2.3.0
 - Update development dependencies

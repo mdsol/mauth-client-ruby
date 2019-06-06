@@ -366,18 +366,12 @@ describe MAuth::Client do
             authenticating_mc.authentic?(signed_request) rescue nil
           end
 
-          it 'logs an error when trying to log but getting an exception instead' do
-            signed_request = signing_mc.signed(request, :time => Time.now.to_i)
-            allow(signed_request).to receive(:signature_app_uuid).and_raise('uh oh')
-            expect(authenticating_mc.logger).to receive(:error).with("Mauth-client failed to log information about its attempts to authenticate the current request because uh oh")
-            authenticating_mc.authentic?(signed_request) rescue nil
-          end
         end
       end
 
       context 'when AUTHENTICATE_WITH_ONLY_V2 flag is true' do
         let(:authenticate_with_only_v2) { false }
-        
+
         before do
           ENV['AUTHENTICATE_WITH_ONLY_V2'] = 'true'
         end

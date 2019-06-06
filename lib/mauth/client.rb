@@ -116,6 +116,11 @@ module MAuth
   class InauthenticError < StandardError
   end
 
+  # Used when the incoming request does not contain any mAuth related information
+  class MauthNotPresent < StandardError
+  end
+
+
   # required information for signing was missing
   class UnableToSignError < StandardError
   end
@@ -329,7 +334,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError
+        rescue InauthenticError, MauthNotPresent
           false
         end
       end
@@ -356,7 +361,7 @@ module MAuth
           else
             msg = 'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
             log_inauthentic(object, msg)
-            raise InauthenticError, msg
+            raise MauthNotPresent, msg
           end
         end
       end
@@ -368,8 +373,6 @@ module MAuth
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         object_token = object.signature_token || '[none provided]'
         logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid} using version #{object_token}."
-      rescue => e # don't let a failed attempt to log disrupt the rest of the action
-        logger.error "Mauth-client failed to log information about its attempts to authenticate the current request because #{e.message}"
       end
 
       def log_inauthentic(object, message)
@@ -378,6 +381,10 @@ module MAuth
 
       def log_unable_to_authenticate(message)
         logger.error("Unable to authenticate with MAuth. Exception #{message}")
+      end
+
+      def log_mauth_not_present(object, message)
+        logger.warn("mAuth signature not present on #{object.class}. Exception: #{e.message}")
       end
 
       def time_within_valid_range!(object, time_signed, now = Time.now)
@@ -418,8 +425,8 @@ module MAuth
       def authentication_present_v2!(object)
         if authentication_present_v2(object)
           msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
+          log_mauth_not_present(object, msg)
+          raise MauthNotPresent, msg
         end
       end
 
