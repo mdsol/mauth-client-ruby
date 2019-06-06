@@ -390,7 +390,7 @@ module MAuth
       def time_within_valid_range!(object, time_signed, now = Time.now)
         unless (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
           msg = "Time verification failed. #{time_signed} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
-          log_inauthentic(object, msg)
+          log_mauth_not_present(object, msg)
           raise InauthenticError, msg
         end
       end
