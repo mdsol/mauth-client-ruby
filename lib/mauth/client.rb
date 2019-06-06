@@ -344,6 +344,7 @@ module MAuth
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
         if authenticate_with_only_v2
+          # TODO message?
           raise MAuth::MissingV2Error if authentication_present_v1(object)
           authentication_present_v2!(object)
           time_valid_v2!(object)
@@ -384,7 +385,7 @@ module MAuth
       end
 
       def log_mauth_not_present(object, message)
-        logger.warn("mAuth signature not present on #{object.class}. Exception: #{e.message}")
+        logger.warn("mAuth signature not present on #{object.class}. Exception: #{message}")
       end
 
       def time_within_valid_range!(object, time_signed, now = Time.now)
@@ -397,7 +398,7 @@ module MAuth
 
       # V1 helpers
       def authentication_present_v1(object)
-        !object.x_mws_authentication.nil? || object.x_mws_authentication =~ /\S/
+        !object.x_mws_authentication.nil? || object.x_mws_authentication&.match?(/\S/)
       end
 
       def time_valid_v1!(object, now = Time.now)
@@ -419,11 +420,11 @@ module MAuth
 
       # V2 helpers
       def authentication_present_v2(object)
-        !object.mcc_authentication.nil? || object.mcc_authentication =~ /\S/
+        !object.mcc_authentication.nil? || object.mcc_authentication&.match?(/\S/)
       end
 
       def authentication_present_v2!(object)
-        if authentication_present_v2(object)
+        unless authentication_present_v2(object)
           msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
           log_mauth_not_present(object, msg)
           raise MauthNotPresent, msg
@@ -465,15 +466,15 @@ module MAuth
         original_request_uri = object.attributes_for_signing[:request_url]
 
         # craft an expected string-to-sign without doing any percent-encoding
-        expected_no_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_no_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # do a simple percent reencoding variant of the path
         object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        expected_for_percent_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_for_percent_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # do a moderately complex Euresource-style reencoding of the path
         object.attributes_for_signing[:request_url] = euresource_escape(original_request_uri.to_s)
-        expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_euresource_style_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # reset the object original request_uri, just in case we need it again
         object.attributes_for_signing[:request_url] = original_request_uri
@@ -518,7 +519,7 @@ module MAuth
         expected_euresource_style_reencoding = object.string_to_sign_v2(
           time: object.mcc_time,
           app_uuid: object.signature_app_uuid,
-          resource_url: euresource_escape(original_request_uri.to_s),
+          request_url: euresource_escape(original_request_uri.to_s),
           query_string: euresource_escape(original_query_string.to_s)
         )
 
@@ -578,7 +579,7 @@ module MAuth
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
             rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
               msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
-              log_unable_to_authenticate(msg)
+              @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
               raise UnableToAuthenticateError, msg
             end
             if response.status == 200
@@ -586,7 +587,7 @@ module MAuth
                 security_token = JSON.parse(response.body)
               rescue JSON::ParserError => e
                 msg =  "mAuth service responded with unparseable json: #{response.body}\n#{e.class}: #{e.message}"
-                log_unable_to_authenticate(msg)
+                @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
                 raise UnableToAuthenticateError, msg
               end
               @cache_write_lock.synchronize do
