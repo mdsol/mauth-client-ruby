@@ -212,7 +212,7 @@ Create a `MAuth::Request` object from the information in your HTTP request, what
 
 ```ruby
 require 'mauth/request_and_response'
-request = MAuth::Request.new(verb: my_verb, request_url: my_request_url, body: my_body)
+request = MAuth::Request.new(verb: my_verb, request_url: my_request_url, body: my_body, query_string: my_query_string)
 ```
 `mauth_client.signed_headers(request)` will then return mauth headers which you can apply to your request.
 
@@ -233,3 +233,7 @@ When fetching public keys from MAuth, the following rules apply:
 During development classes are typically not cached in Rails applications.
 If this is the case, be aware that the MAuth-Client middleware object will be instantiated anew for each request;
 this will cause applications performing local authentication to fetch public keys before each request is authenticated.
+
+## Protocol Versions
+
+The mauth V2 protocol was added as of v5.0.0. This protocol updates the string_to_sign to include query parameters, uses different authentication header names, and has a few other changes. See this document for more information: (DOC?). By default mauth client will sign requests with both V1 and V2, sign responses with only the version used in the request, authenticate requests with only the highest version of the protocol present, and authenticate responses with only the highest version of the protocol present.
