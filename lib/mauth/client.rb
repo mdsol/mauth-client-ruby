@@ -240,13 +240,12 @@ module MAuth
       @config['ssl_certs_path']
     end
 
-    # do these need to be normalized
     def sign_requests_with_only_v2
-      @config['sign_requests_with_only_v2'] == 'true'
+      @config['sign_requests_with_only_v2']
     end
 
     def authenticate_with_only_v2
-      @config['authenticate_with_only_v2'] == 'true'
+      @config['authenticate_with_only_v2']
     end
 
     def assert_private_key(err)
