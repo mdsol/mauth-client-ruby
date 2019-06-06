@@ -28,7 +28,7 @@ module MAuth
     #     response_body_digest + <LF> +
     #     app_uuid + <LF> +
     #     current_seconds_since_epoch
-    def string_to_sign(more_attributes)
+    def string_to_sign_v1(more_attributes)
       attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
       missing_attributes = self.class::SIGNATURE_COMPONENTS.select { |key| !attributes_for_signing.key?(key) || attributes_for_signing[key].nil? }
       missing_attributes.delete(:body) # body may be omitted
@@ -58,22 +58,24 @@ module MAuth
     def string_to_sign_v2(more_attributes)
       attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
 
-      # lazy instantiation of request body digest to avoid hashing request bodies
+      # lazy instantiation of body digest to avoid hashing request bodies
       # three times because we call string to sign three times.
-      attributes_for_signing[:request_body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body])
-      attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string])
+      if attributes_for_signing[:body]
+        attributes_for_signing[:body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body].to_s)
+      end
+      attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string].to_s)
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attributes_for_signing.dig(key)
       end
 
-      missing_attributes.delete(:body) # body may be omitted
+      missing_attributes.delete(:body_digest) # body may be omitted
       if missing_attributes.any?
         raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
 
-      string = self.class::SIGNATURE_COMPONENTS.map do |k|
-        attributes_for_signing[k].to_s.force_encoding(CHARACTER_ENCODING)
+      string = self.class::SIGNATURE_COMPONENTS_V2.map do |k|
+        attributes_for_signing[k].to_s.force_encoding('UTF-8')
       end.join("\n")
       Digest::SHA512.hexdigest(string)
     end
@@ -90,8 +92,9 @@ module MAuth
     end
 
     # percent encodes special characters, preserving character encoding
-    # identical to CGI.escape except it does not escape ~ and encodes spaces as %20%
+    # identical to CGI.escape except it encodes spaces as %20%
     # QUESTION should just use CGI.escape then gsub?
+    # CGI.escape(string).gsub(/\+/, '%20%')
     def uri_escape(string)
       encoding = string.encoding
       string.b.gsub(/([^a-zA-Z0-9_.~-]+)/) do |m|
@@ -121,13 +124,12 @@ module MAuth
     # protocol versions.
     # returns a hash with keys :token, :app_uuid, and :signature parsed from the MCC-Authentication header
     # if it is present and if not then the X-MWS-Authentication header if it is present.
-    # Note MWSV2 protocol no longer allows more than one space between the token app uuid.
+    # Note MWSV2 protocol no longer allows more than one space between the token and app uuid.
     def signature_info
       @signature_info ||= begin
         match = if mcc_authentication
           mcc_authentication.match(
-            # QUESTION should this just use a general regex or use the token const
-            /\A([^ ]+) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
+            /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
           )
         elsif x_mws_authentication
           x_mws_authentication.match(/\A([^ ]+) *([^:]+):([^:]+)\z/)
@@ -153,14 +155,23 @@ module MAuth
   # virtual base class for signable requests
   class Request
     SIGNATURE_COMPONENTS = %i[verb request_url body app_uuid time].freeze
-    SIGNATURE_COMPONENTS_V2 = %i[verb request_url request_body_digest app_uuid time encoded_query_params].freeze
+    SIGNATURE_COMPONENTS_V2 =
+      %i[
+        verb
+        request_url
+        body_digest
+        app_uuid
+        time
+        encoded_query_params
+      ].freeze
+
     include Signable
   end
 
   # virtual base class for signable responses
   class Response
     SIGNATURE_COMPONENTS = %i[status_code body app_uuid time].freeze
-    SIGNATURE_COMPONENTS_V2 = %i[status_code body app_uuid time].freeze
+    SIGNATURE_COMPONENTS_V2 = %i[status_code body_digest app_uuid time].freeze
     include Signable
   end
 end
