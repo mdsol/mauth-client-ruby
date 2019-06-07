@@ -99,8 +99,41 @@ describe MAuth::Client do
       end
     end
 
-    it 'initializes with authenticate_with_only_v2'
-    it 'initializes with sign_requests_with_only_v2'
+    it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
+      [true, 'true'].each do |authenticate_with_only_v2|
+        [{:authenticate_with_only_v2 => authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.authenticate_with_only_v2).to eq(true)
+        end
+      end
+    end
+
+    it 'correctly initializes with authenticate_with_only_v2 as false with any other values' do
+      ['tru', false, 'false', 1, 0, nil, ''].each do |authenticate_with_only_v2|
+        [{:authenticate_with_only_v2 => authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.authenticate_with_only_v2).to eq(false)
+        end
+      end
+    end
+
+    it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
+      [true, 'true'].each do |sign_requests_with_only_v2|
+        [{:sign_requests_with_only_v2 => sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.sign_requests_with_only_v2).to eq(true)
+        end
+      end
+    end
+
+    it 'correctly initializes with sign_requests_with_only_v2 as false with any other values' do
+      ['tru', false, 'false', 1, 0, nil].each do |sign_requests_with_only_v2|
+        [{:sign_requests_with_only_v2 => sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.sign_requests_with_only_v2).to eq(false)
+        end
+      end
+    end
   end
 
   require 'mauth/request_and_response'
@@ -218,7 +251,12 @@ describe MAuth::Client do
 
     shared_examples MAuth::Client::Authenticator do
       context 'when v2 and v1 headers are present on the object to authenticate' do
-        it 'authenticates with v2'
+        it 'authenticates with v2' do
+          signed_request = client.signed(request)
+          expect(authenticating_mc).to receive(:signature_valid_v2!).with(signed_request)
+          expect(authenticating_mc).not_to receive(:signature_valid_v1!)
+          authenticating_mc.authentic?(signed_request)
+        end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
           {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
@@ -275,7 +313,11 @@ describe MAuth::Client do
 
       context 'when only v1 headers are present on the object to authenticate' do
 
-        it 'authenticates with v1'
+        it 'authenticates with v1' do
+          expect(authenticating_mc).to receive(:signature_valid_v1!).with(v1_signed_req)
+          expect(authenticating_mc).not_to receive(:signature_valid_v1!)
+          authenticating_mc.authentic?(v1_signed_req)
+        end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
           {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
@@ -463,8 +505,8 @@ describe MAuth::Client do
         end
 
         context 'v2' do
+          it 'considers a request to be authentic'
           it 'considers an authentically signed request with a query string to be authentic'
-          it 'considers a request to be authentic '
 
           # Note:  We need this feature because some web servers (e.g. nginx) unescape
           # URIs in PATH_INFO before sending them along to the served applications.  This added to the
