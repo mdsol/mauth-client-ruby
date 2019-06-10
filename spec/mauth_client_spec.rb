@@ -521,31 +521,40 @@ describe MAuth::Client do
           # fact that Euresource percent-encodes just about everything in the path except '/' leads to
           # this somewhat odd test.
           it "considers a request with query parameters to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
-            [['/v1/users/pjones+1@mdsol.com',  'nice=cool&good=great'], ["! # $ & ' ( ) * + , / : ; = ? @ [ ]", ""]].each do |path, qs|
+            [
+              ['/v1/users/pjones+1@mdsol.com',  'nice=cool&good=great'],
+              ["! # $ & ' ( ) * + , / : ; = ? @ [ ]", "param=\\'df+P=%5C"]
+            ].each do |path, qs|
               # imagine what are on the requester's side now...
-              signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
-              signed_qs = CGI.escape(qs).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#")
+              signed_path = CGI.escape(path).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
+              signed_qs = CGI.escape(qs).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
               req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path, query_string: signed_qs)
-              signed_request = client.signed(req_w_path, v1_only_override: true)
+              signed_request = client.signed(req_w_path)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
+              decoded_signed_request.attributes_for_signing[:query_string] = CGI.unescape(decoded_signed_request.attributes_for_signing[:query_string])
               expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
             end
           end
 
           # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded
           it "considers a request with query parameters to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
-            ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
+            [
+              ['/v1/users/pjones+1@mdsol.com',  'nice=cool&good=great'],
+              ["! # $ & ' ( ) * + , / : ; = ? @ [ ]", "param=\\'df+P=%5C"]
+            ].each do |path, qs|
               # imagine what are on the requester's side now...
               signed_path = CGI.escape(path)
-              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
-              signed_request = client.signed(req_w_path, v1_only_override: true)
+              signed_qs = CGI.escape(qs)
+              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path, query_string: signed_qs)
+              signed_request = client.signed(req_w_path)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
+              decoded_signed_request.attributes_for_signing[:query_string] = CGI.unescape(decoded_signed_request.attributes_for_signing[:query_string])
               expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
             end
           end
