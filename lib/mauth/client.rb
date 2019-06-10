@@ -343,8 +343,10 @@ module MAuth
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
         if authenticate_with_only_v2
-          # TODO message?
-          raise MAuth::MissingV2Error if authentication_present_v1(object)
+          if authentication_present_v1(object)
+            msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+            raise MAuth::MissingV2Error, msg
+          end
           authentication_present_v2!(object)
           time_valid_v2!(object)
           token_valid_v2!(object)
@@ -490,7 +492,6 @@ module MAuth
         end
       end
 
-      #TODO does this need to be updated to handle encoding of query params?
       #TODO also is the request body encoded differently? (seems like no but what about if content type is url encoded?)
       def signature_valid_v2!(object)
         # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
