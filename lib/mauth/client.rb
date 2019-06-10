@@ -127,7 +127,6 @@ module MAuth
 
   # used when an object has the V1 headers but not the V2 headers and the
   # AUTHENTICATE_WITH_ONLY_V2 variable is set to true.
-  # QUESTION do we only respond with this if the v1 signature is valid?
   class MissingV2Error < StandardError
   end
 
@@ -646,7 +645,7 @@ module MAuth
           'request_url' => object.attributes_for_signing[:request_url],
           'request_time' => object.mcc_time,
           'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || ''),
-          'query_string' => object.attributes_for_signing[:body]
+          'query_string' => object.attributes_for_signing[:query_string]
         }
         make_mauth_request(authentication_ticket)
       end
