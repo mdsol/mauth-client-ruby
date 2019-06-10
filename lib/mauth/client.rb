@@ -144,7 +144,6 @@ module MAuth
 
     MWS_TOKEN = 'MWS'.freeze
     MWSV2_TOKEN = 'MWSV2'.freeze
-    # CHARACTER_ENCODING = 'UTF-8'.freeze
     AUTH_HEADER_DELIMITER = ';'.freeze
 
     # new client with the given App UUID and public key. config may include the following (all
