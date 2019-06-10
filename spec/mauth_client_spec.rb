@@ -3,15 +3,6 @@ require 'faraday'
 require 'mauth/client'
 require 'securerandom'
 
-# edge cases for specs
-# -> unencoded equals in value
-# -> empty string
-# -> extended utf8 chars
-# -> special chars
-# -> ks w no vs
-# -> ks w multiple vs and starting with extended chars sort by codepoint
-# -> sort by codepoint of key then value
-
 describe MAuth::Client do
   let(:app_uuid) { SecureRandom.uuid }
   let(:request) { TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
@@ -447,77 +438,22 @@ describe MAuth::Client do
 
         include_examples MAuth::Client::Authenticator
 
-        it 'considers an authentically-signed request to be authentic' do
-          signed_request = client.signed(request)
-          expect(authenticating_mc.authentic?(signed_request)).to be_truthy
-        end
 
-        # Note:  We need this feature because some web servers (e.g. nginx) unescape
-        # URIs in PATH_INFO before sending them along to the served applications.  This added to the
-        # fact that Euresource percent-encodes just about everything in the path except '/' leads to
-        # this somewhat odd test.
-        it "considers a request to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
-          ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
-            # imagine what are on the requester's side now...
-            signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
-            req_w_path = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
-            signed_request = client.signed(req_w_path)
-
-            # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
-            decoded_signed_request = signed_request.clone
-            decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-            expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+        context 'when authenticating with v1' do
+          it 'considers an authentically-signed request to be authentic' do
+            expect(authenticating_mc.authentic?(v1_signed_req)).to be_truthy
           end
-        end
-
-        # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded
-        it "considers a request to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
-          ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
-            # imagine what are on the requester's side now...
-            signed_path = CGI.escape(path)
-            req_w_path = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
-            signed_request = client.signed(req_w_path)
-
-            # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
-            decoded_signed_request = signed_request.clone
-            decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-            expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
-          end
-        end
-
-        it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
-          client = MAuth::Client.new(:private_key => signing_key, :app_uuid => 'nope')
-          stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
-          signed_request = client.signed(request)
-          expect(authenticating_mc.authentic?(signed_request)).to be_falsey
-        end
-
-        it "considers a request with a bad signature to be inauthentic" do
-          signed_request = client.signed(request)
-          signed_request.headers['MCC-Authentication'] = "MWS #{app_uuid}:wat"
-          expect(authenticating_mc.authentic?(signed_request)).to be_falsey
-        end
-
-        it "considers a request that has been tampered with to be inauthentic" do
-          signed_request = client.signed(request)
-          signed_request.attributes_for_signing[:verb] = 'DELETE'
-          expect(authenticating_mc.authentic?(signed_request)).to be_falsey
-        end
-
-        context 'v2' do
-          it 'considers a request to be authentic'
-          it 'considers an authentically signed request with a query string to be authentic'
 
           # Note:  We need this feature because some web servers (e.g. nginx) unescape
           # URIs in PATH_INFO before sending them along to the served applications.  This added to the
           # fact that Euresource percent-encodes just about everything in the path except '/' leads to
           # this somewhat odd test.
-          xit "considers a request with a query string to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
+          it "considers a request to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
             ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
               # imagine what are on the requester's side now...
               signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
-              req_w_path = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
-              signed_request = client.signed(req_w_path)
+              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
+              signed_request = client.signed(req_w_path, v1_only_override: true)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
@@ -527,18 +463,110 @@ describe MAuth::Client do
           end
 
           # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded
-          xit "considers a request with a query to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
+          it "considers a request to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
             ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
               # imagine what are on the requester's side now...
               signed_path = CGI.escape(path)
-              req_w_path = TestSignableRequest.new(:verb => 'GET', :request_url => signed_path)
-              signed_request = client.signed(req_w_path)
+              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
+              signed_request = client.signed(req_w_path, v1_only_override: true)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
               expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
             end
+          end
+
+          it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
+            bad_client = MAuth::Client.new(:private_key => signing_key, :app_uuid => 'nope')
+            signed_request = bad_client.signed(request, v1_only_override: true)
+            stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
+            expect(authenticating_mc.authentic?(signed_request)).to be_falsey
+          end
+
+          it "considers a request with a bad signature to be inauthentic" do
+            v1_signed_req.headers['X-MWS-Authentication'] = "MWS #{app_uuid}:wat"
+            expect(authenticating_mc.authentic?(v1_signed_req)).to be_falsey
+          end
+
+          it "considers a request that has been tampered with to be inauthentic" do
+            v1_signed_req.attributes_for_signing[:verb] = 'DELETE'
+            expect(authenticating_mc.authentic?(v1_signed_req)).to be_falsey
+          end
+        end
+
+
+        context 'when authenticating with v2' do
+          let(:qs_request) do
+            TestSignableRequest.new(
+              verb: 'PUT',
+              request_url: '/',
+              body: 'himom',
+              query_string: 'key=value&coolkey=coolvalue'
+            )
+          end
+
+          it 'considers an authentically-signed request to be authentic' do
+            signed_request = client.signed(request)
+            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          end
+
+          it 'considers an authentically signed request with with query parameters to be authentic' do
+            signed_request = client.signed(qs_request)
+            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          end
+
+          # Note:  We need this feature because some web servers (e.g. nginx) unescape
+          # URIs in PATH_INFO before sending them along to the served applications.  This added to the
+          # fact that Euresource percent-encodes just about everything in the path except '/' leads to
+          # this somewhat odd test.
+          it "considers a request with query parameters to be authentic even if the request_url must be CGI::escape'ed (after being escaped in Euresource's own idiosyncratic way) before authenticity is achieved" do
+            [['/v1/users/pjones+1@mdsol.com',  'nice=cool&good=great'], ["! # $ & ' ( ) * + , / : ; = ? @ [ ]", ""]].each do |path, qs|
+              # imagine what are on the requester's side now...
+              signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
+              signed_qs = CGI.escape(qs).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#")
+              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path, query_string: signed_qs)
+              signed_request = client.signed(req_w_path, v1_only_override: true)
+
+              # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
+              decoded_signed_request = signed_request.clone
+              decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+            end
+          end
+
+          # And the above example inspires a slightly less unusual case, in which the path is fully percent-encoded
+          it "considers a request with query parameters to be authentic even if the request_url must be CGI::escape'ed before authenticity is achieved" do
+            ['/v1/users/pjones+1@mdsol.com', "! # $ & ' ( ) * + , / : ; = ? @ [ ]"].each do |path|
+              # imagine what are on the requester's side now...
+              signed_path = CGI.escape(path)
+              req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
+              signed_request = client.signed(req_w_path, v1_only_override: true)
+
+              # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
+              decoded_signed_request = signed_request.clone
+              decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+            end
+          end
+
+          it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
+            bad_client = MAuth::Client.new(:private_key => signing_key, :app_uuid => 'nope')
+            signed_request = bad_client.signed(request)
+            stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
+            expect(authenticating_mc.authentic?(signed_request)).to be_falsey
+          end
+
+          it "considers a request with a bad signature to be inauthentic" do
+            signed_request = client.signed(request)
+            signed_request.headers['MCC-Authentication'] = "MWS #{app_uuid}:wat"
+            expect(authenticating_mc.authentic?(signed_request)).to be_falsey
+          end
+
+          it "considers a request that has been tampered with to be inauthentic" do
+            signed_request = client.signed(request)
+            signed_request.attributes_for_signing[:verb] = 'DELETE'
+            expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end
         end
       end

@@ -94,7 +94,7 @@ module MAuth
     # percent encodes special characters, preserving character encoding
     # identical to CGI.escape except it encodes spaces as %20%
     # QUESTION should just use CGI.escape then gsub?
-    # CGI.escape(string).gsub(/\+/, '%20%')
+    # CGI.escape(string).gsub!(/\+/, '%20%')
     def uri_escape(string)
       encoding = string.encoding
       string.b.gsub(/([^a-zA-Z0-9_.~-]+)/) do |m|
