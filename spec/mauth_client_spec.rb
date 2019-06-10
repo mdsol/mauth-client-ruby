@@ -603,6 +603,15 @@ describe MAuth::Client do
             builder.adapter(:test, stubs)
           end
         end
+        let(:query_string) { 'key=value&coolkey=coolvalue' }
+        let(:qs_request) do
+          TestSignableRequest.new(
+            verb: 'PUT',
+            request_url: '/',
+            body: 'himom',
+            query_string: query_string
+          )
+        end
 
         before do
           expect(authenticating_mc).to be_kind_of(MAuth::Client::RemoteRequestAuthenticator)
@@ -622,6 +631,18 @@ describe MAuth::Client do
           stubs.post('/mauth/v1/authentication_tickets.json') { [412, {}, []] }
           signed_request = client.signed(request)
           expect(authenticating_mc.authentic?(signed_request)).to be_falsey
+        end
+
+        context 'when authenticating with v2' do
+          it 'includes the query string and token in the request' do
+            expect(test_faraday).to receive(:post).with(
+              '/mauth/v1/authentication_tickets.json',
+              'authentication_ticket' => hash_including('query_string' => query_string, 'token' => 'MWSV2')
+            ).and_return(double('resp', status: 200))
+
+            signed_request = client.signed(qs_request)
+            authenticating_mc.authentic?(signed_request)
+          end
         end
       end
     end
