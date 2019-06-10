@@ -80,8 +80,6 @@ module MAuth
       Digest::SHA512.hexdigest(string)
     end
 
-    # todo how to handle array query params -> do rack and faraday handle them in the same way?
-
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
     def encode_query_string(q_string)

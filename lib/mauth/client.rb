@@ -485,13 +485,12 @@ module MAuth
         rescue OpenSSL::PKey::PKeyError
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
-        # TODO: time-invariant comparison instead of #== ?
+
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
       end
 
-      #TODO also is the request body encoded differently? (seems like no but what about if content type is url encoded?)
       def signature_valid_v2!(object)
         # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
         # all of them.  In particular, Euresource is percent-encoding all special characters save for '/'.
@@ -528,7 +527,7 @@ module MAuth
         rescue OpenSSL::PKey::PKeyError
           raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
         end
-        # TODO: time-invariant comparison instead of #== ?
+
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
         end
