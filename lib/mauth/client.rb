@@ -636,6 +636,7 @@ module MAuth
         make_mauth_request(authentication_ticket)
       end
 
+      # TODO: update mAuth to be able verify authentication tickets w V2 (MCC-413109)
       def signature_valid_v2!(object)
         raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
         authentication_ticket = {
@@ -645,7 +646,8 @@ module MAuth
           'request_url' => object.attributes_for_signing[:request_url],
           'request_time' => object.mcc_time,
           'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || ''),
-          'query_string' => object.attributes_for_signing[:query_string]
+          'query_string' => object.attributes_for_signing[:query_string],
+          'token' => object.signature_token
         }
         make_mauth_request(authentication_ticket)
       end
