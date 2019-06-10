@@ -5,7 +5,7 @@ require 'securerandom'
 
 describe MAuth::Client do
   let(:app_uuid) { SecureRandom.uuid }
-  let(:request) { TestSignableRequest.new(:verb => 'PUT', :request_url => '/', :body => 'himom') }
+  let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
   let(:sign_requests_with_only_v2) { false }
   let(:authenticate_with_only_v2) { false }
   let(:v1_signed_req) { client.signed(request, v1_only_override: true) }
@@ -27,9 +27,9 @@ describe MAuth::Client do
 
     require 'logger'
     config_pieces = {
-      :logger => ::Logger.new(STDERR),
-      :mauth_baseurl => 'https://mauth.imedidata.net',
-      :mauth_api_version => 'v1',
+      logger: ::Logger.new(STDERR),
+      mauth_baseurl: 'https://mauth.imedidata.net',
+      mauth_api_version: 'v1',
     }
     config_pieces.each do |config_key, value|
       it "initializes with #{config_key}" do
@@ -66,7 +66,7 @@ describe MAuth::Client do
 
     it 'initializes with app_uuid' do
       uuid = "40e19273-6a43-41d1-ba71-71cbb1b69d35"
-      [{:app_uuid => uuid}, {'app_uuid' => uuid}].each do |config|
+      [{app_uuid: uuid}, {'app_uuid' => uuid}].each do |config|
         mc = MAuth::Client.new(config)
         expect(uuid).to eq(mc.client_app_uuid)
       end
@@ -74,7 +74,7 @@ describe MAuth::Client do
 
     it 'initializes with ssl_cert_path' do
       ssl_certs_path = 'ssl/certs/path'
-      [{:ssl_certs_path => ssl_certs_path}, {'ssl_certs_path' => ssl_certs_path}].each do |config|
+      [{ssl_certs_path: ssl_certs_path}, {'ssl_certs_path' => ssl_certs_path}].each do |config|
         mc = MAuth::Client.new(config)
         expect(ssl_certs_path).to eq(mc.ssl_certs_path)
       end
@@ -82,7 +82,7 @@ describe MAuth::Client do
 
     it 'initializes with private key' do
       key = OpenSSL::PKey::RSA.generate(2048)
-      [{:private_key => key}, {'private_key' => key}, {:private_key => key.to_s}, {'private_key' => key.to_s}].each do |config|
+      [{private_key: key}, {'private_key' => key}, {private_key: key.to_s}, {'private_key' => key.to_s}].each do |config|
         mc = MAuth::Client.new(config)
         # can't directly compare the OpenSSL::PKey::RSA instances
         expect(key.class).to eq(mc.private_key.class)
@@ -189,12 +189,12 @@ describe MAuth::Client do
     end
 
     it "can't sign without a private key" do
-      mc = MAuth::Client.new(:app_uuid => app_uuid)
+      mc = MAuth::Client.new(app_uuid: app_uuid)
       expect { mc.signed(request) }.to raise_error(MAuth::UnableToSignError)
     end
 
     it "can't sign without an app uuid" do
-      mc = MAuth::Client.new(:private_key => OpenSSL::PKey::RSA.generate(2048))
+      mc = MAuth::Client.new(private_key: OpenSSL::PKey::RSA.generate(2048))
       expect { mc.signed(request) }.to raise_error(MAuth::UnableToSignError)
     end
   end
@@ -251,7 +251,7 @@ describe MAuth::Client do
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
           {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
-            signed_request = client.signed(request, :time => Time.now.to_i + time_offset)
+            signed_request = client.signed(request, time: Time.now.to_i + time_offset)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
               expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
@@ -288,13 +288,13 @@ describe MAuth::Client do
           end
 
           it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
-            signed_request = client.signed(request, :time => Time.now.to_i)
+            signed_request = client.signed(request, time: Time.now.to_i)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator using version MWSV2.")
             authenticating_mc.authentic?(signed_request)
           end
 
           it 'says when the mauth app uuid is not provided in the request' do
-            signed_request = client.signed(request, :time => Time.now.to_i)
+            signed_request = client.signed(request, time: Time.now.to_i)
             allow(signed_request).to receive(:signature_app_uuid).and_return(nil)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
             authenticating_mc.authentic?(signed_request) rescue nil
@@ -312,7 +312,7 @@ describe MAuth::Client do
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
           {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
-            signed_request = client.signed(request, :time => Time.now.to_i + time_offset, v1_only_override: true)
+            signed_request = client.signed(request, time: Time.now.to_i + time_offset, v1_only_override: true)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
               expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
@@ -370,13 +370,13 @@ describe MAuth::Client do
           end
 
           it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
-            v1_signed_req = client.signed(request, :time => Time.now.to_i)
+            v1_signed_req = client.signed(request, time: Time.now.to_i)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator using version MWSV2.")
             authenticating_mc.authentic?(v1_signed_req)
           end
 
           it 'says when the mauth app uuid is not provided in the request' do
-            v1_signed_req = client.signed(request, :time => Time.now.to_i)
+            v1_signed_req = client.signed(request, time: Time.now.to_i)
             allow(v1_signed_req).to receive(:signature_app_uuid).and_return(nil)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
             authenticating_mc.authentic?(v1_signed_req) rescue nil
@@ -478,7 +478,7 @@ describe MAuth::Client do
           end
 
           it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
-            bad_client = MAuth::Client.new(:private_key => signing_key, :app_uuid => 'nope')
+            bad_client = MAuth::Client.new(private_key: signing_key, app_uuid: 'nope')
             signed_request = bad_client.signed(request, v1_only_override: true)
             stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
@@ -551,7 +551,7 @@ describe MAuth::Client do
           end
 
           it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
-            bad_client = MAuth::Client.new(:private_key => signing_key, :app_uuid => 'nope')
+            bad_client = MAuth::Client.new(private_key: signing_key, app_uuid: 'nope')
             signed_request = bad_client.signed(request)
             stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey

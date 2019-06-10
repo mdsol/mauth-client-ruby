@@ -7,12 +7,12 @@ require 'mauth/faraday'
 shared_examples MAuth::Middleware do
   it 'uses a given mauth_client if given' do
     mauth_client = double
-    expect(mauth_client).to eq(described_class.new(double('app'), :mauth_client => mauth_client).mauth_client)
+    expect(mauth_client).to eq(described_class.new(double('app'), mauth_client: mauth_client).mauth_client)
     expect(mauth_client).to eq(described_class.new(double('app'), 'mauth_client' => mauth_client).mauth_client)
   end
 
   it 'builds a mauth client if not given a mauth_client' do
-    mauth_config = {:mauth_baseurl => 'http://mauth', :mauth_api_version => 'v1'}
+    mauth_config = {mauth_baseurl: 'http://mauth', mauth_api_version: 'v1'}
     middleware_instance = described_class.new(double('app'), mauth_config)
     expect(mauth_config[:mauth_baseurl]).to eq(middleware_instance.mauth_client.mauth_baseurl)
     expect(mauth_config[:mauth_api_version]).to eq(middleware_instance.mauth_client.mauth_api_version)
@@ -28,7 +28,7 @@ describe MAuth::Rack do
     include_examples MAuth::Middleware
 
     it 'calls the app without authentication if should_authenticate check indicates not to' do
-      mw_auth_false = described_class.new(rack_app, :should_authenticate_check => proc { false })
+      mw_auth_false = described_class.new(rack_app, should_authenticate_check: proc { false })
       env = double
       expect(mw_auth_false.mauth_client).not_to receive(:authentic?)
       expect(rack_app).to receive(:call).with(env).and_return(res)
@@ -39,7 +39,7 @@ describe MAuth::Rack do
 
     it 'authenticates if should_authenticate_check is omitted or indicates to' do
       [nil, proc {|env| true }].each do |should_authenticate_check|
-        mw_w_flag = described_class.new(rack_app, :should_authenticate_check => should_authenticate_check)
+        mw_w_flag = described_class.new(rack_app, should_authenticate_check: should_authenticate_check)
         env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
         expect(mw_w_flag.mauth_client).to receive(:authentic?).and_return(true)
         expect(rack_app).to receive(:call).with(env.merge('mauth.app_uuid' => 'foo', 'mauth.authentic' => true)).and_return(res)
