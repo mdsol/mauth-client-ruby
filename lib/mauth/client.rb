@@ -95,6 +95,7 @@ module MAuth
       unless @config[path]
         raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
       end
+
       @config[path]
     end
   end
@@ -119,7 +120,6 @@ module MAuth
   # Used when the incoming request does not contain any mAuth related information
   class MauthNotPresent < StandardError
   end
-
 
   # required information for signing was missing
   class UnableToSignError < StandardError
@@ -315,7 +315,7 @@ module MAuth
 
       def signature(string_to_sign)
         assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
-        signature = Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
+        Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
       end
     end
     include Signer
@@ -365,7 +365,7 @@ module MAuth
 
       private
 
-      # Note:  This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
+      # Note: This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         object_token = object.signature_token || '[none provided]'
@@ -397,7 +397,7 @@ module MAuth
         !object.x_mws_authentication.nil? || object.x_mws_authentication&.match?(/\S/)
       end
 
-      def time_valid_v1!(object, now = Time.now)
+      def time_valid_v1!(object)
         if object.x_mws_time.nil?
           msg = 'Time verification failed. No x-mws-time present.'
           log_inauthentic(object, msg)
@@ -420,14 +420,13 @@ module MAuth
       end
 
       def authentication_present_v2!(object)
-        unless authentication_present_v2(object)
-          msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
-          log_mauth_not_present(object, msg)
-          raise MauthNotPresent, msg
-        end
+        return if authentication_present_v2(object)
+        msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
+        log_mauth_not_present(object, msg)
+        raise MauthNotPresent, msg
       end
 
-      def time_valid_v2!(object, now = Time.now)
+      def time_valid_v2!(object)
         if object.mcc_time.nil?
           msg = 'Time verification failed. No MCC-Time present.'
           log_inauthentic(object, msg)
@@ -437,11 +436,10 @@ module MAuth
       end
 
       def token_valid_v2!(object)
-        unless object.signature_token == MWSV2_TOKEN
-          msg = "Token verification failed. Expected #{MWSV2_TOKEN}; token was #{object.signature_token}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
-        end
+        return if object.signature_token == MWSV2_TOKEN
+        msg = "Token verification failed. Expected #{MWSV2_TOKEN}; token was #{object.signature_token}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
     end
     include Authenticator
@@ -533,7 +531,7 @@ module MAuth
       #   and number sign "#" as component delimiters. Since these are valid URI components,
       #   they are decoded back into characters here to avoid signature invalidation
       def euresource_escape(str)
-        CGI.escape(str).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
+        CGI.escape(str).gsub(/%2F|%23/, '%2F' => '/', '%23' => '#')
       end
 
       def retrieve_public_key(app_uuid)
@@ -649,7 +647,7 @@ module MAuth
 
       def make_mauth_request(authentication_ticket)
         begin
-          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", "authentication_ticket" => authentication_ticket)
+          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
         rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
           log_unable_to_authenticate(msg)

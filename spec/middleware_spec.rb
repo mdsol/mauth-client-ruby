@@ -21,7 +21,7 @@ end
 
 describe MAuth::Rack do
   let(:res) { [200, {}, ['hello world']] }
-  let(:rack_app) { proc { |env| res } }
+  let(:rack_app) { proc { |_env| res } }
   let(:mw)  { described_class.new(rack_app) }
 
   describe MAuth::Rack::RequestAuthenticator do
@@ -38,7 +38,7 @@ describe MAuth::Rack do
     end
 
     it 'authenticates if should_authenticate_check is omitted or indicates to' do
-      [nil, proc {|env| true }].each do |should_authenticate_check|
+      [nil, proc {|_env| true }].each do |should_authenticate_check|
         mw_w_flag = described_class.new(rack_app, should_authenticate_check: should_authenticate_check)
         env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
         expect(mw_w_flag.mauth_client).to receive(:authentic?).and_return(true)
@@ -157,7 +157,7 @@ describe MAuth::Rack do
     end
 
     context 'request with v1 headers' do
-      let (:env) { { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar', 'REQUEST_METHOD' => 'GET' } }
+      let(:env) { { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar', 'REQUEST_METHOD' => 'GET' } }
 
       it 'signs the response with only v1' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
@@ -175,7 +175,7 @@ describe MAuth::Faraday do
   describe MAuth::Faraday::ResponseAuthenticator do
     include_examples MAuth::Middleware
     let(:faraday_app) do
-      proc do |env|
+      proc do
         res = Object.new
         def res.on_complete
           response_env = Faraday::Env.new
@@ -199,12 +199,12 @@ describe MAuth::Faraday do
 
     it 'raises InauthenticError on inauthentic response' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::InauthenticError.new)
-      expect{res = mw.call({})}.to raise_error(MAuth::InauthenticError)
+      expect{mw.call({})}.to raise_error(MAuth::InauthenticError)
     end
 
     it 'raises UnableToAuthenticateError when unable to authenticate' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::UnableToAuthenticateError.new)
-      expect{res = mw.call({})}.to raise_error(MAuth::UnableToAuthenticateError)
+      expect{mw.call({})}.to raise_error(MAuth::UnableToAuthenticateError)
     end
 
     it 'is usable via the name mauth_response_authenticator' do
