@@ -49,6 +49,8 @@ You will not be able to sign your responses without an `app_uuid` and a private 
 The `mauth_baseurl` and `mauth_api_version` are required in mauth.yml.
 These tell the MAuth Client where and how to communicate with the MAuth service.
 
+The `sign_requests_with_only_v2` and `authenticate_with_only_v2` flags were added to facilitate conversion from the MAuth V1 protocol to the MAuth
+V2 protocol. For more information about the conversion process see the document here (DOC). By default both of these flags are false. (see [Protocol Versions](#protocol-versions) below) for more informatio about the flags.
 
 ## Rack Middleware Usage
 
@@ -237,3 +239,4 @@ this will cause applications performing local authentication to fetch public key
 ## Protocol Versions
 
 The mauth V2 protocol was added as of v5.0.0. This protocol updates the string_to_sign to include query parameters, uses different authentication header names, and has a few other changes. See this document for more information: (DOC?). By default mauth client will sign requests with both V1 and V2, sign responses with only the version used in the request, authenticate requests with only the highest version of the protocol present, and authenticate responses with only the highest version of the protocol present.
+If the `sign_requests_with_only_v2` flag is true all requests will be signed with only the V2 protocol (responses will still be signed with whatever protocol used to authenticate the request). If the `authenticate_with_only_v2` flag is true then MAuth Client will reject any request that does not use the V2 protocol.
