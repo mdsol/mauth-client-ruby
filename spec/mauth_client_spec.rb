@@ -577,6 +577,21 @@ describe MAuth::Client do
             signed_request.attributes_for_signing[:verb] = 'DELETE'
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end
+
+          it 'considers a request with many repeated query params authentic' do
+            pairs = (1..100).reduce([]) { |acc, el|  acc << [1, el] } +
+              (1..100).reduce([]) { |acc, el|  acc << [2, el] }
+            pairs.shuffle!
+
+            request = TestSignableRequest.new(
+              verb: 'PUT',
+              request_url: '/',
+              body: 'himom',
+              query_string: pairs.map { |pair| pair.join('=') }.join('&')
+            )
+            signed_request = client.signed(request)
+            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          end
         end
       end
 

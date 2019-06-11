@@ -82,11 +82,8 @@ module MAuth
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
-    # Note: must sort query params using a stable sort because multiple parameters
-    # with the same key muyst appear in the same order when signing and authenticating.
-    # todo this sort is stable but probably slow. merge sort? stable quick sort?
     def encode_query_string(q_string)
-      q_string.split('&').sort_by.with_index { |x, idx| [x, idx] }.map do |part|
+      q_string.split('&').sort.map do |part|
         k, e, v = part.partition('=')
         uri_escape(k) + e + uri_escape(v)
       end.join('&')
