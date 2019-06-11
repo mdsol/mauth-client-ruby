@@ -345,17 +345,11 @@ module MAuth
           raise MAuth::MissingV2Error, msg
         elsif authenticate_with_only_v2?
           authentication_present_v2!(object)
-          time_valid_v2!(object)
-          token_valid_v2!(object)
-          signature_valid_v2!(object)
+          authenticate_v2!(object)
         elsif authentication_present_v2(object)
-          time_valid_v2!(object)
-          token_valid_v2!(object)
-          signature_valid_v2!(object)
+          authenticate_v2!(object)
         elsif authentication_present_v1(object)
-          time_valid_v1!(object)
-          token_valid_v1!(object)
-          signature_valid_v1!(object)
+          authenticate_v1!(object)
         else
           msg = 'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
           log_inauthentic(object, msg)
@@ -393,6 +387,12 @@ module MAuth
       end
 
       # V1 helpers
+      def authenticate_v1!(object)
+        time_valid_v1!(object)
+        token_valid_v1!(object)
+        signature_valid_v1!(object)
+      end
+
       def authentication_present_v1(object)
         !object.x_mws_authentication.nil? || object.x_mws_authentication&.match?(/\S/)
       end
@@ -415,6 +415,12 @@ module MAuth
       end
 
       # V2 helpers
+      def authenticate_v2!(object)
+        time_valid_v2!(object)
+        token_valid_v2!(object)
+        signature_valid_v2!(object)
+      end
+
       def authentication_present_v2(object)
         !object.mcc_authentication.nil? || object.mcc_authentication&.match?(/\S/)
       end
