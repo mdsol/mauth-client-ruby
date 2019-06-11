@@ -66,7 +66,7 @@ describe MAuth::Client do
 
     it 'initializes with app_uuid' do
       uuid = "40e19273-6a43-41d1-ba71-71cbb1b69d35"
-      [{app_uuid: uuid}, {'app_uuid' => uuid}].each do |config|
+      [{ app_uuid: uuid }, { 'app_uuid' => uuid }].each do |config|
         mc = MAuth::Client.new(config)
         expect(uuid).to eq(mc.client_app_uuid)
       end
@@ -74,7 +74,7 @@ describe MAuth::Client do
 
     it 'initializes with ssl_cert_path' do
       ssl_certs_path = 'ssl/certs/path'
-      [{ssl_certs_path: ssl_certs_path}, {'ssl_certs_path' => ssl_certs_path}].each do |config|
+      [{ ssl_certs_path: ssl_certs_path }, { 'ssl_certs_path' => ssl_certs_path }].each do |config|
         mc = MAuth::Client.new(config)
         expect(ssl_certs_path).to eq(mc.ssl_certs_path)
       end
@@ -82,7 +82,7 @@ describe MAuth::Client do
 
     it 'initializes with private key' do
       key = OpenSSL::PKey::RSA.generate(2048)
-      [{private_key: key}, {'private_key' => key}, {private_key: key.to_s}, {'private_key' => key.to_s}].each do |config|
+      [{ private_key: key }, { 'private_key' => key }, { private_key: key.to_s }, { 'private_key' => key.to_s }].each do |config|
         mc = MAuth::Client.new(config)
         # can't directly compare the OpenSSL::PKey::RSA instances
         expect(key.class).to eq(mc.private_key.class)
@@ -92,7 +92,7 @@ describe MAuth::Client do
 
     it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
       [true, 'true'].each do |authenticate_with_only_v2|
-        [{authenticate_with_only_v2: authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+        [{ authenticate_with_only_v2: authenticate_with_only_v2 }, { 'authenticate_with_only_v2' => authenticate_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.authenticate_with_only_v2?).to eq(true)
         end
@@ -101,7 +101,7 @@ describe MAuth::Client do
 
     it 'correctly initializes with authenticate_with_only_v2 as false with any other values' do
       ['tru', false, 'false', 1, 0, nil, ''].each do |authenticate_with_only_v2|
-        [{authenticate_with_only_v2: authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+        [{ authenticate_with_only_v2: authenticate_with_only_v2 }, { 'authenticate_with_only_v2' => authenticate_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.authenticate_with_only_v2?).to eq(false)
         end
@@ -110,7 +110,7 @@ describe MAuth::Client do
 
     it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
       [true, 'true'].each do |sign_requests_with_only_v2|
-        [{sign_requests_with_only_v2: sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+        [{ sign_requests_with_only_v2: sign_requests_with_only_v2 }, { 'sign_requests_with_only_v2' => sign_requests_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.sign_requests_with_only_v2?).to eq(true)
         end
@@ -119,7 +119,7 @@ describe MAuth::Client do
 
     it 'correctly initializes with sign_requests_with_only_v2 as false with any other values' do
       ['tru', false, 'false', 1, 0, nil].each do |sign_requests_with_only_v2|
-        [{sign_requests_with_only_v2: sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+        [{ sign_requests_with_only_v2: sign_requests_with_only_v2 }, { 'sign_requests_with_only_v2' => sign_requests_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.sign_requests_with_only_v2?).to eq(false)
         end
@@ -133,7 +133,7 @@ describe MAuth::Client do
     attr_accessor :headers
 
     def merge_headers(headers)
-      self.class.new(@attributes_for_signing).tap{|r| r.headers = (@headers || {}).merge(headers) }
+      self.class.new(@attributes_for_signing).tap{ |r| r.headers = (@headers || {}).merge(headers) }
     end
 
     def x_mws_time
@@ -232,7 +232,7 @@ describe MAuth::Client do
         end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
-          {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
+          { -301 => false, -299 => true, 299 => true, 301 => false }.each do |time_offset, authentic|
             signed_request = client.signed(request, time: Time.now.to_i + time_offset)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
@@ -259,7 +259,7 @@ describe MAuth::Client do
           ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
             signed_request = client.signed(request)
             signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
-              expect { authenticating_mc.authenticate!(signed_request)}.to raise_error(
+              expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
                 MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
           end
         end
@@ -293,7 +293,7 @@ describe MAuth::Client do
         end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
-          {-301 => false, -299 => true, 299 => true, 301 => false}.each do |time_offset, authentic|
+          { -301 => false, -299 => true, 299 => true, 301 => false }.each do |time_offset, authentic|
             signed_request = client.signed(request, time: Time.now.to_i + time_offset, v1_only_override: true)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
@@ -407,7 +407,7 @@ describe MAuth::Client do
         let(:test_faraday) do
           ::Faraday.new do |builder|
             builder.adapter(:test, stubs) do |stub|
-              stub.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [200, {}, JSON.generate({'security_token' => {'public_key_str' => signing_key.public_key.to_s}})] }
+              stub.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [200, {}, JSON.generate({ 'security_token' => { 'public_key_str' => signing_key.public_key.to_s } })] }
             end
           end
         end
@@ -582,7 +582,7 @@ describe MAuth::Client do
           it 'properly sets the timeouts on the faraday connection' do
             config = {
               'private_key' => OpenSSL::PKey::RSA.generate(2048),
-              'faraday_options' => {'timeout' => '23', 'open_timeout' => '18'},
+              'faraday_options' => { 'timeout' => '23', 'open_timeout' => '18' },
               'mauth_baseurl' => 'https://mauth.imedidata.net'
             }
             mc = MAuth::Client.new(config)

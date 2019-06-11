@@ -12,7 +12,7 @@ shared_examples MAuth::Middleware do
   end
 
   it 'builds a mauth client if not given a mauth_client' do
-    mauth_config = {mauth_baseurl: 'http://mauth', mauth_api_version: 'v1'}
+    mauth_config = { mauth_baseurl: 'http://mauth', mauth_api_version: 'v1' }
     middleware_instance = described_class.new(double('app'), mauth_config)
     expect(mauth_config[:mauth_baseurl]).to eq(middleware_instance.mauth_client.mauth_baseurl)
     expect(mauth_config[:mauth_api_version]).to eq(middleware_instance.mauth_client.mauth_api_version)
@@ -38,9 +38,9 @@ describe MAuth::Rack do
     end
 
     it 'authenticates if should_authenticate_check is omitted or indicates to' do
-      [nil, proc {|_env| true }].each do |should_authenticate_check|
+      [nil, proc { |_env| true }].each do |should_authenticate_check|
         mw_w_flag = described_class.new(rack_app, should_authenticate_check: should_authenticate_check)
-        env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+        env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
         expect(mw_w_flag.mauth_client).to receive(:authentic?).and_return(true)
         expect(rack_app).to receive(:call).with(env.merge('mauth.app_uuid' => 'foo', 'mauth.authentic' => true)).and_return(res)
         status, headers, body = mw_w_flag.call(env)
@@ -52,7 +52,7 @@ describe MAuth::Rack do
     it 'returns 401 and does not call the app if authentication fails' do
       expect(mw.mauth_client).to receive(:authentic?).and_return(false)
       expect(rack_app).not_to receive(:call)
-      status, headers, body = mw.call({'REQUEST_METHOD' => 'GET'})
+      status, headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
       expect(401).to eq(status)
       expect(body.join).to match(/Unauthorized/)
     end
@@ -60,7 +60,7 @@ describe MAuth::Rack do
     it 'returns 401 with no body if the request method is HEAD and authentication fails' do
       expect(mw.mauth_client).to receive(:authentic?).and_return(false)
       expect(rack_app).not_to receive(:call)
-      status, headers, body = mw.call({'REQUEST_METHOD' => 'HEAD'})
+      status, headers, body = mw.call({ 'REQUEST_METHOD' => 'HEAD' })
       expect(headers["Content-Length"].to_i).to be > 0
       expect(401).to eq(status)
       expect([]).to eq(body)
@@ -69,7 +69,7 @@ describe MAuth::Rack do
     it 'returns 500 and does not call the app if unable to authenticate' do
       expect(mw.mauth_client).to receive(:authentic?).and_raise(MAuth::UnableToAuthenticateError.new(''))
       expect(rack_app).not_to receive(:call)
-      status, headers, body = mw.call({'REQUEST_METHOD' => 'GET'})
+      status, headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
       expect(500).to eq(status)
       expect(body.join).to match(/Could not determine request authenticity/)
     end
@@ -100,9 +100,9 @@ describe MAuth::Rack do
 
   describe MAuth::Rack::RequestAuthenticationFaker do
     it 'does not call check authenticity for any request by default' do
-      env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+      env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw.mauth_client).not_to receive(:authentic?)
-      expect(rack_app).to receive(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(res)
+      expect(rack_app).to receive(:call).with(env.merge({ 'mauth.app_uuid' => 'foo', 'mauth.authentic' => true })).and_return(res)
       status, headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
@@ -110,8 +110,8 @@ describe MAuth::Rack do
 
     it 'calls the app when the request is set to be authentic' do
       described_class.authentic = true
-      env = {'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
-      allow(rack_app).to receive(:call).with(env.merge({'mauth.app_uuid' => 'foo', 'mauth.authentic' => true})).and_return(res)
+      env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
+      allow(rack_app).to receive(:call).with(env.merge({ 'mauth.app_uuid' => 'foo', 'mauth.authentic' => true })).and_return(res)
       status, headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
@@ -119,21 +119,21 @@ describe MAuth::Rack do
 
     it 'does not call the app when the request is set to be inauthentic' do
       described_class.authentic = false
-      env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+      env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       status, headers, body = mw.call(env)
       expect(rack_app).not_to receive(:call)
     end
 
     it 'returns appropriate responses when the request is set to be inauthentic' do
       described_class.authentic = false
-      env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+      env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       status, headers, body = mw.call(env)
       expect(status).to eq(401)
     end
 
     it 'after an inauthentic request, the next request is authentic by default' do
       described_class.authentic = false
-      env = {'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar'}
+      env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       status, headers, body = mw.call(env)
       expect(status).to eq(401)
       status, headers, body = mw.call(env)
@@ -199,12 +199,12 @@ describe MAuth::Faraday do
 
     it 'raises InauthenticError on inauthentic response' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::InauthenticError.new)
-      expect{mw.call({})}.to raise_error(MAuth::InauthenticError)
+      expect{ mw.call({}) }.to raise_error(MAuth::InauthenticError)
     end
 
     it 'raises UnableToAuthenticateError when unable to authenticate' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::UnableToAuthenticateError.new)
-      expect{mw.call({})}.to raise_error(MAuth::UnableToAuthenticateError)
+      expect{ mw.call({}) }.to raise_error(MAuth::UnableToAuthenticateError)
     end
 
     it 'is usable via the name mauth_response_authenticator' do

@@ -314,7 +314,7 @@ module MAuth
       end
 
       def signature(string_to_sign)
-        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
+        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
         Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
       end
     end
@@ -385,11 +385,11 @@ module MAuth
       end
 
       def time_within_valid_range!(object, time_signed, now = Time.now)
-        unless (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
-          msg = "Time verification failed. #{time_signed} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
-          log_mauth_not_present(object, msg)
-          raise InauthenticError, msg
-        end
+        return if  (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
+
+        msg = "Time verification failed. #{time_signed} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
+        log_mauth_not_present(object, msg)
+        raise InauthenticError, msg
       end
 
       # V1 helpers
@@ -407,11 +407,11 @@ module MAuth
       end
 
       def token_valid_v1!(object)
-        unless object.signature_token == MWS_TOKEN
-          msg = "Token verification failed. Expected #{MWS_TOKEN}; token was #{object.signature_token}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
-        end
+        return if object.signature_token == MWS_TOKEN
+
+        msg = "Token verification failed. Expected #{MWS_TOKEN}; token was #{object.signature_token}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       # V2 helpers
@@ -421,6 +421,7 @@ module MAuth
 
       def authentication_present_v2!(object)
         return if authentication_present_v2(object)
+
         msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
         log_mauth_not_present(object, msg)
         raise MauthNotPresent, msg
@@ -437,6 +438,7 @@ module MAuth
 
       def token_valid_v2!(object)
         return if object.signature_token == MWSV2_TOKEN
+
         msg = "Token verification failed. Expected #{MWSV2_TOKEN}; token was #{object.signature_token}"
         log_inauthentic(object, msg)
         raise InauthenticError, msg
