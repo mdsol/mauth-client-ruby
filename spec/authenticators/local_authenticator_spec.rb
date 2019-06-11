@@ -1,9 +1,12 @@
 require 'spec_helper'
 require 'mauth/client'
 require 'mauth/authenticators/local_authenticator'
-require_relative '../shared_examples/authenticators.rb'
+require_relative '../support/shared_examples/authenticators.rb'
+require_relative '../support/shared_contexts/client_context'
 
 describe MAuth::Client::LocalAuthenticator do
+  include_context 'client'
+  
   describe '#authentic?' do
     let(:authenticate_with_only_v2) { false }
     let(:authenticating_mc) do

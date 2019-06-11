@@ -1,9 +1,12 @@
 require 'spec_helper'
 require 'mauth/client'
 require 'mauth/authenticators/remote_request_authenticator'
-require_relative '../shared_examples/authenticators.rb'
+require_relative '../support/shared_examples/authenticators.rb'
+require_relative '../support/shared_contexts/client_context'
 
 describe MAuth::Client::RemoteRequestAuthenticator do
+  include_context 'client'
+  
   describe '#authentic?' do
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
     let(:authenticating_mc) do
