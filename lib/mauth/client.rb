@@ -243,11 +243,11 @@ module MAuth
       @config['ssl_certs_path']
     end
 
-    def sign_requests_with_only_v2
+    def sign_requests_with_only_v2?
       @config['sign_requests_with_only_v2']
     end
 
-    def authenticate_with_only_v2
+    def authenticate_with_only_v2?
       @config['authenticate_with_only_v2']
     end
 
@@ -287,9 +287,9 @@ module MAuth
         v1_only_override = attributes.delete(:v1_only_override)
         v2_only_override = attributes.delete(:v2_only_override)
 
-        if v1_only_override # used when signing responses to requests with only the v1 protocol, when VALIDATE_ONLY_V2 is false and SIGN_REQUESTS_WITH_ONLY_V2 is true
+        if v1_only_override # used when signing responses to requests with only the v1 protocol, when AUTHENTICATE_WITH_ONLY_V2 is false and SIGN_REQUESTS_WITH_ONLY_V2 is true
           signed_headers_v1(object, attributes)
-        elsif sign_requests_with_only_v2 || v2_only_override # override used when signing responses to requests with the v2 protocol when SIGN_REQUESTS_WITH_ONLY_V2 is false
+        elsif sign_requests_with_only_v2? || v2_only_override # override used when signing responses to requests with the v2 protocol when SIGN_REQUESTS_WITH_ONLY_V2 is false
           signed_headers_v2(object, attributes)
         else # by default sign with both the v1 and v2 protocol
           signed_headers_v1(object, attributes).merge(signed_headers_v2(object, attributes))
@@ -313,7 +313,6 @@ module MAuth
         }
       end
 
-      # takes a string_to_sign and returns a mauth signature for that string_to_sign
       def signature(string_to_sign)
         assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
         signature = Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
@@ -341,29 +340,26 @@ module MAuth
       # authenticate with v2 if the environment variable AUTHENTICATE_WITH_ONLY_V2
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
-        if authenticate_with_only_v2
-          if authentication_present_v1(object)
-            msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
-            raise MAuth::MissingV2Error, msg
-          end
+        if authenticate_with_only_v2? && authentication_present_v1(object)
+          msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+          raise MAuth::MissingV2Error, msg
+        elsif authenticate_with_only_v2?
           authentication_present_v2!(object)
           time_valid_v2!(object)
           token_valid_v2!(object)
           signature_valid_v2!(object)
+        elsif authentication_present_v2(object)
+          time_valid_v2!(object)
+          token_valid_v2!(object)
+          signature_valid_v2!(object)
+        elsif authentication_present_v1(object)
+          time_valid_v1!(object)
+          token_valid_v1!(object)
+          signature_valid_v1!(object)
         else
-          if authentication_present_v2(object)
-            time_valid_v2!(object)
-            token_valid_v2!(object)
-            signature_valid_v2!(object)
-          elsif authentication_present_v1(object)
-            time_valid_v1!(object)
-            token_valid_v1!(object)
-            signature_valid_v1!(object)
-          else
-            msg = 'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
-            log_inauthentic(object, msg)
-            raise MauthNotPresent, msg
-          end
+          msg = 'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
+          log_inauthentic(object, msg)
+          raise MauthNotPresent, msg
         end
       end
 

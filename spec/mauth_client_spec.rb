@@ -92,36 +92,36 @@ describe MAuth::Client do
 
     it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
       [true, 'true'].each do |authenticate_with_only_v2|
-        [{:authenticate_with_only_v2 => authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+        [{authenticate_with_only_v2: authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.authenticate_with_only_v2).to eq(true)
+          expect(mc.authenticate_with_only_v2?).to eq(true)
         end
       end
     end
 
     it 'correctly initializes with authenticate_with_only_v2 as false with any other values' do
       ['tru', false, 'false', 1, 0, nil, ''].each do |authenticate_with_only_v2|
-        [{:authenticate_with_only_v2 => authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
+        [{authenticate_with_only_v2: authenticate_with_only_v2}, {'authenticate_with_only_v2' => authenticate_with_only_v2}].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.authenticate_with_only_v2).to eq(false)
+          expect(mc.authenticate_with_only_v2?).to eq(false)
         end
       end
     end
 
     it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
       [true, 'true'].each do |sign_requests_with_only_v2|
-        [{:sign_requests_with_only_v2 => sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+        [{sign_requests_with_only_v2: sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.sign_requests_with_only_v2).to eq(true)
+          expect(mc.sign_requests_with_only_v2?).to eq(true)
         end
       end
     end
 
     it 'correctly initializes with sign_requests_with_only_v2 as false with any other values' do
       ['tru', false, 'false', 1, 0, nil].each do |sign_requests_with_only_v2|
-        [{:sign_requests_with_only_v2 => sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
+        [{sign_requests_with_only_v2: sign_requests_with_only_v2}, {'sign_requests_with_only_v2' => sign_requests_with_only_v2}].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.sign_requests_with_only_v2).to eq(false)
+          expect(mc.sign_requests_with_only_v2?).to eq(false)
         end
       end
     end
@@ -155,17 +155,13 @@ describe MAuth::Client do
 
   describe '#signed' do
     it 'adds only X-MWS-Time and X-MWS-Authentication headers when signing with v1 override' do
-      expect(v1_signed_req.headers.keys).to include('X-MWS-Authentication')
-      expect(v1_signed_req.headers.keys).to include('X-MWS-Time')
-      expect(v1_signed_req.headers.keys).not_to include('MCC-Authentication')
-      expect(v1_signed_req.headers.keys).not_to include('MCC-Time')
+      expect(v1_signed_req.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+      expect(v1_signed_req.headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
     end
 
     it 'adds only MCC-Time and MCC-Authentication headers when signing with v2 override' do
-      expect(v2_signed_req.headers.keys).to include('MCC-Authentication')
-      expect(v2_signed_req.headers.keys).to include('MCC-Time')
-      expect(v2_signed_req.headers.keys).not_to include('X-MWS-Authentication')
-      expect(v2_signed_req.headers.keys).not_to include('X-MWS-Time')
+      expect(v2_signed_req.headers.keys).to include('MCC-Authentication', 'MCC-Time')
+      expect(v2_signed_req.headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
     end
 
     context 'when the sign_requests_with_only_v2 flag is true' do
@@ -173,19 +169,14 @@ describe MAuth::Client do
 
       it 'adds only MCC-Time and MCC-Authentication headers when signing' do
         signed_request = client.signed(request)
-        expect(signed_request.headers.keys).to include('MCC-Authentication')
-        expect(signed_request.headers.keys).to include('MCC-Time')
-        expect(signed_request.headers.keys).not_to include('X-MWS-Authentication')
-        expect(signed_request.headers.keys).not_to include('X-MWS-Time')
+        expect(signed_request.headers.keys).to include('MCC-Authentication', 'MCC-Time')
+        expect(signed_request.headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
       end
     end
 
     it 'by default adds X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers when signing' do
       signed_request = client.signed(request)
-      expect(signed_request.headers.keys).to include('X-MWS-Authentication')
-      expect(signed_request.headers.keys).to include('X-MWS-Time')
-      expect(signed_request.headers.keys).to include('MCC-Authentication')
-      expect(signed_request.headers.keys).to include('MCC-Time')
+      expect(signed_request.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time','MCC-Authentication', 'MCC-Time')
     end
 
     it "can't sign without a private key" do
@@ -202,18 +193,14 @@ describe MAuth::Client do
   describe '#signed_headers' do
     it 'returns only X-MWS-Time and X-MWS-Authentication headers when called with v1 override' do
       signed_headers = client.signed_headers(request, v1_only_override: true)
-      expect(signed_headers.keys).to include('X-MWS-Authentication')
-      expect(signed_headers.keys).to include('X-MWS-Time')
-      expect(signed_headers.keys).not_to include('MCC-Authentication')
-      expect(signed_headers.keys).not_to include('MCC-Time')
+      expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+      expect(signed_headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
     end
 
     it 'returns only MCC-Time and MCC-Authentication headers when called with v2 override' do
       signed_headers = client.signed_headers(request, v2_only_override: true)
-      expect(signed_headers.keys).to include('MCC-Authentication')
-      expect(signed_headers.keys).to include('MCC-Time')
-      expect(signed_headers.keys).not_to include('X-MWS-Authentication')
-      expect(signed_headers.keys).not_to include('X-MWS-Time')
+      expect(signed_headers.keys).to include('MCC-Authentication', 'MCC-Time')
+      expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
     end
 
     context 'when the sign_requests_with_only_v2 flag is true' do
@@ -221,19 +208,14 @@ describe MAuth::Client do
 
       it 'returns only MCC-Time and MCC-Authentication headers when signing' do
         signed_headers = client.signed_headers(request)
-        expect(signed_headers.keys).to include('MCC-Authentication')
-        expect(signed_headers.keys).to include('MCC-Time')
-        expect(signed_headers.keys).not_to include('X-MWS-Authentication')
-        expect(signed_headers.keys).not_to include('X-MWS-Time')
+        expect(signed_headers.keys).to include('MCC-Authentication', 'MCC-Time')
+        expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
       end
     end
 
     it 'by default returns X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers' do
       signed_headers = client.signed_headers(request)
-      expect(signed_headers.keys).to include('X-MWS-Authentication')
-      expect(signed_headers.keys).to include('X-MWS-Time')
-      expect(signed_headers.keys).to include('MCC-Authentication')
-      expect(signed_headers.keys).to include('MCC-Time')
+      expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time', 'MCC-Authentication', 'MCC-Time')
     end
   end
 
