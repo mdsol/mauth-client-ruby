@@ -1,5 +1,5 @@
 shared_context 'client' do
-  let(:app_uuid) { SecureRandom.uuid }
+  let(:app_uuid) { 'signer' }
   let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
   let(:sign_requests_with_only_v2) { false }
   let(:authenticate_with_only_v2) { false }

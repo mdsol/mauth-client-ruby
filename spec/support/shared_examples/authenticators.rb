@@ -149,7 +149,8 @@ require 'faraday'
         let(:authenticate_with_only_v2) { true }
 
         it 'authenticates with v2' do
-
+          signed_request = client.signed(request, v2_only_override: true)
+          expect(authenticating_mc.authentic?(signed_request)).to be_truthy
         end
 
         it 'raises MissingV2Error if v2 headers are not present and v1 headers are present' do
