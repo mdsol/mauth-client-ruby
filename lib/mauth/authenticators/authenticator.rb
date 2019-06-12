@@ -23,6 +23,7 @@ module MAuth
       def authenticate!(object)
         if authenticate_with_only_v2? && authentication_present_v1(object)
           msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+          log_inauthentic(object, msg)
           raise MAuth::MissingV2Error, msg
         elsif authenticate_with_only_v2?
           authentication_present_v2!(object)
