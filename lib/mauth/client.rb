@@ -201,8 +201,8 @@ module MAuth
       request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
-      @config['authenticate_with_only_v2'] = given_config['authenticate_with_only_v2'].to_s == 'true'
-      @config['sign_requests_with_only_v2'] = given_config['sign_requests_with_only_v2'].to_s == 'true'
+      @config['authenticate_with_only_v2'] = given_config['authenticate_with_only_v2'].to_s.downcase == 'true'
+      @config['sign_requests_with_only_v2'] = given_config['sign_requests_with_only_v2'].to_s.downcase == 'true'
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false
       if given_config.key?('authenticator')

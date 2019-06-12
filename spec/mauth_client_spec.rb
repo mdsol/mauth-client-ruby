@@ -78,7 +78,7 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
-      [true, 'true'].each do |authenticate_with_only_v2|
+      [true, 'true', 'TRUE'].each do |authenticate_with_only_v2|
         [{ authenticate_with_only_v2: authenticate_with_only_v2 }, { 'authenticate_with_only_v2' => authenticate_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.authenticate_with_only_v2?).to eq(true)
@@ -96,7 +96,7 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
-      [true, 'true'].each do |sign_requests_with_only_v2|
+      [true, 'true', 'TRUE'].each do |sign_requests_with_only_v2|
         [{ sign_requests_with_only_v2: sign_requests_with_only_v2 }, { 'sign_requests_with_only_v2' => sign_requests_with_only_v2 }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.sign_requests_with_only_v2?).to eq(true)
