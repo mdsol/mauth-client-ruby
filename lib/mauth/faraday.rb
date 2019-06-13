@@ -37,8 +37,7 @@ module MAuth
 
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          request_url = @request_env[:url].path
-          request_url = '/' if request_url.empty?
+          request_url = request_url.empty? ? '/' : @request_env[:url].path
           {
             verb: @request_env[:method].to_s.upcase,
             request_url: request_url,
