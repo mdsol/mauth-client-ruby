@@ -18,3 +18,12 @@ Next, run the tests:
 ```
 bundle exec rspec
 ```
+
+## Running Benchmark
+
+If you make changes which could affect performance, please run the benchmark before and after the change as sanity check.
+
+```
+bundle exec rake benchmark
+```
+
