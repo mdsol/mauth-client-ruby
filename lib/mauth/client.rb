@@ -331,7 +331,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError, MauthNotPresent
+        rescue InauthenticError, MauthNotPresent, MAuth::MissingV2Error
           false
         end
       end
@@ -340,8 +340,11 @@ module MAuth
       # authenticate with v2 if the environment variable AUTHENTICATE_WITH_ONLY_V2
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
-        if authenticate_with_only_v2? && authentication_present_v1(object)
+        if authenticate_with_only_v2? &&
+            !authentication_present_v2(object) && authentication_present_v1(object)
+          # If v2 is required but not present and v1 is present we raise MissingV2Error
           msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+          log_inauthentic(object, msg)
           raise MAuth::MissingV2Error, msg
         elsif authenticate_with_only_v2?
           authentication_present_v2!(object)

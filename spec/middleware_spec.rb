@@ -22,7 +22,8 @@ end
 describe MAuth::Rack do
   let(:res) { [200, {}, ['hello world']] }
   let(:rack_app) { proc { |_env| res } }
-  let(:mw)  { described_class.new(rack_app) }
+  let(:authenticate_with_only_v2) { false }
+  let(:mw) { described_class.new(rack_app, authenticate_with_only_v2: authenticate_with_only_v2) }
 
   describe MAuth::Rack::RequestAuthenticator do
     include_examples MAuth::Middleware
@@ -75,17 +76,11 @@ describe MAuth::Rack do
     end
 
     context 'the AUTHENTICATE_WITH_ONLY_V2 flag is true and the request has only v1 headers' do
-      before do
-        ENV['AUTHENTICATE_WITH_ONLY_V2'] = 'true'
-      end
-
-      after do
-        ENV['AUTHENTICATE_WITH_ONLY_V2'] = nil
-      end
+      let(:authenticate_with_only_v2) { true }
 
       it 'returns 401 with an informative message and does not call the app' do
         env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar', 'REQUEST_METHOD' => 'GET' }
-        expect(mw.mauth_client).to receive(:authentic?).and_raise(MAuth::MissingV2Error)
+        expect(mw.mauth_client).not_to receive(:authentic?)
         expect(rack_app).not_to receive(:call)
         status, headers, body = mw.call(env)
         expect(401).to eq(status)

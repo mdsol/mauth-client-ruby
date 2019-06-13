@@ -17,6 +17,10 @@ module MAuth
       def call(env)
         if should_authenticate?(env)
           mauth_request = MAuth::Rack::Request.new(env)
+          if mauth_client.authenticate_with_only_v2? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
+            return response_for_missing_v2(env)
+          end
+
           begin
             if mauth_client.authentic?(mauth_request)
               @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
@@ -25,8 +29,6 @@ module MAuth
             end
           rescue MAuth::UnableToAuthenticateError
             response_for_unable_to_authenticate(env)
-          rescue MAuth::MissingV2Error
-            response_for_missing_v2(env)
           end
         else
           @app.call(env)
