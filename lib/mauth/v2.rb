@@ -1,11 +1,9 @@
-# contains methods for MWSV2 
+# contains methods for MWSV2
 
 module MAuth
   class Client
     MWSV2_TOKEN = 'MWSV2'.freeze
     AUTH_HEADER_DELIMITER = ';'.freeze
-
-    private
 
     # methods to sign requests and responses. part of MAuth::Client
     module Signer
@@ -79,7 +77,10 @@ module MAuth
         original_query_string = object.attributes_for_signing[:query_string]
 
         # craft an expected string-to-sign without doing any percent-encoding
-        expected_no_reencoding = object.string_to_sign_v2(time: object.mcc_time, app_uuid: object.signature_app_uuid)
+        expected_no_reencoding = object.string_to_sign_v2(
+          time: object.mcc_time,
+          app_uuid: object.signature_app_uuid
+        )
 
         # do a simple percent reencoding variant of the path
         expected_for_percent_reencoding = object.string_to_sign_v2(
@@ -97,15 +98,22 @@ module MAuth
           query_string: euresource_escape(original_query_string.to_s)
         )
 
-        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-        begin
-          actual = pubkey.public_decrypt(Base64.decode64(object.signature))
-        rescue OpenSSL::PKey::PKeyError
-          raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
-        end
+        actual = actual_string_to_sign(object)
 
-        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
+        unless expected_no_reencoding == actual ||
+           expected_euresource_style_reencoding == actual ||
+           expected_for_percent_reencoding == actual
           raise InauthenticError, "Signature verification failed for #{object.class}"
+        end
+      end
+
+      def actual_string_to_sign(object)
+        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+
+        begin
+          pubkey.public_decrypt(Base64.decode64(object.signature))
+        rescue OpenSSL::PKey::PKeyError => e
+          raise InauthenticError, "Public key decryption of signature failed! #{e.class}: #{e.message}"
         end
       end
     end
@@ -116,16 +124,20 @@ module MAuth
 
       # TODO: update mAuth to be able verify authentication tickets w V2 (MCC-413109)
       def signature_valid_v2!(object)
-        raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
+        unless object.is_a?(MAuth::Request)
+          msg = "Remote Authenticator can only authenticate requests; received #{object.inspect}"
+          raise ArgumentError, msg
+        end
+
         authentication_ticket = {
-          'verb' => object.attributes_for_signing[:verb],
-          'app_uuid' => object.signature_app_uuid,
-          'client_signature' => object.signature,
-          'request_url' => object.attributes_for_signing[:request_url],
-          'request_time' => object.mcc_time,
-          'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || ''),
-          'query_string' => object.attributes_for_signing[:query_string],
-          'token' => object.signature_token
+          verb: object.attributes_for_signing[:verb],
+          app_uuid: object.signature_app_uuid,
+          client_signature: object.signature,
+          request_url: object.attributes_for_signing[:request_url],
+          request_time: object.mcc_time,
+          b64encoded_body: Base64.encode64(object.attributes_for_signing[:body] || ''),
+          query_string: object.attributes_for_signing[:query_string],
+          token: object.signature_token
         }
         make_mauth_request(authentication_ticket)
       end
