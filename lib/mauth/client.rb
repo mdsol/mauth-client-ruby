@@ -351,11 +351,16 @@ module MAuth
 
       private
 
-      # Note: This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
+      # Note: This log is likely consumed downstream and the contents SHOULD NOT
+      # be changed without a thorough review of downstream consumers.
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         object_token = object.signature_token || '[none provided]'
-        logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid} using version #{object_token}."
+        logger.info(
+          "Mauth-client attempting to authenticate request from app with mauth" \
+          " app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}" \
+          " using version #{object_token}."
+        )
       end
 
       def log_inauthentic(object, message)
