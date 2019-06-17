@@ -350,20 +350,18 @@ describe MAuth::Client do
           end
 
           it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
-            v1_signed_req = client.signed(request, time: Time.now.to_i)
             expect(authenticating_mc.logger).to receive(:info).with(
               'Mauth-client attempting to authenticate request from app with mauth app' \
-              ' uuid signer to app with mauth app uuid authenticator using version MWSV2.'
+              ' uuid signer to app with mauth app uuid authenticator using version MWS.'
             )
             authenticating_mc.authentic?(v1_signed_req)
           end
 
           it 'logs when the mauth app uuid is not provided in the request' do
-            v1_signed_req = client.signed(request, time: Time.now.to_i)
             allow(v1_signed_req).to receive(:signature_app_uuid).and_return(nil)
             expect(authenticating_mc.logger).to receive(:info).with(
               'Mauth-client attempting to authenticate request from app with mauth app' \
-              ' uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.'
+              ' uuid [none provided] to app with mauth app uuid authenticator using version MWS.'
             )
             authenticating_mc.authentic?(v1_signed_req) rescue nil
           end
