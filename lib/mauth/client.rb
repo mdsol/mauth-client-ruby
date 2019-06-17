@@ -391,7 +391,7 @@ module MAuth
       end
 
       def authentication_present_v1?(object)
-        !object.x_mws_authentication.nil? && object.x_mws_authentication&.match?(/\S/)
+        !(object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/)
       end
 
       def time_valid_v1!(object)

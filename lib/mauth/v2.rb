@@ -30,7 +30,7 @@ module MAuth
       end
 
       def authentication_present_v2?(object)
-        !object.mcc_authentication.nil? && object.mcc_authentication&.match?(/\S/)
+        !(object.mcc_authentication.nil? || object.mcc_authentication !~ /\S/)
       end
 
       def time_valid_v2!(object)
