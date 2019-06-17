@@ -89,15 +89,12 @@ module MAuth
       end.join('&')
     end
 
-    # percent encodes special characters, preserving character encoding
-    # identical to CGI.escape except it encodes spaces as %20%
-    # QUESTION should just use CGI.escape then gsub?
-    # CGI.escape(string).gsub!(/\+/, '%20%')
+    # percent encodes special characters, preserving character encoding.
+    # encodes space as '%20'
+    # does not encode A-Z, a-z, 0-9, hyphen ( - ), underscore ( _ ), period ( . ),
+    # or tilde ( ~ )
     def uri_escape(string)
-      encoding = string.encoding
-      string.b.gsub(/([^a-zA-Z0-9_.~-]+)/) do |m|
-        '%' + m.unpack('H2' * m.bytesize).join('%').upcase
-      end.force_encoding(encoding)
+      CGI.escape(string).gsub(/\+/, '%20')
     end
 
     def initialize(attributes_for_signing)
