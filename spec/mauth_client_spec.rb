@@ -239,10 +239,10 @@ describe MAuth::Client do
               expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
             else
               expect { authenticating_mc.authenticate!(signed_request) }.to(
-                  raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
-                  message
-                )
-            end
+                raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
+                message
+              )
+          end
           end
         end
 
@@ -250,9 +250,9 @@ describe MAuth::Client do
           signed_request = client.signed(request)
           signed_request.headers.delete('MCC-Time')
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-              MAuth::InauthenticError,
-              /Time verification failed\. No MCC-Time present\./
-            )
+            MAuth::InauthenticError,
+            /Time verification failed\. No MCC-Time present\./
+          )
         end
 
         it "considers a request with a bad V2 token to be inauthentic" do
@@ -321,24 +321,6 @@ describe MAuth::Client do
             )
         end
 
-        it "considers a request with no X-MWS-Authentication to be inauthentic" do
-          v1_signed_req.headers.delete('X-MWS-Authentication')
-          expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-              MAuth::MauthNotPresent,
-              'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
-              'header is blank, MCC-Authentication header is blank.'
-            )
-        end
-
-        it "considers a request with an empty X-MWS-Authentication to be inauthentic" do
-          v1_signed_req.headers['X-MWS-Authentication'] = ''
-          expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-              MAuth::MauthNotPresent,
-              'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
-              ' header is blank, MCC-Authentication header is blank.'
-            )
-        end
-
         it "considers a request with a bad MWS token to be inauthentic" do
           ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
               v1_signed_req.headers['X-MWS-Authentication'] = v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
@@ -389,6 +371,30 @@ describe MAuth::Client do
         end
       end
 
+      context 'when no headers are present on the object to authenticate' do
+        it "considers a request with no v1 or v2 headers to be inauthentic" do
+          signed_request = client.signed(request)
+          signed_request.headers.delete('X-MWS-Authentication')
+          signed_request.headers.delete('MCC-Authentication')
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::MauthNotPresent,
+            'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
+            'header is blank, MCC-Authentication header is blank.'
+          )
+        end
+
+        it "considers a request with empty v1 and v2 headers to be inauthentic" do
+          signed_request = client.signed(request)
+          signed_request.headers['X-MWS-Authentication'] = ''
+          signed_request.headers['MCC-Authentication'] = ''
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::MauthNotPresent,
+            'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
+            ' header is blank, MCC-Authentication header is blank.'
+          )
+        end
+      end
+
       context 'when authenticate_with_only_v2 flag is true' do
         let(:authenticate_with_only_v2) { true }
 
@@ -405,6 +411,16 @@ describe MAuth::Client do
         it 'considers a request with no v2 or v1 headers to be inauthentic' do
           signed_request = client.signed(request)
           signed_request.headers.delete('MCC-Authentication')
+          signed_request.headers.delete('X-MWS-Authentication')
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::MauthNotPresent,
+            'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
+          )
+        end
+
+        it 'considers a request with no v2 or v1 headers to be inauthentic' do
+          signed_request = client.signed(request)
+          signed_request.headers['MCC-Authentication'] = ''
           signed_request.headers.delete('X-MWS-Authentication')
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
             MAuth::MauthNotPresent,
