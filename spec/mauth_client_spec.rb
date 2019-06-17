@@ -271,14 +271,20 @@ describe MAuth::Client do
 
           it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
             signed_request = client.signed(request, time: Time.now.to_i)
-            expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator using version MWSV2.")
+            expect(authenticating_mc.logger).to receive(:info).with(
+              'Mauth-client attempting to authenticate request from app with mauth ' \
+              'app uuid signer to app with mauth app uuid authenticator using version MWSV2.'
+            )
             authenticating_mc.authentic?(signed_request)
           end
 
           it 'logs when the mauth app uuid is not provided in the request' do
             signed_request = client.signed(request, time: Time.now.to_i)
             allow(signed_request).to receive(:signature_app_uuid).and_return(nil)
-            expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
+            expect(authenticating_mc.logger).to receive(:info).with(
+              'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
+              '[none provided] to app with mauth app uuid authenticator using version MWSV2.'
+            )
             authenticating_mc.authentic?(signed_request) rescue nil
           end
         end
@@ -319,7 +325,17 @@ describe MAuth::Client do
           v1_signed_req.headers.delete('X-MWS-Authentication')
           expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
               MAuth::MauthNotPresent,
-              'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
+              'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
+              'header is blank, MCC-Authentication header is blank.'
+            )
+        end
+
+        it "considers a request with an empty X-MWS-Authentication to be inauthentic" do
+          v1_signed_req.headers['X-MWS-Authentication'] = ''
+          expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
+              MAuth::MauthNotPresent,
+              'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
+              ' header is blank, MCC-Authentication header is blank.'
             )
         end
 
@@ -353,14 +369,20 @@ describe MAuth::Client do
 
           it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
             v1_signed_req = client.signed(request, time: Time.now.to_i)
-            expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid signer to app with mauth app uuid authenticator using version MWSV2.")
+            expect(authenticating_mc.logger).to receive(:info).with(
+              'Mauth-client attempting to authenticate request from app with mauth app' \
+              ' uuid signer to app with mauth app uuid authenticator using version MWSV2.'
+            )
             authenticating_mc.authentic?(v1_signed_req)
           end
 
           it 'logs when the mauth app uuid is not provided in the request' do
             v1_signed_req = client.signed(request, time: Time.now.to_i)
             allow(v1_signed_req).to receive(:signature_app_uuid).and_return(nil)
-            expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
+            expect(authenticating_mc.logger).to receive(:info).with(
+              'Mauth-client attempting to authenticate request from app with mauth app' \
+              ' uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.'
+            )
             authenticating_mc.authentic?(v1_signed_req) rescue nil
           end
 
@@ -371,7 +393,7 @@ describe MAuth::Client do
         let(:authenticate_with_only_v2) { true }
 
         it 'authenticates with v2' do
-
+          # TODO
         end
 
         it 'raises MissingV2Error if v2 headers are not present and v1 headers are present' do
@@ -380,13 +402,13 @@ describe MAuth::Client do
           )
         end
 
-        it "considers a request with no v2 or v1 headers to be inauthentic" do
+        it 'considers a request with no v2 or v1 headers to be inauthentic' do
           signed_request = client.signed(request)
           signed_request.headers.delete('MCC-Authentication')
           signed_request.headers.delete('X-MWS-Authentication')
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
             MAuth::MauthNotPresent,
-            "Authentication Failed. No mAuth signature present; MCC-Authentication header is blank."
+            'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
           )
         end
       end
@@ -466,12 +488,12 @@ describe MAuth::Client do
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end
 
-          it "considers a request with a bad signature to be inauthentic" do
+          it 'considers a request with a bad signature to be inauthentic' do
             v1_signed_req.headers['X-MWS-Authentication'] = "MWS #{app_uuid}:wat"
             expect(authenticating_mc.authentic?(v1_signed_req)).to be_falsey
           end
 
-          it "considers a request that has been tampered with to be inauthentic" do
+          it 'considers a request that has been tampered with to be inauthentic' do
             v1_signed_req.attributes_for_signing[:verb] = 'DELETE'
             expect(authenticating_mc.authentic?(v1_signed_req)).to be_falsey
           end
@@ -548,13 +570,13 @@ describe MAuth::Client do
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end
 
-          it "considers a request with a bad signature to be inauthentic" do
+          it 'considers a request with a bad signature to be inauthentic' do
             signed_request = client.signed(request)
             signed_request.headers['MCC-Authentication'] = "MWS #{app_uuid}:wat"
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end
 
-          it "considers a request that has been tampered with to be inauthentic" do
+          it 'considers a request that has been tampered with to be inauthentic' do
             signed_request = client.signed(request)
             signed_request.attributes_for_signing[:verb] = 'DELETE'
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
