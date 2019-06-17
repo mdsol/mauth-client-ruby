@@ -331,21 +331,19 @@ module MAuth
       # authenticate with v2 if the environment variable AUTHENTICATE_WITH_ONLY_V2
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
-        if authenticate_with_only_v2? &&
-            !authentication_present_v2(object) && authentication_present_v1(object)
-          # If v2 is required but not present and v1 is present we raise MissingV2Error
-          msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
-          log_inauthentic(object, msg)
-          raise MAuth::MissingV2Error, msg
-        elsif authenticate_with_only_v2?
-          authentication_present_v2!(object)
+        if authentication_present_v2?(object)
           authenticate_v2!(object)
-        elsif authentication_present_v2(object)
-          authenticate_v2!(object)
-        elsif authentication_present_v1(object)
+        elsif authentication_present_v1?(object)
+          if authenticate_with_only_v2?
+            # If v2 is required but not present and v1 is present we raise MissingV2Error
+            msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+            raise MAuth::MissingV2Error, msg
+          end
+
           authenticate_v1!(object)
         else
-          msg = 'Authentication Failed. No mAuth signature present;  X-MWS-Authentication header is blank, MCC-Authentication header is blank.'
+          sub_str = authenticate_with_only_v2? ? '' : 'X-MWS-Authentication header is blank, '
+          msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
           log_inauthentic(object, msg)
           raise MauthNotPresent, msg
         end
@@ -387,8 +385,8 @@ module MAuth
         signature_valid_v1!(object)
       end
 
-      def authentication_present_v1(object)
-        !object.x_mws_authentication.nil? || object.x_mws_authentication&.match?(/\S/)
+      def authentication_present_v1?(object)
+        !object.x_mws_authentication.nil? && object.x_mws_authentication&.match?(/\S/)
       end
 
       def time_valid_v1!(object)
