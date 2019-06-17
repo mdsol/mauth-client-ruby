@@ -399,7 +399,10 @@ describe MAuth::Client do
         let(:authenticate_with_only_v2) { true }
 
         it 'authenticates with v2' do
-          # TODO
+          signed_request = client.signed(request)
+          expect(authenticating_mc).to receive(:signature_valid_v2!).with(signed_request)
+          expect(authenticating_mc).not_to receive(:signature_valid_v1!)
+          authenticating_mc.authentic?(signed_request)
         end
 
         it 'raises MissingV2Error if v2 headers are not present and v1 headers are present' do
