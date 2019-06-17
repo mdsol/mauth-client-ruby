@@ -29,16 +29,8 @@ module MAuth
         signature_valid_v2!(object)
       end
 
-      def authentication_present_v2(object)
-        !object.mcc_authentication.nil? || object.mcc_authentication&.match?(/\S/)
-      end
-
-      def authentication_present_v2!(object)
-        return if authentication_present_v2(object)
-
-        msg = 'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
-        log_mauth_not_present(object, msg)
-        raise MauthNotPresent, msg
+      def authentication_present_v2?(object)
+        !object.mcc_authentication.nil? && object.mcc_authentication&.match?(/\S/)
       end
 
       def time_valid_v2!(object)
