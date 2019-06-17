@@ -91,8 +91,8 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
-      [true, 'true', 'TRUE'].each do |authenticate_with_only_v2|
-        [{ authenticate_with_only_v2: authenticate_with_only_v2 }, { 'authenticate_with_only_v2' => authenticate_with_only_v2 }].each do |config|
+      [true, 'true', 'TRUE'].each do |val|
+        [{ authenticate_with_only_v2: val }, { 'authenticate_with_only_v2' => val }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.authenticate_with_only_v2?).to eq(true)
         end
@@ -100,8 +100,8 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with authenticate_with_only_v2 as false with any other values' do
-      ['tru', false, 'false', 1, 0, nil, ''].each do |authenticate_with_only_v2|
-        [{ authenticate_with_only_v2: authenticate_with_only_v2 }, { 'authenticate_with_only_v2' => authenticate_with_only_v2 }].each do |config|
+      ['tru', false, 'false', 1, 0, nil, ''].each do |val|
+        [{ authenticate_with_only_v2: val }, { 'authenticate_with_only_v2' => val }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.authenticate_with_only_v2?).to eq(false)
         end
@@ -109,8 +109,8 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
-      [true, 'true', 'TRUE'].each do |sign_requests_with_only_v2|
-        [{ sign_requests_with_only_v2: sign_requests_with_only_v2 }, { 'sign_requests_with_only_v2' => sign_requests_with_only_v2 }].each do |config|
+      [true, 'true', 'TRUE'].each do |val|
+        [{ sign_requests_with_only_v2: val }, { 'sign_requests_with_only_v2' => val }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.sign_requests_with_only_v2?).to eq(true)
         end
@@ -118,8 +118,8 @@ describe MAuth::Client do
     end
 
     it 'correctly initializes with sign_requests_with_only_v2 as false with any other values' do
-      ['tru', false, 'false', 1, 0, nil].each do |sign_requests_with_only_v2|
-        [{ sign_requests_with_only_v2: sign_requests_with_only_v2 }, { 'sign_requests_with_only_v2' => sign_requests_with_only_v2 }].each do |config|
+      ['tru', false, 'false', 1, 0, nil].each do |val|
+        [{ sign_requests_with_only_v2: val }, { 'sign_requests_with_only_v2' => val }].each do |config|
           mc = MAuth::Client.new(config)
           expect(mc.sign_requests_with_only_v2?).to eq(false)
         end
@@ -331,8 +331,8 @@ describe MAuth::Client do
 
         [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
           it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
-            allow(test_faraday).to receive(:get).and_raise(error_klass.new(''))
-            allow(test_faraday).to receive(:post).and_raise(error_klass.new(''))
+            allow(test_faraday).to receive(:get).and_raise(error_klass.new('')) # for the local authenticator
+            allow(test_faraday).to receive(:post).and_raise(error_klass.new('')) # for the remote authenticator
             expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
           end
         end
@@ -372,7 +372,7 @@ describe MAuth::Client do
       end
 
       context 'when no headers are present on the object to authenticate' do
-        it "considers a request with no v1 or v2 headers to be inauthentic" do
+        it "considers a request without v1 or v2 headers to be inauthentic" do
           signed_request = client.signed(request)
           signed_request.headers.delete('X-MWS-Authentication')
           signed_request.headers.delete('MCC-Authentication')
@@ -408,7 +408,7 @@ describe MAuth::Client do
           )
         end
 
-        it 'considers a request with no v2 or v1 headers to be inauthentic' do
+        it 'considers a request without v2 or v1 headers to be inauthentic' do
           signed_request = client.signed(request)
           signed_request.headers.delete('MCC-Authentication')
           signed_request.headers.delete('X-MWS-Authentication')
@@ -418,7 +418,7 @@ describe MAuth::Client do
           )
         end
 
-        it 'considers a request with no v2 or v1 headers to be inauthentic' do
+        it 'considers a request with an empty v2 header to be inauthentic' do
           signed_request = client.signed(request)
           signed_request.headers['MCC-Authentication'] = ''
           signed_request.headers.delete('X-MWS-Authentication')
