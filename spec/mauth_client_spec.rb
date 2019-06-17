@@ -275,7 +275,7 @@ describe MAuth::Client do
             authenticating_mc.authentic?(signed_request)
           end
 
-          it 'says when the mauth app uuid is not provided in the request' do
+          it 'logs when the mauth app uuid is not provided in the request' do
             signed_request = client.signed(request, time: Time.now.to_i)
             allow(signed_request).to receive(:signature_app_uuid).and_return(nil)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
@@ -288,7 +288,7 @@ describe MAuth::Client do
 
         it 'authenticates with v1' do
           expect(authenticating_mc).to receive(:signature_valid_v1!).with(v1_signed_req)
-          expect(authenticating_mc).not_to receive(:signature_valid_v1!)
+          expect(authenticating_mc).not_to receive(:signature_valid_v2!)
           authenticating_mc.authentic?(v1_signed_req)
         end
 
@@ -335,7 +335,7 @@ describe MAuth::Client do
           it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
             allow(test_faraday).to receive(:get).and_raise(error_klass.new(''))
             allow(test_faraday).to receive(:post).and_raise(error_klass.new(''))
-              expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
+            expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
           end
         end
 
@@ -343,7 +343,7 @@ describe MAuth::Client do
           stubs.instance_eval{ @stack.clear } #HAX
           stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [500, {}, []] } # for the local authenticator
           stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator
-          expect {  authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
+          expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
         end
 
         describe 'logging requester and requestee' do
@@ -357,7 +357,7 @@ describe MAuth::Client do
             authenticating_mc.authentic?(v1_signed_req)
           end
 
-          it 'says when the mauth app uuid is not provided in the request' do
+          it 'logs when the mauth app uuid is not provided in the request' do
             v1_signed_req = client.signed(request, time: Time.now.to_i)
             allow(v1_signed_req).to receive(:signature_app_uuid).and_return(nil)
             expect(authenticating_mc.logger).to receive(:info).with("Mauth-client attempting to authenticate request from app with mauth app uuid [none provided] to app with mauth app uuid authenticator using version MWSV2.")
@@ -493,7 +493,7 @@ describe MAuth::Client do
             expect(authenticating_mc.authentic?(signed_request)).to be_truthy
           end
 
-          it 'considers an authentically signed request with with query parameters to be authentic' do
+          it 'considers an authentically signed request with query parameters to be authentic' do
             signed_request = client.signed(qs_request)
             expect(authenticating_mc.authentic?(signed_request)).to be_truthy
           end
@@ -561,9 +561,9 @@ describe MAuth::Client do
           end
 
           it 'considers a request with many repeated query params authentic' do
-            pairs = (1..100).reduce([]) { |acc, el|  acc << [1, el] } +
-              (1..100).reduce([]) { |acc, el|  acc << [2, el] }
-            pairs.shuffle!
+            pairs = (1..100).reduce([]) do |acc, el|
+              acc.push(['param1', el], ['param2', el])
+            end.shuffle
 
             request = TestSignableRequest.new(
               verb: 'PUT',
@@ -643,7 +643,7 @@ describe MAuth::Client do
           it 'includes the query string and token in the request' do
             expect(test_faraday).to receive(:post).with(
               '/mauth/v1/authentication_tickets.json',
-              'authentication_ticket' => hash_including('query_string' => query_string, 'token' => 'MWSV2')
+              'authentication_ticket' => hash_including(query_string: query_string, token: 'MWSV2')
             ).and_return(double('resp', status: 200))
 
             signed_request = client.signed(qs_request)

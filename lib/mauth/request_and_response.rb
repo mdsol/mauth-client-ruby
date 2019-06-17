@@ -58,8 +58,8 @@ module MAuth
     def string_to_sign_v2(more_attributes)
       attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
 
-      # lazy instantiation of body digest to avoid hashing request bodies
-      # three times because we call string to sign three times.
+      # memoization of body digest to avoid hashing request bodies three times
+      # because we call string to sign three times.
       if attributes_for_signing[:body]
         attributes_for_signing[:body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body].to_s)
       end

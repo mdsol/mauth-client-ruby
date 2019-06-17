@@ -1,7 +1,6 @@
 require 'timecop'
 require 'json'
 require 'rack/mock'
-require 'byebug'
 
 require 'simplecov'
 SimpleCov.start

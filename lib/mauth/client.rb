@@ -283,12 +283,12 @@ module MAuth
       end
 
       # takes a signable object (outgoing request or response). returns a hash of headers to be
-      # applied to the object which comprise its signature.
+      # applied to the object which comprises its signature.
       def signed_headers(object, attributes = {})
         v1_only_override = attributes.delete(:v1_only_override)
         v2_only_override = attributes.delete(:v2_only_override)
 
-        if v1_only_override # used when signing responses to requests with only the v1 protocol, when AUTHENTICATE_WITH_ONLY_V2 is false and SIGN_REQUESTS_WITH_ONLY_V2 is true
+        if v1_only_override # used when signing responses to requests with only the v1 protocol
           signed_headers_v1(object, attributes)
         elsif sign_requests_with_only_v2? || v2_only_override # override used when signing responses to requests with the v2 protocol when SIGN_REQUESTS_WITH_ONLY_V2 is false
           signed_headers_v2(object, attributes)

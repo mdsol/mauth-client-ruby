@@ -86,9 +86,9 @@ describe MAuth::Rack do
         expect(401).to eq(status)
         expect(headers['Content-Type']).to eq('application/json')
         expect(JSON.parse(body.join)).to eq({
-            'type' => 'errors:mauth:missing_v2',
-            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly'
-          })
+          'type' => 'errors:mauth:missing_v2',
+          'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly'
+        })
       end
     end
   end
