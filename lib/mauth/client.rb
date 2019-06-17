@@ -379,7 +379,7 @@ module MAuth
         return if  (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
 
         msg = "Time verification failed. #{time_signed} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
-        log_mauth_not_present(object, msg)
+        log_inauthentic(object, msg)
         raise InauthenticError, msg
       end
 
