@@ -370,7 +370,7 @@ describe MAuth::Client do
       end
 
       context 'when no headers are present on the object to authenticate' do
-        it "considers a request without v1 or v2 headers to be inauthentic" do
+        it "considers a request without v1 and v2 headers to be inauthentic" do
           signed_request = client.signed(request)
           signed_request.headers.delete('X-MWS-Authentication')
           signed_request.headers.delete('MCC-Authentication')
@@ -609,6 +609,17 @@ describe MAuth::Client do
               request_url: '/',
               body: 'himom',
               query_string: pairs.map { |pair| pair.join('=') }.join('&')
+            )
+            signed_request = client.signed(request)
+            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          end
+
+          it 'considers a signed request with multi-byte UTF-8 characters in the query string to be authentic' do
+            request = TestSignableRequest.new(
+              verb: 'PUT',
+              request_url: '/',
+              body: 'himom',
+              query_string: 'prm=val&prm=𝖛𝗮ḷ&パラメータ=値&매개 변수=값&參數=值'
             )
             signed_request = client.signed(request)
             expect(authenticating_mc.authentic?(signed_request)).to be_truthy
