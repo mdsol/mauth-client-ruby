@@ -446,12 +446,16 @@ module MAuth
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
-        rescue OpenSSL::PKey::PKeyError
-          raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
+        rescue OpenSSL::PKey::PKeyError => e
+          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
 
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
-          raise InauthenticError, "Signature verification failed for #{object.class}"
+          msg = "Signature verification failed for #{object.class}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
       end
 

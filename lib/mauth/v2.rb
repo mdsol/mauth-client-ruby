@@ -95,7 +95,9 @@ module MAuth
         unless expected_no_reencoding == actual ||
            expected_euresource_style_reencoding == actual ||
            expected_for_percent_reencoding == actual
-          raise InauthenticError, "Signature verification failed for #{object.class}"
+          msg = "Signature verification failed for #{object.class}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
       end
 
@@ -105,7 +107,9 @@ module MAuth
         begin
           pubkey.public_decrypt(Base64.decode64(object.signature))
         rescue OpenSSL::PKey::PKeyError => e
-          raise InauthenticError, "Public key decryption of signature failed! #{e.class}: #{e.message}"
+          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
       end
     end
