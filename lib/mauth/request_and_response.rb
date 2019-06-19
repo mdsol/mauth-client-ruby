@@ -63,13 +63,17 @@ module MAuth
       if attributes_for_signing[:body]
         attributes_for_signing[:body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body].to_s)
       end
-      attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string].to_s)
+
+      if attributes_for_signing[:query_string]
+        attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string].to_s)
+      end
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attributes_for_signing.dig(key)
       end
 
       missing_attributes.delete(:body_digest) # body may be omitted
+      missing_attributes.delete(:encoded_query_params) # query_string may be omitted
       if missing_attributes.any?
         raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
