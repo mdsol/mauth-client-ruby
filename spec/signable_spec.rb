@@ -95,11 +95,17 @@ describe MAuth::Signable do
         dummy_inst.string_to_sign_v2({})
       end
 
-      xit 'enforces UTF-8 encoding for all components of the string to sign' do
-        dummy_inst = dummy_cls.new(req_attrs)
-        dummy_inst.string_to_sign_v2({}).split("\n\r").each do |component|
-          expect(component.encoding.to_s).to eq('UTF-8')
+      it 'enforces UTF-8 encoding for all components of the string to sign' do
+        # this spec fails unless we expect Digest::SHA512 to be on the body first
+        expect(Digest::SHA512).to receive(:hexdigest).with(req_attrs[:body]).once
+        expect(Digest::SHA512).to receive(:hexdigest) do |string_to_sign|
+          string_to_sign.split("\n\r").each do |component|
+            expect(component.encoding.to_s).to eq('UTF-8')
+          end
         end
+
+        dummy_inst = dummy_cls.new(req_attrs)
+        dummy_inst.string_to_sign_v2({})
       end
     end
 
