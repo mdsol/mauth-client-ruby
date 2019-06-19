@@ -55,21 +55,19 @@ module MAuth
     #     response_body_digest + <LF> +
     #     app_uuid + <LF> +
     #     current_seconds_since_epoch
-    def string_to_sign_v2(more_attributes)
-      attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
+    def string_to_sign_v2(override_attrs)
+      attrs_with_overrides = self.attributes_for_signing.merge(override_attrs)
 
-      # memoization of body digest to avoid hashing request bodies three times
-      # because we call string to sign three times.
-      if attributes_for_signing[:body]
-        attributes_for_signing[:body_digest] ||= Digest::SHA512.hexdigest(attributes_for_signing[:body].to_s)
+      if attrs_with_overrides[:body]
+        attrs_with_overrides[:body_digest] = Digest::SHA512.hexdigest(attrs_with_overrides[:body].to_s)
       end
 
-      if attributes_for_signing[:query_string]
-        attributes_for_signing[:encoded_query_params] = encode_query_string(attributes_for_signing[:query_string].to_s)
+      if attrs_with_overrides[:query_string]
+        attrs_with_overrides[:encoded_query_params] = encode_query_string(attrs_with_overrides[:query_string].to_s)
       end
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
-        attributes_for_signing.dig(key)
+        attrs_with_overrides.dig(key)
       end
 
       missing_attributes.delete(:body_digest) # body may be omitted
@@ -79,7 +77,7 @@ module MAuth
       end
 
       string = self.class::SIGNATURE_COMPONENTS_V2.map do |k|
-        attributes_for_signing[k].to_s.force_encoding('UTF-8')
+        attrs_with_overrides[k].to_s.force_encoding('UTF-8')
       end.join("\n")
       Digest::SHA512.hexdigest(string)
     end
