@@ -95,8 +95,10 @@ module MAuth
     # encodes space as '%20'
     # does not encode A-Z, a-z, 0-9, hyphen ( - ), underscore ( _ ), period ( . ),
     # or tilde ( ~ )
+    # NOTE the CGI.escape spec changed in 2.5 to not escape tildes. we gsub
+    # tilde encoding back to tildes to account for older Rubies
     def uri_escape(string)
-      CGI.escape(string).gsub(/\+/, '%20')
+      CGI.escape(string).gsub(/\+|%7E/, '+' => '%20', '%7E' => '~')
     end
 
     def initialize(attributes_for_signing)

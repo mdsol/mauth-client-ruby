@@ -17,6 +17,7 @@ describe MAuth::Signable do
     Dummy.const_set(const_name, sig_components)
     Dummy
   end
+  let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
 
 
   describe 'string_to_sign_v1({})' do
@@ -72,8 +73,8 @@ describe MAuth::Signable do
       %i[verb request_url app_uuid time].each do |component|
         it "raises when the signature component `#{component}` is missing" do
           req_attrs.delete(component)
-          dummy_inst = dummy_cls.new(req_attrs)
-          expect { dummy_inst.string_to_sign_v2({}) }
+          dummy_req = dummy_cls.new(req_attrs)
+          expect { dummy_req.string_to_sign_v2({}) }
             .to raise_error(MAuth::UnableToSignError)
         end
       end
@@ -81,8 +82,8 @@ describe MAuth::Signable do
       %i[body_digest encoded_query_params].each do |component|
         it "does not raise when the signature component `#{component}` is missing" do
           req_attrs.delete(component)
-          dummy_inst = dummy_cls.new(req_attrs)
-          expect { dummy_inst.string_to_sign_v2({}) }.not_to raise_error
+          dummy_req = dummy_cls.new(req_attrs)
+          expect { dummy_req.string_to_sign_v2({}) }.not_to raise_error
         end
       end
 
@@ -91,8 +92,8 @@ describe MAuth::Signable do
         # this spec fails unless we expect Digest::SHA512 to be called again
         # with the concatenated signature components
         expect(Digest::SHA512).to receive(:hexdigest).with(anything)
-        dummy_inst = dummy_cls.new(req_attrs)
-        dummy_inst.string_to_sign_v2({})
+        dummy_req = dummy_cls.new(req_attrs)
+        dummy_req.string_to_sign_v2({})
       end
 
       it 'enforces UTF-8 encoding for all components of the string to sign' do
@@ -104,8 +105,8 @@ describe MAuth::Signable do
           end
         end
 
-        dummy_inst = dummy_cls.new(req_attrs)
-        dummy_inst.string_to_sign_v2({})
+        dummy_req = dummy_cls.new(req_attrs)
+        dummy_req.string_to_sign_v2({})
       end
     end
 
@@ -115,16 +116,16 @@ describe MAuth::Signable do
       %i[status_code app_uuid time].each do |component|
         it "raises when the signature component `#{component}` is missing" do
           resp_attrs.delete(component)
-          dummy_inst = dummy_cls.new(resp_attrs)
-          expect { dummy_inst.string_to_sign_v2({}) }
+          dummy_resp = dummy_cls.new(resp_attrs)
+          expect { dummy_resp.string_to_sign_v2({}) }
             .to raise_error(MAuth::UnableToSignError)
         end
       end
 
       it 'does not raise when `body_digest` is missing' do
         resp_attrs.delete(:body_digest)
-        dummy_inst = dummy_cls.new(resp_attrs)
-        expect { dummy_inst.string_to_sign_v2({}) }.not_to raise_error
+        dummy_resp = dummy_cls.new(resp_attrs)
+        expect { dummy_resp.string_to_sign_v2({}) }.not_to raise_error
       end
 
       it 'hashes the request body with SHA512' do
@@ -132,15 +133,13 @@ describe MAuth::Signable do
         # this spec fails unless we expect Digest::SHA512 to be called again
         # with the concatenated signature components
         expect(Digest::SHA512).to receive(:hexdigest).with(anything)
-        dummy_inst = dummy_cls.new(resp_attrs)
-        dummy_inst.string_to_sign_v2({})
+        dummy_resp = dummy_cls.new(resp_attrs)
+        dummy_resp.string_to_sign_v2({})
       end
     end
   end
 
   describe 'encode_query_string' do
-    let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
-
     it 'uri encodes special characters in keys and values of the parameters' do
       qs = "key=-_.~!@#$%^*()+{}|:\"'`<>?"
       expected = 'key=-_.~%21%40%23%24%25%5E%2A%28%29%2B%7B%7D%7C%3A%22%27%60%3C%3E%3F'
@@ -166,6 +165,24 @@ describe MAuth::Signable do
 
     it 'properly handles empty strings' do
       expect(dummy_inst.encode_query_string('')).to eq('')
+    end
+  end
+
+  describe 'uri_escape' do
+    it 'uri encodes special characters' do
+      str = "!@#$%^*()+{}|:\"'`<>?"
+      expected = '%21%40%23%24%25%5E%2A%28%29%2B%7B%7D%7C%3A%22%27%60%3C%3E%3F'
+      expect(dummy_inst.uri_escape(str)).to eq(expected)
+    end
+
+    %w[~ _ . - a A 0].each do |char|
+      it "does not uri encode `#{char}`" do
+        expect(dummy_inst.uri_escape(char)).to eq(char)
+      end
+    end
+
+    it 'encodes space as %20' do
+      expect(dummy_inst.uri_escape(' ')).to eq('%20')
     end
   end
 end
