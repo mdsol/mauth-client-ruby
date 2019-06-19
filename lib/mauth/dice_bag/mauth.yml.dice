@@ -5,8 +5,8 @@ common: &common
   mauth_api_version: v1
   app_uuid: <%= configured.mauth_app_uuid! || 'fb17460e-9868-11e1-8399-0090f5ccb4d3' %>
   private_key_file: config/mauth_key
-  authenticate_with_only_v2: <%= configured.authenticate_with_only_v2 || 'false' %>
-  sign_requests_with_only_v2: <%= configured.sign_requests_with_only_v2 || 'false' %>
+  v2_only_authenticate: <%= configured.v2_only_authenticate || 'false' %>
+  v2_only_sign_requests: <%= configured.v2_only_sign_requests || 'false' %>
 
 production:
   <<: *common

@@ -17,7 +17,7 @@ module MAuth
       def call(env)
         if should_authenticate?(env)
           mauth_request = MAuth::Rack::Request.new(env)
-          if mauth_client.authenticate_with_only_v2? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
+          if mauth_client.v2_only_authenticate? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
             return response_for_missing_v2(env)
           end
 
@@ -67,7 +67,7 @@ module MAuth
       end
 
       # response when the requests includes V1 headers but does not include V2
-      # headers and the AUTHENTICATE_WITH_ONLY_V2 flag is set.
+      # headers and the V2_ONLY_AUTHENTICATE flag is set.
       def response_for_missing_v2(env)
         handle_head(env) do
           body = {

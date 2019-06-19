@@ -6,8 +6,8 @@ require 'securerandom'
 describe MAuth::Client do
   let(:app_uuid) { SecureRandom.uuid }
   let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
-  let(:sign_requests_with_only_v2) { false }
-  let(:authenticate_with_only_v2) { false }
+  let(:v2_only_sign_requests) { false }
+  let(:v2_only_authenticate) { false }
   let(:v1_signed_req) { client.signed(request, v1_only_override: true) }
   let(:v2_signed_req) { client.signed(request, v2_only_override: true) }
   let(:signing_key) { OpenSSL::PKey::RSA.generate(2048) }
@@ -15,8 +15,8 @@ describe MAuth::Client do
     MAuth::Client.new(
       private_key: signing_key,
       app_uuid: app_uuid,
-      sign_requests_with_only_v2: sign_requests_with_only_v2,
-      authenticate_with_only_v2: authenticate_with_only_v2
+      v2_only_sign_requests: v2_only_sign_requests,
+      v2_only_authenticate: v2_only_authenticate
     )
   end
 
@@ -90,38 +90,38 @@ describe MAuth::Client do
       end
     end
 
-    it 'correctly initializes with authenticate_with_only_v2 as true with boolean true or string "true"' do
+    it 'correctly initializes with v2_only_authenticate as true with boolean true or string "true"' do
       [true, 'true', 'TRUE'].each do |val|
-        [{ authenticate_with_only_v2: val }, { 'authenticate_with_only_v2' => val }].each do |config|
+        [{ v2_only_authenticate: val }, { 'v2_only_authenticate' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.authenticate_with_only_v2?).to eq(true)
+          expect(mc.v2_only_authenticate?).to eq(true)
         end
       end
     end
 
-    it 'correctly initializes with authenticate_with_only_v2 as false with any other values' do
+    it 'correctly initializes with v2_only_authenticate as false with any other values' do
       ['tru', false, 'false', 1, 0, nil, ''].each do |val|
-        [{ authenticate_with_only_v2: val }, { 'authenticate_with_only_v2' => val }].each do |config|
+        [{ v2_only_authenticate: val }, { 'v2_only_authenticate' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.authenticate_with_only_v2?).to eq(false)
+          expect(mc.v2_only_authenticate?).to eq(false)
         end
       end
     end
 
-    it 'correctly initializes with sign_requests_with_only_v2 as true with boolean true or string "true"' do
+    it 'correctly initializes with v2_only_sign_requests as true with boolean true or string "true"' do
       [true, 'true', 'TRUE'].each do |val|
-        [{ sign_requests_with_only_v2: val }, { 'sign_requests_with_only_v2' => val }].each do |config|
+        [{ v2_only_sign_requests: val }, { 'v2_only_sign_requests' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.sign_requests_with_only_v2?).to eq(true)
+          expect(mc.v2_only_sign_requests?).to eq(true)
         end
       end
     end
 
-    it 'correctly initializes with sign_requests_with_only_v2 as false with any other values' do
+    it 'correctly initializes with v2_only_sign_requests as false with any other values' do
       ['tru', false, 'false', 1, 0, nil].each do |val|
-        [{ sign_requests_with_only_v2: val }, { 'sign_requests_with_only_v2' => val }].each do |config|
+        [{ v2_only_sign_requests: val }, { 'v2_only_sign_requests' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.sign_requests_with_only_v2?).to eq(false)
+          expect(mc.v2_only_sign_requests?).to eq(false)
         end
       end
     end
@@ -164,8 +164,8 @@ describe MAuth::Client do
       expect(v2_signed_req.headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
     end
 
-    context 'when the sign_requests_with_only_v2 flag is true' do
-      let(:sign_requests_with_only_v2) { true }
+    context 'when the v2_only_sign_requests flag is true' do
+      let(:v2_only_sign_requests) { true }
 
       it 'adds only MCC-Time and MCC-Authentication headers when signing' do
         signed_request = client.signed(request)
@@ -203,8 +203,8 @@ describe MAuth::Client do
       expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
     end
 
-    context 'when the sign_requests_with_only_v2 flag is true' do
-      let(:sign_requests_with_only_v2) { true }
+    context 'when the v2_only_sign_requests flag is true' do
+      let(:v2_only_sign_requests) { true }
 
       it 'returns only MCC-Time and MCC-Authentication headers when signing' do
         signed_headers = client.signed_headers(request)
@@ -393,8 +393,8 @@ describe MAuth::Client do
         end
       end
 
-      context 'when authenticate_with_only_v2 flag is true' do
-        let(:authenticate_with_only_v2) { true }
+      context 'when v2_only_authenticate flag is true' do
+        let(:v2_only_authenticate) { true }
 
         it 'authenticates with v2' do
           signed_request = client.signed(request)
@@ -433,14 +433,14 @@ describe MAuth::Client do
 
     describe MAuth::Client::LocalAuthenticator do
       describe '#authentic?' do
-        let(:authenticate_with_only_v2) { false }
+        let(:v2_only_authenticate) { false }
         let(:authenticating_mc) do
           MAuth::Client.new(
             mauth_baseurl: 'http://whatever',
             mauth_api_version: 'v1',
             private_key: OpenSSL::PKey::RSA.generate(2048),
             app_uuid: 'authenticator',
-            authenticate_with_only_v2: authenticate_with_only_v2
+            v2_only_authenticate: v2_only_authenticate
           )
         end
         let(:test_faraday) do
@@ -665,7 +665,7 @@ describe MAuth::Client do
           MAuth::Client.new(
             mauth_baseurl: 'http://whatever',
             mauth_api_version: 'v1',
-            authenticate_with_only_v2: authenticate_with_only_v2
+            v2_only_authenticate: v2_only_authenticate
           )
         end
         let(:test_faraday) do

@@ -127,7 +127,7 @@ module MAuth
   end
 
   # used when an object has the V1 headers but not the V2 headers and the
-  # AUTHENTICATE_WITH_ONLY_V2 variable is set to true.
+  # V2_ONLY_AUTHENTICATE variable is set to true.
   class MissingV2Error < StandardError
   end
 
@@ -196,8 +196,8 @@ module MAuth
       request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
-      @config['authenticate_with_only_v2'] = given_config['authenticate_with_only_v2'].to_s.downcase == 'true'
-      @config['sign_requests_with_only_v2'] = given_config['sign_requests_with_only_v2'].to_s.downcase == 'true'
+      @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.downcase == 'true'
+      @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.downcase == 'true'
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false
       if given_config.key?('authenticator')
@@ -242,12 +242,12 @@ module MAuth
       @config['ssl_certs_path']
     end
 
-    def sign_requests_with_only_v2?
-      @config['sign_requests_with_only_v2']
+    def v2_only_sign_requests?
+      @config['v2_only_sign_requests']
     end
 
-    def authenticate_with_only_v2?
-      @config['authenticate_with_only_v2']
+    def v2_only_authenticate?
+      @config['v2_only_authenticate']
     end
 
     def assert_private_key(err)
@@ -288,7 +288,7 @@ module MAuth
 
         if v1_only_override # used when signing responses to requests with only the v1 protocol
           signed_headers_v1(object, attributes)
-        elsif sign_requests_with_only_v2? || v2_only_override # override used when signing responses to requests with the v2 protocol when SIGN_REQUESTS_WITH_ONLY_V2 is false
+        elsif v2_only_sign_requests? || v2_only_override # override used when signing responses to requests with the v2 protocol when V2_ONLY_SIGN_REQUESTS is false
           signed_headers_v2(object, attributes)
         else # by default sign with both the v1 and v2 protocol
           signed_headers_v1(object, attributes).merge(signed_headers_v2(object, attributes))
@@ -326,13 +326,13 @@ module MAuth
       end
 
       # raises InauthenticError unless the given object is authentic. Will only
-      # authenticate with v2 if the environment variable AUTHENTICATE_WITH_ONLY_V2
+      # authenticate with v2 if the environment variable V2_ONLY_AUTHENTICATE
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
         if authentication_present_v2?(object)
           authenticate_v2!(object)
         elsif authentication_present_v1?(object)
-          if authenticate_with_only_v2?
+          if v2_only_authenticate?
             # If v2 is required but not present and v1 is present we raise MissingV2Error
             msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
             raise MAuth::MissingV2Error, msg
@@ -340,7 +340,7 @@ module MAuth
 
           authenticate_v1!(object)
         else
-          sub_str = authenticate_with_only_v2? ? '' : 'X-MWS-Authentication header is blank, '
+          sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
           msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
           log_inauthentic(object, msg)
           raise MauthNotPresent, msg

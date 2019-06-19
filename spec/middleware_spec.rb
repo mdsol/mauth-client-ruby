@@ -22,8 +22,8 @@ end
 describe MAuth::Rack do
   let(:res) { [200, {}, ['hello world']] }
   let(:rack_app) { proc { |_env| res } }
-  let(:authenticate_with_only_v2) { false }
-  let(:mw) { described_class.new(rack_app, authenticate_with_only_v2: authenticate_with_only_v2) }
+  let(:v2_only_authenticate) { false }
+  let(:mw) { described_class.new(rack_app, v2_only_authenticate: v2_only_authenticate) }
 
   describe MAuth::Rack::RequestAuthenticator do
     include_examples MAuth::Middleware
@@ -75,8 +75,8 @@ describe MAuth::Rack do
       expect(body.join).to match(/Could not determine request authenticity/)
     end
 
-    context 'the AUTHENTICATE_WITH_ONLY_V2 flag is true and the request has only v1 headers' do
-      let(:authenticate_with_only_v2) { true }
+    context 'the V2_ONLY_AUTHENTICATE flag is true and the request has only v1 headers' do
+      let(:v2_only_authenticate) { true }
 
       it 'returns 401 with an informative message and does not call the app' do
         env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar', 'REQUEST_METHOD' => 'GET' }
