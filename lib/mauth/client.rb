@@ -144,8 +144,6 @@ module MAuth
     class ConfigurationError < StandardError; end
 
     MWS_TOKEN = 'MWS'.freeze
-    MWSV2_TOKEN = 'MWSV2'.freeze
-    AUTH_HEADER_DELIMITER = ';'.freeze
 
     # new client with the given App UUID and public key. config may include the following (all
     # config keys may be strings or symbols):
