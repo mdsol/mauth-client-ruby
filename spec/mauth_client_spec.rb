@@ -624,6 +624,20 @@ describe MAuth::Client do
             signed_request = client.signed(request)
             expect(authenticating_mc.authentic?(signed_request)).to be_truthy
           end
+
+          it 'considers a signed request with multi-byte UTF-8 characters in the query string to be authentic' do
+            qs = 'prm=パ&prm=개'
+
+            request = TestSignableRequest.new(
+              verb: 'PUT',
+              request_url: '/',
+              body: 'himom',
+              query_string: 'prm=val&𝛒ям=𝖛𝗮ḷ&パラメータ=値&매개 변수=값&參數=值'
+            )
+            signed_request = client.signed(request)
+            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          end
+
         end
       end
 
