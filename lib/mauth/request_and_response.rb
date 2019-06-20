@@ -4,7 +4,7 @@ module MAuth
   # module which composes a string to sign.
   #
   # includer must provide
-  # - SIGNATURE_COMPONENTS OR SIGNATURE_COMPONENTS_V2 constant - array of keys to get from #attributes_for_signing
+  # - SIGNATURE_COMPONENTS OR SIGNATURE_COMPONENTS_V2 constant - array of keys to get from
   # - #attributes_for_signing
   # - #merge_headers (takes a Hash of headers; returns an instance of includer's own class whose
   #   headers have been updated with the argument headers)
