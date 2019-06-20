@@ -389,7 +389,7 @@ module MAuth
       end
 
       def authentication_present_v1?(object)
-        !(object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/)
+        !object.x_mws_authentication.to_s.strip.empty?
       end
 
       def time_valid_v1!(object)
