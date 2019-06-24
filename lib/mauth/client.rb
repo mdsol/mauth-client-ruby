@@ -381,10 +381,6 @@ module MAuth
         signature_valid_v1!(object)
       end
 
-      def authentication_present_v1?(object)
-        !object.x_mws_authentication.to_s.strip.empty?
-      end
-
       def time_valid_v1!(object)
         if object.x_mws_time.nil?
           msg = 'Time verification failed. No x-mws-time present.'
