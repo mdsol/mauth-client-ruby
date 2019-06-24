@@ -151,12 +151,10 @@ module MAuth
     end
 
     def protocol_version
-      if signature_token == MAuth::Client::MWSV2_TOKEN
+      if !mcc_authentication.to_s.strip.empty?
         2
-      elsif signature_token == MAuth::Client::MWS_TOKEN
+      elsif !x_mws_authentication.to_s.strip.empty?
         1
-      else
-        # nil ? 0 ?
       end
     end
   end
