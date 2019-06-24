@@ -26,7 +26,10 @@ module MAuth
 
         begin
           if mauth_client.authentic?(mauth_request)
-            @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
+            @app.call(env.merge!(
+              'mauth.app_uuid' => mauth_request.signature_app_uuid,
+              'mauth.authentic' => true
+            ))
           else
             response_for_inauthentic_request(env)
           end
