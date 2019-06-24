@@ -15,10 +15,12 @@ module MAuth
     #   from this is false, the request is passed to the app with no authentication performed.
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
+        mauth_request = MAuth::Rack::Request.new(env)
+        env['mauth.protocol_version'] = mauth_request.protocol_version
+
         return @app.call(env) unless should_authenticate?(env)
 
-        mauth_request = MAuth::Rack::Request.new(env)
-        if mauth_client.v2_only_authenticate? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
+        if mauth_client.v2_only_authenticate? && mauth_request.protocol_version == 1
           return response_for_missing_v2(env)
         end
 
@@ -87,18 +89,20 @@ module MAuth
     # signs outgoing responses with only the protocol used to sign the request.
     class ResponseSigner < MAuth::Middleware
       def call(env)
-        # QUESTION does instaniate a new request object, rather than doing a check for the headers here, add too much overhead?
-        versioned_token = MAuth::Rack::Request.new(env).signature_token
         unsigned_response = @app.call(env)
 
-        signed_response =
-          if versioned_token == MAuth::Client::MWSV2_TOKEN
-            mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response), v2_only_override: true)
+        method =
+          if env['mauth.protocol_version'] == 2
+            :signed_v2
+          elsif env['mauth.protocol_version'] == 1
+            :signed_v1
           else
-            mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response), v1_only_override: true)
+            # if no protocol was supplied then use `signed` which either signs
+            # with both protocol versions or only v2
+            :signed
           end
-
-        signed_response.status_headers_body
+        response = mauth_client.send(method, MAuth::Rack::Response.new(*unsigned_response))
+        response.status_headers_body
       end
     end
 

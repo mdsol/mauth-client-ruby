@@ -280,15 +280,15 @@ module MAuth
         object.merge_headers(signed_headers(object, attributes))
       end
 
+      # signs with v1 only. used when signing responses to v1 requests.
+      def signed_v1(object, attributes = {})
+        object.merge_headers(signed_headers_v1(object, attributes))
+      end
+
       # takes a signable object (outgoing request or response). returns a hash of headers to be
       # applied to the object which comprises its signature.
       def signed_headers(object, attributes = {})
-        v1_only_override = attributes.delete(:v1_only_override)
-        v2_only_override = attributes.delete(:v2_only_override)
-
-        if v1_only_override # used when signing responses to requests with only the v1 protocol
-          signed_headers_v1(object, attributes)
-        elsif v2_only_sign_requests? || v2_only_override # override used when signing responses to requests with the v2 protocol when V2_ONLY_SIGN_REQUESTS is false
+        if v2_only_sign_requests?
           signed_headers_v2(object, attributes)
         else # by default sign with both the v1 and v2 protocol
           signed_headers_v1(object, attributes).merge(signed_headers_v2(object, attributes))
@@ -342,7 +342,7 @@ module MAuth
         else
           sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
           msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
-          log_inauthentic(object, msg)
+          logger.warn("mAuth signature not present on #{object.class}. Exception: #{msg}")
           raise MauthNotPresent, msg
         end
       end

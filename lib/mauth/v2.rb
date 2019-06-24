@@ -7,6 +7,10 @@ module MAuth
 
     # methods to sign requests and responses. part of MAuth::Client
     module Signer
+      def signed_v2(object, attributes = {})
+        object.merge_headers(signed_headers_v2(object, attributes))
+      end
+
       def signed_headers_v2(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v2(attributes)
