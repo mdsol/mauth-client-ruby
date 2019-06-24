@@ -8,8 +8,8 @@ describe MAuth::Client do
   let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
   let(:v2_only_sign_requests) { false }
   let(:v2_only_authenticate) { false }
-  let(:v1_signed_req) { client.signed(request, v1_only_override: true) }
-  let(:v2_signed_req) { client.signed(request, v2_only_override: true) }
+  let(:v1_signed_req) { client.signed_v1(request) }
+  let(:v2_signed_req) { client.signed_v2(request) }
   let(:signing_key) { OpenSSL::PKey::RSA.generate(2048) }
   let(:client) do
     MAuth::Client.new(
@@ -154,16 +154,6 @@ describe MAuth::Client do
   end
 
   describe '#signed' do
-    it 'adds only X-MWS-Time and X-MWS-Authentication headers when signing with v1 override' do
-      expect(v1_signed_req.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
-      expect(v1_signed_req.headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
-    end
-
-    it 'adds only MCC-Time and MCC-Authentication headers when signing with v2 override' do
-      expect(v2_signed_req.headers.keys).to include('MCC-Authentication', 'MCC-Time')
-      expect(v2_signed_req.headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
-    end
-
     context 'when the v2_only_sign_requests flag is true' do
       let(:v2_only_sign_requests) { true }
 
@@ -190,19 +180,21 @@ describe MAuth::Client do
     end
   end
 
+  describe '#signed_v1' do
+    it 'adds only X-MWS-Time and X-MWS-Authentication headers' do
+      expect(v1_signed_req.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+      expect(v1_signed_req.headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
+    end
+  end
+
+  describe '#signed_v2' do
+    it 'adds only MCC-Time and MCC-Authentication headers' do
+      expect(v2_signed_req.headers.keys).to include('MCC-Authentication', 'MCC-Time')
+      expect(v2_signed_req.headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
+    end
+  end
+
   describe '#signed_headers' do
-    it 'returns only X-MWS-Time and X-MWS-Authentication headers when called with v1 override' do
-      signed_headers = client.signed_headers(request, v1_only_override: true)
-      expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
-      expect(signed_headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
-    end
-
-    it 'returns only MCC-Time and MCC-Authentication headers when called with v2 override' do
-      signed_headers = client.signed_headers(request, v2_only_override: true)
-      expect(signed_headers.keys).to include('MCC-Authentication', 'MCC-Time')
-      expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
-    end
-
     context 'when the v2_only_sign_requests flag is true' do
       let(:v2_only_sign_requests) { true }
 
@@ -216,6 +208,22 @@ describe MAuth::Client do
     it 'by default returns X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers' do
       signed_headers = client.signed_headers(request)
       expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time', 'MCC-Authentication', 'MCC-Time')
+    end
+  end
+
+  describe '#signed_headers_v1' do
+    it 'returns only X-MWS-Time and X-MWS-Authentication headers' do
+      signed_headers = client.signed_headers_v1(request)
+      expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+      expect(signed_headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
+    end
+  end
+
+  describe '#signed_headers_v2' do
+    it 'returns only MCC-Time and MCC-Authentication headers' do
+      signed_headers = client.signed_headers_v2(request)
+      expect(signed_headers.keys).to include('MCC-Authentication', 'MCC-Time')
+      expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
     end
   end
 
@@ -300,7 +308,7 @@ describe MAuth::Client do
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
           { -301 => false, -299 => true, 299 => true, 301 => false }.each do |time_offset, authentic|
-            signed_request = client.signed(request, time: Time.now.to_i + time_offset, v1_only_override: true)
+            signed_request = client.signed_v2(request, time: Time.now.to_i + time_offset)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
               expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
@@ -474,7 +482,7 @@ describe MAuth::Client do
               # imagine what are on the requester's side now...
               signed_path = CGI.escape(path).gsub!(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
               req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
-              signed_request = client.signed(req_w_path, v1_only_override: true)
+              signed_request = client.signed_v1(req_w_path)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
@@ -489,7 +497,7 @@ describe MAuth::Client do
               # imagine what are on the requester's side now...
               signed_path = CGI.escape(path)
               req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path)
-              signed_request = client.signed(req_w_path, v1_only_override: true)
+              signed_request = client.signed_v1(req_w_path)
 
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
@@ -500,7 +508,7 @@ describe MAuth::Client do
 
           it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
             bad_client = MAuth::Client.new(private_key: signing_key, app_uuid: 'nope')
-            signed_request = bad_client.signed(request, v1_only_override: true)
+            signed_request = bad_client.signed_v1(request)
             stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
             expect(authenticating_mc.authentic?(signed_request)).to be_falsey
           end

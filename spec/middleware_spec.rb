@@ -30,7 +30,7 @@ describe MAuth::Rack do
 
     it 'calls the app without authentication if should_authenticate check indicates not to' do
       mw_auth_false = described_class.new(rack_app, should_authenticate_check: proc { false })
-      env = double
+      env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw_auth_false.mauth_client).not_to receive(:authentic?)
       expect(rack_app).to receive(:call).with(env).and_return(res)
       status, headers, body = mw_auth_false.call(env)
@@ -43,7 +43,11 @@ describe MAuth::Rack do
         mw_w_flag = described_class.new(rack_app, should_authenticate_check: should_authenticate_check)
         env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
         expect(mw_w_flag.mauth_client).to receive(:authentic?).and_return(true)
-        expect(rack_app).to receive(:call).with(env.merge('mauth.app_uuid' => 'foo', 'mauth.authentic' => true)).and_return(res)
+        expect(rack_app).to receive(:call).with(env.merge(
+          'mauth.app_uuid' => 'foo',
+          'mauth.authentic' => true,
+          'mauth.protocol_version' => 1
+        )).and_return(res)
         status, headers, body = mw_w_flag.call(env)
         expect(status).to eq(200)
         expect(body).to eq(['hello world'])
@@ -140,24 +144,53 @@ describe MAuth::Rack do
     include_examples MAuth::Middleware
 
     context 'request with v2 headers' do
-      let(:env) { { 'HTTP_MCC_AUTHENTICATION' => 'MWSV2 foo:bar;', 'REQUEST_METHOD' => 'GET' } }
+      let(:env) do
+        {
+          'HTTP_MCC_AUTHENTICATION' => 'MWSV2 foo:bar;',
+          'REQUEST_METHOD' => 'GET',
+          'mauth.protocol_version' => 2
+        }
+      end
 
       it 'signs the response with only v2' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
-        expect(mw.mauth_client).to receive(:signed).with(
-            an_instance_of(MAuth::Rack::Response), v2_only_override: true
+        expect(mw.mauth_client).to receive(:signed_v2).with(
+            an_instance_of(MAuth::Rack::Response)
           ).and_return(MAuth::Rack::Response.new(*res))
         mw.call(env)
       end
     end
 
     context 'request with v1 headers' do
-      let(:env) { { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar', 'REQUEST_METHOD' => 'GET' } }
+      let(:env) do
+        {
+          'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar',
+          'REQUEST_METHOD' => 'GET',
+          'mauth.protocol_version' => 1
+        }
+      end
 
       it 'signs the response with only v1' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
+        expect(mw.mauth_client).to receive(:signed_v1).with(
+            an_instance_of(MAuth::Rack::Response)
+          ).and_return(MAuth::Rack::Response.new(*res))
+        mw.call(env)
+      end
+    end
+
+    context 'request with invalid headers' do
+      let(:env) do
+        {
+          'HTTP_MCC_AUTHENTICATION' => 'MWSV500 foo:bar;',
+          'REQUEST_METHOD' => 'GET',
+        }
+      end
+
+      it 'signs the response with the default headers' do
+        allow(rack_app).to receive(:call).with(env).and_return(res)
         expect(mw.mauth_client).to receive(:signed).with(
-            an_instance_of(MAuth::Rack::Response), v1_only_override: true
+            an_instance_of(MAuth::Rack::Response)
           ).and_return(MAuth::Rack::Response.new(*res))
         mw.call(env)
       end
