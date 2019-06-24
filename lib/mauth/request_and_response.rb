@@ -20,7 +20,7 @@ module MAuth
     #     resource_url_path (no host, port or query string; first "/" is included) + <LF> +
     #     request_body + <LF> +
     #     app_uuid + <LF> +
-    #     current_seconds_since_epoch + <LF> +
+    #     current_seconds_since_epoch
     #
     # for responses:
     #   string_to_sign =
@@ -148,6 +148,16 @@ module MAuth
 
     def signature
       signature_info[:signature]
+    end
+
+    def protocol_version
+      if signature_token == MAuth::Client::MWSV2_TOKEN
+        2
+      elsif signature_token == MAuth::Client::MWS_TOKEN
+        1
+      else
+        # nil ? 0 ?
+      end
     end
   end
 
