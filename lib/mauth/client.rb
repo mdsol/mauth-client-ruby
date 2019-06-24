@@ -365,14 +365,6 @@ module MAuth
         logger.error("mAuth signature authentication failed for #{object.class}. Exception: #{message}")
       end
 
-      def log_unable_to_authenticate(message)
-        logger.error("Unable to authenticate with MAuth. Exception #{message}")
-      end
-
-      def log_mauth_not_present(object, message)
-        logger.warn("mAuth signature not present on #{object.class}. Exception: #{message}")
-      end
-
       def time_within_valid_range!(object, time_signed, now = Time.now)
         return if  (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
 
@@ -564,7 +556,7 @@ module MAuth
           response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
         rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
-          log_unable_to_authenticate(msg)
+          logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end
         if (200..299).cover?(response.status)
