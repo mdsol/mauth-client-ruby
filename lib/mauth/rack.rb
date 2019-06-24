@@ -15,23 +15,21 @@ module MAuth
     #   from this is false, the request is passed to the app with no authentication performed.
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
-        if should_authenticate?(env)
-          mauth_request = MAuth::Rack::Request.new(env)
-          if mauth_client.v2_only_authenticate? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
-            return response_for_missing_v2(env)
-          end
+        return @app.call(env) unless should_authenticate?(env)
 
-          begin
-            if mauth_client.authentic?(mauth_request)
-              @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
-            else
-              response_for_inauthentic_request(env)
-            end
-          rescue MAuth::UnableToAuthenticateError
-            response_for_unable_to_authenticate(env)
+        mauth_request = MAuth::Rack::Request.new(env)
+        if mauth_client.v2_only_authenticate? && mauth_request.signature_token == MAuth::Client::MWS_TOKEN
+          return response_for_missing_v2(env)
+        end
+
+        begin
+          if mauth_client.authentic?(mauth_request)
+            @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
+          else
+            response_for_inauthentic_request(env)
           end
-        else
-          @app.call(env)
+        rescue MAuth::UnableToAuthenticateError
+          response_for_unable_to_authenticate(env)
         end
       end
 
