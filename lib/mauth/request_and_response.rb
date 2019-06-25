@@ -58,13 +58,11 @@ module MAuth
     def string_to_sign_v2(override_attrs)
       attrs_with_overrides = self.attributes_for_signing.merge(override_attrs)
 
-      if attrs_with_overrides[:body]
-        attrs_with_overrides[:body_digest] = Digest::SHA512.hexdigest(attrs_with_overrides[:body].to_s)
-      end
-
-      if attrs_with_overrides[:query_string]
-        attrs_with_overrides[:encoded_query_params] = encode_query_string(attrs_with_overrides[:query_string].to_s)
-      end
+      # memoization of body_digest to avoid hashing three times when we call
+      # string_to_sign_v2 three times in client#signature_valid_v2!
+      # note that if :body is nil we hash an empty string ("") because nil.to_s = ""
+      attrs_with_overrides[:body_digest] ||= Digest::SHA512.hexdigest(attrs_with_overrides[:body].to_s)
+      attrs_with_overrides[:encoded_query_params] = encode_query_string(attrs_with_overrides[:query_string].to_s)
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attrs_with_overrides.dig(key)

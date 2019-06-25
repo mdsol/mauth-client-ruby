@@ -108,6 +108,20 @@ describe MAuth::Signable do
         dummy_req = dummy_cls.new(req_attrs)
         dummy_req.string_to_sign_v2({})
       end
+
+      # we have this spec because Faraday and Rack handle empty request bodies
+      # differently.
+      # our Rack::Request class reads the body of a bodiless-request as an empty string
+      # our Faraday::Request class reads the body of a bodiless-request as nil
+      it 'treats requests where the body is nil and the body is an empty request the same' do
+        nil_body_attrs = req_attrs.merge(body: nil)
+        empty_body_attrs = req_attrs.merge(body: '')
+
+        nil_req = dummy_cls.new(nil_body_attrs)
+        empy_req = dummy_cls.new(empty_body_attrs)
+
+        expect(nil_req.string_to_sign_v2({})).to eq(empy_req.string_to_sign_v2({}))
+      end
     end
 
     context 'responses' do
