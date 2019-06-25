@@ -60,7 +60,7 @@ module MAuth
 
       # memoization of body_digest to avoid hashing three times when we call
       # string_to_sign_v2 three times in client#signature_valid_v2!
-      # note that if :body is nil we hash an empty string ("") because nil.to_s = ""
+      # note that if :body is nil we hash an empty string ("")
       attrs_with_overrides[:body_digest] ||= Digest::SHA512.hexdigest(attrs_with_overrides[:body].to_s)
       attrs_with_overrides[:encoded_query_params] = encode_query_string(attrs_with_overrides[:query_string].to_s)
 

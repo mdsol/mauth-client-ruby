@@ -118,7 +118,6 @@ module MAuth
     module RemoteRequestAuthenticator
       private
 
-      # TODO: update mAuth to be able verify authentication tickets w V2 (MCC-413109)
       def signature_valid_v2!(object)
         unless object.is_a?(MAuth::Request)
           msg = "Remote Authenticator can only authenticate requests; received #{object.inspect}"
