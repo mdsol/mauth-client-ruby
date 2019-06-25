@@ -101,7 +101,11 @@ describe MAuth::Rack do
     it 'does not call check authenticity for any request by default' do
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw.mauth_client).not_to receive(:authentic?)
-      expect(rack_app).to receive(:call).with(env.merge({ 'mauth.app_uuid' => 'foo', 'mauth.authentic' => true })).and_return(res)
+      expect(rack_app).to receive(:call).with(env.merge({
+        'mauth.app_uuid' => 'foo',
+        'mauth.authentic' => true,
+        'mauth.protocol_version' => 1
+      })).and_return(res)
       status, headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
@@ -110,7 +114,11 @@ describe MAuth::Rack do
     it 'calls the app when the request is set to be authentic' do
       described_class.authentic = true
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
-      allow(rack_app).to receive(:call).with(env.merge({ 'mauth.app_uuid' => 'foo', 'mauth.authentic' => true })).and_return(res)
+      expect(rack_app).to receive(:call).with(env.merge({
+        'mauth.app_uuid' => 'foo',
+        'mauth.authentic' => true,
+        'mauth.protocol_version' => 1
+      })).and_return(res)
       status, headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
