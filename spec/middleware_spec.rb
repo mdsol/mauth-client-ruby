@@ -178,6 +178,23 @@ describe MAuth::Rack do
         mw.call(env)
       end
     end
+
+    context 'request with invalid headers' do
+      let(:env) do
+        {
+          'HTTP_MCC_AUTHENTICATION' => 'MWSV500 foo:bar;',
+          'REQUEST_METHOD' => 'GET',
+        }
+      end
+
+      it 'signs the response with the default headers' do
+        allow(rack_app).to receive(:call).with(env).and_return(res)
+        expect(mw.mauth_client).to receive(:signed).with(
+            an_instance_of(MAuth::Rack::Response)
+          ).and_return(MAuth::Rack::Response.new(*res))
+        mw.call(env)
+      end
+    end
   end
 end
 

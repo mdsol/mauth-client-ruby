@@ -99,6 +99,10 @@ module MAuth
             :signed_v2
           elsif env['mauth.protocol_version'] == 1
             :signed_v1
+          else
+            # if no protocol was supplied then use `signed` which either signs
+            # with both protocol versions or only v2
+            :signed
           end
         response = mauth_client.send(method, MAuth::Rack::Response.new(*unsigned_response))
         response.status_headers_body
