@@ -7,7 +7,6 @@ require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/dice_bag/mauth_templates'
 require 'mauth/version'
-require 'mauth/v2'
 require 'mauth/authenticator_base'
 require 'mauth/local_authenticator'
 require 'mauth/remote_authenticator'
@@ -148,6 +147,8 @@ module MAuth
     class ConfigurationError < StandardError; end
 
     MWS_TOKEN = 'MWS'.freeze
+    MWSV2_TOKEN = 'MWSV2'.freeze
+    AUTH_HEADER_DELIMITER = ';'.freeze
 
     include AuthenticatorBase
     include Signer

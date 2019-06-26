@@ -46,6 +46,62 @@ module MAuth
         end
       end
 
+      def signature_valid_v2!(object)
+        # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
+        # all of them.  In particular, Euresource is percent-encoding all special characters save for '/'.
+        # Also, unfortunately, Nginx unencodes URIs before sending them off to served applications, though
+        # other web servers (particularly those we typically use for local testing) do not.  The various forms
+        # of the expected string to sign are meant to cover the main cases.
+        # TODO:  Revisit and simplify this unfortunate situation.
+
+        original_request_uri = object.attributes_for_signing[:request_url]
+        original_query_string = object.attributes_for_signing[:query_string]
+
+        # craft an expected string-to-sign without doing any percent-encoding
+        expected_no_reencoding = object.string_to_sign_v2(
+          time: object.mcc_time,
+          app_uuid: object.signature_app_uuid
+        )
+
+        # do a simple percent reencoding variant of the path
+        expected_for_percent_reencoding = object.string_to_sign_v2(
+          time: object.mcc_time,
+          app_uuid: object.signature_app_uuid,
+          request_url: CGI.escape(original_request_uri.to_s),
+          query_string: CGI.escape(original_query_string.to_s)
+        )
+
+        # do a moderately complex Euresource-style reencoding of the path
+        expected_euresource_style_reencoding = object.string_to_sign_v2(
+          time: object.mcc_time,
+          app_uuid: object.signature_app_uuid,
+          request_url: euresource_escape(original_request_uri.to_s),
+          query_string: euresource_escape(original_query_string.to_s)
+        )
+
+        actual = actual_string_to_sign(object)
+
+        unless expected_no_reencoding == actual ||
+           expected_euresource_style_reencoding == actual ||
+           expected_for_percent_reencoding == actual
+          msg = "Signature verification failed for #{object.class}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
+        end
+      end
+
+      def actual_string_to_sign(object)
+        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+
+        begin
+          pubkey.public_decrypt(Base64.decode64(object.signature))
+        rescue OpenSSL::PKey::PKeyError => e
+          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
+        end
+      end
+
       # Note: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
       #   and number sign "#" as component delimiters. Since these are valid URI components,
       #   they are decoded back into characters here to avoid signature invalidation

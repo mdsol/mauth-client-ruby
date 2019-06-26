@@ -14,6 +14,10 @@ module MAuth
         object.merge_headers(signed_headers_v1(object, attributes))
       end
 
+      def signed_v2(object, attributes = {})
+        object.merge_headers(signed_headers_v2(object, attributes))
+      end
+
       # takes a signable object (outgoing request or response). returns a hash of headers to be
       # applied to the object which comprises its signature.
       def signed_headers(object, attributes = {})
@@ -29,6 +33,16 @@ module MAuth
         string_to_sign = object.string_to_sign_v1(attributes)
         signature = self.signature(string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
+      end
+
+      def signed_headers_v2(object, attributes = {})
+        attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
+        string_to_sign = object.string_to_sign_v2(attributes)
+        signature = self.signature(string_to_sign)
+        {
+          'MCC-Authentication' => "#{MWSV2_TOKEN} #{client_app_uuid}:#{signature}#{AUTH_HEADER_DELIMITER}",
+          'MCC-Time' => attributes[:time]
+        }
       end
 
       def signature(string_to_sign)

@@ -89,6 +89,30 @@ module MAuth
         log_inauthentic(object, msg)
         raise InauthenticError, msg
       end
+
+      # V2 helpers
+      def authenticate_v2!(object)
+        time_valid_v2!(object)
+        token_valid_v2!(object)
+        signature_valid_v2!(object)
+      end
+
+      def time_valid_v2!(object)
+        if object.mcc_time.nil?
+          msg = 'Time verification failed. No MCC-Time present.'
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
+        end
+        time_within_valid_range!(object, object.mcc_time.to_i)
+      end
+
+      def token_valid_v2!(object)
+        return if object.signature_token == MWSV2_TOKEN
+
+        msg = "Token verification failed. Expected #{MWSV2_TOKEN}; token was #{object.signature_token}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
+      end
     end
   end
 end

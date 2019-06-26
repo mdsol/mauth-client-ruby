@@ -230,7 +230,7 @@ describe MAuth::Client do
   describe 'authenticators' do
     let(:app_uuid) { 'signer' }
 
-    shared_examples MAuth::Client::Authenticator do
+    shared_examples MAuth::Client::AuthenticatorBase do
       context 'when v2 and v1 headers are present on the object to authenticate' do
         it 'authenticates with v2' do
           signed_request = client.signed(request)
@@ -473,7 +473,7 @@ describe MAuth::Client do
           allow(::Faraday).to receive(:new).and_return(test_faraday)
         end
 
-        include_examples MAuth::Client::Authenticator
+        include_examples MAuth::Client::AuthenticatorBase
 
 
         context 'when authenticating with v1' do
@@ -705,7 +705,7 @@ describe MAuth::Client do
           allow(::Faraday).to receive(:new).and_return(test_faraday)
         end
 
-        include_examples MAuth::Client::Authenticator
+        include_examples MAuth::Client::AuthenticatorBase
 
         it 'considers a request to be authentic if mauth reports it so' do
           signed_request = client.signed(request)
