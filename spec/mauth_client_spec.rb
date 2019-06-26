@@ -240,17 +240,21 @@ describe MAuth::Client do
         end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
-          { -301 => false, -299 => true, 299 => true, 301 => false }.each do |time_offset, authentic|
+          [-301, 301].each do |time_offset|
             signed_request = client.signed(request, time: Time.now.to_i + time_offset)
-            message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
-            if authentic
-              expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
-            else
-              expect { authenticating_mc.authenticate!(signed_request) }.to(
-                raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
-                message
-              )
-            end
+            message = "expected request signed at #{time_offset} seconds to be inauthentic"
+            expect { authenticating_mc.authenticate!(signed_request) }.to(
+              raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
+              message
+            )
+          end
+        end
+
+        it "considers an authentically-signed request to be authentic when it's within the allowed time range" do
+          [-300, -299, 299, 300].each do |time_offset|
+            signed_request = client.signed(request, time: Time.now.to_i + time_offset)
+            message = "expected request signed at #{time_offset} seconds to be authentic"
+            expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
           end
         end
 
@@ -307,17 +311,21 @@ describe MAuth::Client do
         end
 
         it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
-          { -301 => false, -299 => true, 299 => true, 301 => false }.each do |time_offset, authentic|
-            signed_request = client.signed_v2(request, time: Time.now.to_i + time_offset)
-            message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
-            if authentic
-              expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
-            else
-              expect { authenticating_mc.authenticate!(signed_request) }.to(
-                  raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
-                  message
-                )
-            end
+          [-301, 301].each do |time_offset|
+            signed_request = client.signed_v1(request, time: Time.now.to_i + time_offset)
+            message = "expected request signed at #{time_offset} seconds to be inauthentic"
+            expect { authenticating_mc.authenticate!(signed_request) }.to(
+              raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
+              message
+            )
+          end
+        end
+
+        it "considers an authentically-signed request to be authentic when it's within the allowed time range" do
+          [-300, -299, 299, 300].each do |time_offset|
+            signed_request = client.signed_v1(request, time: Time.now.to_i + time_offset)
+            message = "expected request signed at #{time_offset} seconds to be authentic"
+            expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
           end
         end
 
@@ -331,9 +339,9 @@ describe MAuth::Client do
 
         it "considers a request with a bad MWS token to be inauthentic" do
           ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
-              v1_signed_req.headers['X-MWS-Authentication'] = v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
-              expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-                MAuth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/)
+            v1_signed_req.headers['X-MWS-Authentication'] = v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
+            expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
+              MAuth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/)
           end
         end
 
@@ -633,14 +641,14 @@ describe MAuth::Client do
             expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
-          it 'considers a signed request with multi-byte UTF-8 characters in the query string to be authentic' do
+          it 'considers a signed request with repeated query param keys with multi-byte UTF-8 character values to be authentic' do
             qs = 'prm=パ&prm=개'
 
             request = TestSignableRequest.new(
               verb: 'PUT',
               request_url: '/',
               body: 'himom',
-              query_string: 'prm=val&𝛒ям=𝖛𝗮ḷ&パラメータ=値&매개 변수=값&參數=值'
+              query_string: qs
             )
             signed_request = client.signed(request)
             expect(authenticating_mc.authentic?(signed_request)).to be true
