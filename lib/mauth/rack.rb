@@ -101,7 +101,8 @@ module MAuth
             :signed_v1
           else
             # if no protocol was supplied then use `signed` which either signs
-            # with both protocol versions or only v2
+            # with both protocol versions (by default) or only v2 when the
+            # v2_only_sign_requests flag is set to true.
             :signed
           end
         response = mauth_client.send(method, MAuth::Rack::Response.new(*unsigned_response))
