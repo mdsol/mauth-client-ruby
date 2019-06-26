@@ -11,7 +11,7 @@ require 'mauth/faraday'
 require 'yaml'
 require 'term/ansicolor'
 
-# OPTION PARSER 
+# OPTION PARSER
 
 require 'optparse'
 
@@ -53,10 +53,10 @@ end
 opt_parser.parse!
 abort(opt_parser.help) unless (2..3).include?(ARGV.size)
 
-# FIND MAUTH CONFIG 
+# FIND MAUTH CONFIG
 
 possible_mauth_config_files = [
-  # whoops, I called this MAUTH_CONFIG_YML in one place and MAUTH_CONFIG_YAML in another. supporting both for now. 
+  # whoops, I called this MAUTH_CONFIG_YML in one place and MAUTH_CONFIG_YAML in another. supporting both for now.
   ENV['MAUTH_CONFIG_YML'],
   ENV['MAUTH_CONFIG_YAML'],
   '~/.mauth_config.yml',
@@ -76,14 +76,14 @@ end
 
 mauth_config = MAuth::Client.default_config(:mauth_config_yml => File.expand_path(mauth_config_yml))
 
-# INSTANTIATE MAUTH CLIENT 
+# INSTANTIATE MAUTH CLIENT
 
 logger = Logger.new(STDERR)
 mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
 
-# OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE 
+# OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE
 
-# outputs the response body to the given output device (defaulting to STDOUT) 
+# outputs the response body to the given output device (defaulting to STDOUT)
 class FaradayOutputter < Faraday::Middleware
   def initialize(app, outdev=STDOUT)
     @app=app
@@ -97,12 +97,12 @@ class FaradayOutputter < Faraday::Middleware
   end
 end
 
-# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you 
-# the real text written and read for request and response. whatever, close enough. 
+# this is to approximate `curl -v`s output. but it's all faked, whereas curl gives you
+# the real text written and read for request and response. whatever, close enough.
 class FaradayCurlVOutputter < FaradayOutputter
 
-  # defines a method with the given name, applying coloring defined by any additional arguments. 
-  # if $options[:color] is set, respects that; otherwise, applies color if the output device is a tty. 
+  # defines a method with the given name, applying coloring defined by any additional arguments.
+  # if $options[:color] is set, respects that; otherwise, applies color if the output device is a tty.
   def self.color(name, *color_args)
     define_method(name) do |arg|
       if color?
@@ -159,8 +159,8 @@ class FaradayCurlVOutputter < FaradayOutputter
     $options[:color].nil? ? @outdev.tty? : $options[:color]
   end
 
-  # a mapping for each registered CodeRay scanner to the Media Types which represent 
-  # that language. extremely incomplete! 
+  # a mapping for each registered CodeRay scanner to the Media Types which represent
+  # that language. extremely incomplete!
   CodeRayForMediaTypes = {
     :c => [],
     :cpp => [],
@@ -184,7 +184,7 @@ class FaradayCurlVOutputter < FaradayOutputter
   }
 
   # takes a body and a content type; returns the body, with coloring (ansi colors for terminals)
-  # possibly added, if it's a recognized content type and #color? is true 
+  # possibly added, if it's a recognized content type and #color? is true
   def color_body_by_content_type(body, content_type)
     if body && color?
       # kinda hacky way to get the media_type. faraday should supply this ...
@@ -207,7 +207,7 @@ class FaradayCurlVOutputter < FaradayOutputter
   end
 end
 
-# CONFIGURE THE FARADAY CONNECTION 
+# CONFIGURE THE FARADAY CONNECTION
 faraday_options = {}
 if $options[:no_ssl_verify]
   faraday_options[:ssl] = {:verify => false}
@@ -233,8 +233,8 @@ if $options[:content_type]
   headers['Content-Type'] = $options[:content_type]
 else
   if body
-    # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to 
-    # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes. 
+    # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to
+    # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes.
     headers['Content-Type'] = 'application/json'
   end
 end
@@ -251,10 +251,10 @@ end
 
 begin
   response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
-rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError => e
+rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError, MAuth::MauthNotPresent, MAuth::MissingV2Error => e
   if $options[:color].nil? ? STDERR.tty? : $options[:color]
-    class_color = Term::ANSIColor.method(e.is_a?(MAuth::InauthenticError) ? :intense_red : :intense_yellow)
-    message_color = Term::ANSIColor.method(e.is_a?(MAuth::InauthenticError) ? :red : :yellow)
+    class_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :intense_yellow : :intense_red)
+    message_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :yellow : :red)
   else
     class_color = proc{|s| s }
     message_color = proc{|s| s }

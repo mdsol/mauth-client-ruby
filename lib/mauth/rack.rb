@@ -15,19 +15,26 @@ module MAuth
     #   from this is false, the request is passed to the app with no authentication performed.
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
-        if should_authenticate?(env)
-          mauth_request = MAuth::Rack::Request.new(env)
-          begin
-            if mauth_client.authentic?(mauth_request)
-              @app.call(env.merge('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
-            else
-              response_for_inauthentic_request(env)
-            end
-          rescue MAuth::UnableToAuthenticateError
-            response_for_unable_to_authenticate(env)
+        mauth_request = MAuth::Rack::Request.new(env)
+        env['mauth.protocol_version'] = mauth_request.protocol_version
+
+        return @app.call(env) unless should_authenticate?(env)
+
+        if mauth_client.v2_only_authenticate? && mauth_request.protocol_version == 1
+          return response_for_missing_v2(env)
+        end
+
+        begin
+          if mauth_client.authentic?(mauth_request)
+            @app.call(env.merge!(
+              'mauth.app_uuid' => mauth_request.signature_app_uuid,
+              'mauth.authentic' => true
+            ))
+          else
+            response_for_inauthentic_request(env)
           end
-        else
-          @app.call(env)
+        rescue MAuth::UnableToAuthenticateError
+          response_for_unable_to_authenticate(env)
         end
       end
 
@@ -61,6 +68,18 @@ module MAuth
           [500, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
       end
+
+      # response when the requests includes V1 headers but does not include V2
+      # headers and the V2_ONLY_AUTHENTICATE flag is set.
+      def response_for_missing_v2(env)
+        handle_head(env) do
+          body = {
+            'type' => 'errors:mauth:missing_v2',
+            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly'
+          }
+          [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
+        end
+      end
     end
 
     # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status
@@ -70,12 +89,24 @@ module MAuth
       end
     end
 
-    # signs outgoing responses
+    # signs outgoing responses with only the protocol used to sign the request.
     class ResponseSigner < MAuth::Middleware
       def call(env)
         unsigned_response = @app.call(env)
-        signed_response = mauth_client.signed(MAuth::Rack::Response.new(*unsigned_response))
-        signed_response.status_headers_body
+
+        method =
+          if env['mauth.protocol_version'] == 2
+            :signed_v2
+          elsif env['mauth.protocol_version'] == 1
+            :signed_v1
+          else
+            # if no protocol was supplied then use `signed` which either signs
+            # with both protocol versions (by default) or only v2 when the
+            # v2_only_sign_requests flag is set to true.
+            :signed
+          end
+        response = mauth_client.send(method, MAuth::Rack::Response.new(*unsigned_response))
+        response.status_headers_body
       end
     end
 
@@ -93,7 +124,12 @@ module MAuth
           env['rack.input'].rewind
           body = env['rack.input'].read
           env['rack.input'].rewind
-          { verb: env['REQUEST_METHOD'], request_url: env['PATH_INFO'], body: body }
+          {
+            verb: env['REQUEST_METHOD'],
+            request_url: env['PATH_INFO'],
+            body: body,
+            query_string: env['QUERY_STRING']
+          }
         end
       end
 
@@ -103,6 +139,14 @@ module MAuth
 
       def x_mws_authentication
         @env['HTTP_X_MWS_AUTHENTICATION']
+      end
+
+      def mcc_time
+        @env['HTTP_MCC_TIME']
+      end
+
+      def mcc_authentication
+        @env['HTTP_MCC_AUTHENTICATION']
       end
     end
 

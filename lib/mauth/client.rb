@@ -7,6 +7,7 @@ require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/dice_bag/mauth_templates'
 require 'mauth/version'
+require 'mauth/v2'
 
 module MAuth
   class Client
@@ -95,6 +96,7 @@ module MAuth
       unless @config[path]
         raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
       end
+
       @config[path]
     end
   end
@@ -120,9 +122,13 @@ module MAuth
   class MauthNotPresent < StandardError
   end
 
-
   # required information for signing was missing
   class UnableToSignError < StandardError
+  end
+
+  # used when an object has the V1 headers but not the V2 headers and the
+  # V2_ONLY_AUTHENTICATE variable is set to true.
+  class MissingV2Error < StandardError
   end
 
   # does operations which require a private key and corresponding app uuid. this is primarily:
@@ -190,6 +196,8 @@ module MAuth
       request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
+      @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.downcase == 'true'
+      @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.downcase == 'true'
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false
       if given_config.key?('authenticator')
@@ -234,6 +242,14 @@ module MAuth
       @config['ssl_certs_path']
     end
 
+    def v2_only_sign_requests?
+      @config['v2_only_sign_requests']
+    end
+
+    def v2_only_authenticate?
+      @config['v2_only_authenticate']
+    end
+
     def assert_private_key(err)
       raise err unless private_key
     end
@@ -264,20 +280,31 @@ module MAuth
         object.merge_headers(signed_headers(object, attributes))
       end
 
+      # signs with v1 only. used when signing responses to v1 requests.
+      def signed_v1(object, attributes = {})
+        object.merge_headers(signed_headers_v1(object, attributes))
+      end
+
       # takes a signable object (outgoing request or response). returns a hash of headers to be
-      # applied tothe object which comprise its signature.
+      # applied to the object which comprises its signature.
       def signed_headers(object, attributes = {})
+        if v2_only_sign_requests?
+          signed_headers_v2(object, attributes)
+        else # by default sign with both the v1 and v2 protocol
+          signed_headers_v1(object, attributes).merge(signed_headers_v2(object, attributes))
+        end
+      end
+
+      def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
-        signature = self.signature(object, attributes)
+        string_to_sign = object.string_to_sign_v1(attributes)
+        signature = self.signature(string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
       end
 
-      # takes a signable object (outgoing request or response). returns a mauth signature string
-      # for that object.
-      def signature(object, attributes = {})
-        assert_private_key(UnableToSignError.new("mAuth client cannot sign without a private key!"))
-        attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
-        signature = Base64.encode64(private_key.private_encrypt(object.string_to_sign(attributes))).delete("\n")
+      def signature(string_to_sign)
+        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
+        Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
       end
     end
     include Signer
@@ -293,55 +320,84 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError, MauthNotPresent
+        rescue InauthenticError, MauthNotPresent, MAuth::MissingV2Error
           false
         end
       end
 
-      # raises InauthenticError unless the given object is authentic
+      # raises InauthenticError unless the given object is authentic. Will only
+      # authenticate with v2 if the environment variable V2_ONLY_AUTHENTICATE
+      # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
-        authentication_present!(object)
-        time_valid!(object)
-        token_valid!(object)
-        signature_valid!(object)
-      rescue MauthNotPresent => e
-        logger.warn "mAuth signature not present on #{object.class}. Exception: #{e.message}"
-        raise
-      rescue InauthenticError => e
-        logger.error "mAuth signature authentication failed for #{object.class}. Exception: #{e.message}"
-        raise
-      rescue UnableToAuthenticateError => e
-        logger.error "Unable to authenticate with MAuth for #{object.class}. Exception: #{e.message}"
-        raise
+        if object.protocol_version == 2
+          authenticate_v2!(object)
+        elsif object.protocol_version == 1
+          if v2_only_authenticate?
+            # If v2 is required but not present and v1 is present we raise MissingV2Error
+            msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
+            logger.error(msg)
+            raise MAuth::MissingV2Error, msg
+          end
+
+          authenticate_v1!(object)
+        else
+          sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
+          msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
+          logger.warn("mAuth signature not present on #{object.class}. Exception: #{msg}")
+          raise MauthNotPresent, msg
+        end
       end
 
       private
 
-      # Note:  This log is likely consumed downstream and the contents SHOULD NOT be changed without a thorough review of downstream consumers.
+      # Note: This log is likely consumed downstream and the contents SHOULD NOT
+      # be changed without a thorough review of downstream consumers.
       def log_authentication_request(object)
         object_app_uuid = object.signature_app_uuid || '[none provided]'
-        logger.info "Mauth-client attempting to authenticate request from app with mauth app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}."
+        object_token = object.signature_token || '[none provided]'
+        logger.info(
+          "Mauth-client attempting to authenticate request from app with mauth" \
+          " app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}" \
+          " using version #{object_token}."
+        )
       end
 
-      def authentication_present!(object)
-        if object.x_mws_authentication.nil? || object.x_mws_authentication !~ /\S/
-          raise MauthNotPresent, "Authentication Failed. No mAuth signature present; X-MWS-Authentication header is blank."
-        end
+      def log_inauthentic(object, message)
+        logger.error("mAuth signature authentication failed for #{object.class}. Exception: #{message}")
       end
 
-      def time_valid!(object, now = Time.now)
+      def time_within_valid_range!(object, time_signed, now = Time.now)
+        return if  (-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - time_signed)
+
+        msg = "Time verification failed. #{time_signed} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
+      end
+
+      # V1 helpers
+      def authenticate_v1!(object)
+        time_valid_v1!(object)
+        token_valid_v1!(object)
+        signature_valid_v1!(object)
+      end
+
+      def time_valid_v1!(object)
         if object.x_mws_time.nil?
-          raise InauthenticError, "Time verification failed. No x-mws-time present."
-        elsif !(-ALLOWED_DRIFT_SECONDS..ALLOWED_DRIFT_SECONDS).cover?(now.to_i - object.x_mws_time.to_i)
-          raise InauthenticError, "Time verification failed. #{object.x_mws_time} not within #{ALLOWED_DRIFT_SECONDS} of #{now}"
+          msg = 'Time verification failed. No x-mws-time present.'
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
+        time_within_valid_range!(object, object.x_mws_time.to_i)
       end
 
-      def token_valid!(object)
-        unless object.signature_token == MWS_TOKEN
-          raise InauthenticError, "Token verification failed. Expected #{MWS_TOKEN.inspect}; token was #{object.signature_token}"
-        end
+      def token_valid_v1!(object)
+        return if object.signature_token == MWS_TOKEN
+
+        msg = "Token verification failed. Expected #{MWS_TOKEN}; token was #{object.signature_token}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
+
     end
     include Authenticator
 
@@ -350,7 +406,7 @@ module MAuth
     module LocalAuthenticator
       private
 
-      def signature_valid!(object)
+      def signature_valid_v1!(object)
         # We are in an unfortunate situation in which Euresource is percent-encoding parts of paths, but not
         # all of them.  In particular, Euresource is percent-encoding all special characters save for '/'.
         # Also, unfortunately, Nginx unencodes URIs before sending them off to served applications, though
@@ -361,15 +417,15 @@ module MAuth
         original_request_uri = object.attributes_for_signing[:request_url]
 
         # craft an expected string-to-sign without doing any percent-encoding
-        expected_no_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_no_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # do a simple percent reencoding variant of the path
         object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        expected_for_percent_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_for_percent_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # do a moderately complex Euresource-style reencoding of the path
         object.attributes_for_signing[:request_url] = euresource_escape(original_request_uri.to_s)
-        expected_euresource_style_reencoding = object.string_to_sign(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_euresource_style_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
 
         # reset the object original request_uri, just in case we need it again
         object.attributes_for_signing[:request_url] = original_request_uri
@@ -377,12 +433,16 @@ module MAuth
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
-        rescue OpenSSL::PKey::PKeyError
-          raise InauthenticError, "Public key decryption of signature failed!\n#{$!.class}: #{$!.message}"
+        rescue OpenSSL::PKey::PKeyError => e
+          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
-        # TODO: time-invariant comparison instead of #== ?
+
         unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
-          raise InauthenticError, "Signature verification failed for #{object.class}"
+          msg = "Signature verification failed for #{object.class}"
+          log_inauthentic(object, msg)
+          raise InauthenticError, msg
         end
       end
 
@@ -390,7 +450,7 @@ module MAuth
       #   and number sign "#" as component delimiters. Since these are valid URI components,
       #   they are decoded back into characters here to avoid signature invalidation
       def euresource_escape(str)
-        CGI.escape(str).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
+        CGI.escape(str).gsub(/%2F|%23/, '%2F' => '/', '%23' => '#')
       end
 
       def retrieve_public_key(app_uuid)
@@ -428,14 +488,18 @@ module MAuth
             url_encoded_app_uuid = URI.escape(app_uuid, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
             begin
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
-            rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError
-              raise UnableToAuthenticateError, "mAuth service did not respond; received #{$!.class}: #{$!.message}"
+            rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
+              msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
+              @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+              raise UnableToAuthenticateError, msg
             end
             if response.status == 200
               begin
                 security_token = JSON.parse(response.body)
-              rescue JSON::ParserError
-                raise UnableToAuthenticateError, "mAuth service responded with unparseable json: #{response.body}\n#{$!.class}: #{$!.message}"
+              rescue JSON::ParserError => e
+                msg =  "mAuth service responded with unparseable json: #{response.body}\n#{e.class}: #{e.message}"
+                @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+                raise UnableToAuthenticateError, msg
               end
               @cache_write_lock.synchronize do
                 @cache[app_uuid] = ExpirableSecurityToken.new(security_token, Time.now)
@@ -471,7 +535,7 @@ module MAuth
 
       # takes an incoming request object (no support for responses currently), and errors if the
       # object is not authentic according to its signature
-      def signature_valid!(object)
+      def signature_valid_v1!(object)
         raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
         authentication_ticket = {
           'verb' => object.attributes_for_signing[:verb],
@@ -481,10 +545,16 @@ module MAuth
           'request_time' => object.x_mws_time,
           'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || '')
         }
+        make_mauth_request(authentication_ticket)
+      end
+
+      def make_mauth_request(authentication_ticket)
         begin
-          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", "authentication_ticket" => authentication_ticket)
-        rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError
-          raise UnableToAuthenticateError, "mAuth service did not respond; received #{$!.class}: #{$!.message}"
+          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
+        rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
+          msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
+          logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+          raise UnableToAuthenticateError, msg
         end
         if (200..299).cover?(response.status)
           nil

@@ -1,10 +1,10 @@
-# MAuth Client
+# MAuth-Client
 [![Build Status](https://travis-ci.org/mdsol/mauth-client-ruby.svg?branch=master)](https://travis-ci.org/mdsol/mauth-client-ruby)
 
 This gem consists of MAuth::Client, a class to manage the information needed to both sign and authenticate requests
 and responses, and middlewares for Rack and Faraday which leverage the client's capabilities.
 
-MAuth Client exists in a variety of languages (.Net, Go, R etc.), see the [implementations list](doc/implementations.md) for more info.
+MAuth-Client exists in a variety of languages (.Net, Go, R etc.), see the [implementations list](doc/implementations.md) for more info.
 
 ## Installation
 
@@ -47,12 +47,19 @@ Remote authentication therefore requires more time than local authentication.
 You will not be able to sign your responses without an `app_uuid` and a private key, so `MAuth::Rack::ResponseSigner` cannot be used.
 
 The `mauth_baseurl` and `mauth_api_version` are required in mauth.yml.
-These tell the MAuth Client where and how to communicate with the MAuth service.
+These tell the MAuth-Client where and how to communicate with the MAuth service.
 
+The `v2_only_sign_requests` and `v2_only_authenticate` flags were added to facilitate conversion from the MAuth V1 protocol to the MAuth
+V2 protocol. By default both of these flags are false. See [Protocol Versions](#protocol-versions) below for more information about the different versions.
+
+|       | v2_only_sign_requests         | v2_only_authenticate                                                            |
+|-------|------------------------------------|--------------------------------------------------------------------------------------|
+| true  | requests are signed with only V2   | requests and responses are authenticated with only V2                                |
+| false | requests are signed with V1 and V2 | requests and responses are authenticated with the highest available protocol version |
 
 ## Rack Middleware Usage
 
-MAuth Client provides a middleware for request authentication and response verification in mauth/rack.
+MAuth-Client provides a middleware for request authentication and response verification in mauth/rack.
 
 ```ruby
 require 'mauth/rack'
@@ -212,13 +219,13 @@ Create a `MAuth::Request` object from the information in your HTTP request, what
 
 ```ruby
 require 'mauth/request_and_response'
-request = MAuth::Request.new(verb: my_verb, request_url: my_request_url, body: my_body)
+request = MAuth::Request.new(verb: my_verb, request_url: my_request_url, body: my_body, query_string: my_query_string)
 ```
 `mauth_client.signed_headers(request)` will then return mauth headers which you can apply to your request.
 
 ## Local Authentication
 
-When doing local authentication, the mauth client will periodically fetch and cache public keys from MAuth.
+When doing local authentication, the MAuth-Client will periodically fetch and cache public keys from MAuth.
 Each public key will be cached locally for 60 seconds.
 Applications which connect frequently to the app will benefit most from this caching strategy.
 When fetching public keys from MAuth, the following rules apply:
@@ -233,3 +240,8 @@ When fetching public keys from MAuth, the following rules apply:
 During development classes are typically not cached in Rails applications.
 If this is the case, be aware that the MAuth-Client middleware object will be instantiated anew for each request;
 this will cause applications performing local authentication to fetch public keys before each request is authenticated.
+
+## Protocol Versions
+
+The mauth V2 protocol was added as of v5.0.0. This protocol updates the string_to_sign to include query parameters, uses different authentication header names, and has a few other changes. See this document for more information: (DOC?). By default MAuth-Client will authenticate incoming requests with only the highest version of the protocol present, and sign their outgoing responses with only the version used to authenticate the request. By default MAuth-Client will sign outgoing requests with both the V1 and V2 protocols, and authenticate their incoming responses with only the highest version of the protocol present.
+If the `v2_only_sign_requests` flag is true all outgoing requests will be signed with only the V2 protocol (outgoing responses will still be signed with whatever protocol used to authenticate the request). If the `v2_only_authenticate` flag is true then MAuth-Client will reject any incoming request or incoming response that does not use the V2 protocol.

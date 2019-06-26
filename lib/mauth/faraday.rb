@@ -36,9 +36,15 @@ module MAuth
       end
 
       def attributes_for_signing
-        request_url = @request_env[:url].path
-        request_url = '/' if request_url.empty?
-        @attributes_for_signing ||= { verb: @request_env[:method].to_s.upcase, request_url: request_url, body: @request_env[:body] }
+        @attributes_for_signing ||= begin
+          request_url = @request_env[:url].path.empty? ? '/' : @request_env[:url].path
+          {
+            verb: @request_env[:method].to_s.upcase,
+            request_url: request_url,
+            body: @request_env[:body],
+            query_string: @request_env[:url].query
+          }
+        end
       end
 
       # takes a Hash of headers; returns an instance of this class whose
@@ -67,6 +73,14 @@ module MAuth
 
       def x_mws_authentication
         @response_env[:response_headers]['x-mws-authentication']
+      end
+
+      def mcc_time
+        @response_env[:response_headers]['mcc-time']
+      end
+
+      def mcc_authentication
+        @response_env[:response_headers]['mcc-authentication']
       end
     end
 
