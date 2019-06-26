@@ -244,13 +244,13 @@ describe MAuth::Client do
             signed_request = client.signed(request, time: Time.now.to_i + time_offset)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
-              expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
+              expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
             else
               expect { authenticating_mc.authenticate!(signed_request) }.to(
                 raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
                 message
               )
-          end
+            end
           end
         end
 
@@ -311,7 +311,7 @@ describe MAuth::Client do
             signed_request = client.signed_v2(request, time: Time.now.to_i + time_offset)
             message = "expected request signed at #{time_offset} seconds to #{authentic ? "" : "not"} be authentic"
             if authentic
-              expect(authenticating_mc.authentic?(signed_request)).to be_truthy, message
+              expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
             else
               expect { authenticating_mc.authenticate!(signed_request) }.to(
                   raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
@@ -470,7 +470,7 @@ describe MAuth::Client do
 
         context 'when authenticating with v1' do
           it 'considers an authentically-signed request to be authentic' do
-            expect(authenticating_mc.authentic?(v1_signed_req)).to be_truthy
+            expect(authenticating_mc.authentic?(v1_signed_req)).to be true
           end
 
           # Note:  We need this feature because some web servers (e.g. nginx) unescape
@@ -487,7 +487,7 @@ describe MAuth::Client do
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be true
             end
           end
 
@@ -502,7 +502,7 @@ describe MAuth::Client do
               # now that we've signed the request, imagine it goes to nginx where it gets percent-decoded
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
-              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be true
             end
           end
 
@@ -537,12 +537,12 @@ describe MAuth::Client do
 
           it 'considers an authentically-signed request to be authentic' do
             signed_request = client.signed(request)
-            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+            expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
           it 'considers an authentically signed request with query parameters to be authentic' do
             signed_request = client.signed(qs_request)
-            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+            expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
           # Note:  We need this feature because some web servers (e.g. nginx) unescape
@@ -564,7 +564,7 @@ describe MAuth::Client do
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
               decoded_signed_request.attributes_for_signing[:query_string] = CGI.unescape(decoded_signed_request.attributes_for_signing[:query_string])
-              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be true
             end
           end
 
@@ -584,7 +584,7 @@ describe MAuth::Client do
               decoded_signed_request = signed_request.clone
               decoded_signed_request.attributes_for_signing[:request_url] = CGI.unescape(decoded_signed_request.attributes_for_signing[:request_url])
               decoded_signed_request.attributes_for_signing[:query_string] = CGI.unescape(decoded_signed_request.attributes_for_signing[:query_string])
-              expect(authenticating_mc.authentic?(decoded_signed_request)).to be_truthy
+              expect(authenticating_mc.authentic?(decoded_signed_request)).to be true
             end
           end
 
@@ -619,7 +619,7 @@ describe MAuth::Client do
               query_string: pairs.map { |pair| pair.join('=') }.join('&')
             )
             signed_request = client.signed(request)
-            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+            expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
           it 'considers a signed request with multi-byte UTF-8 characters in the query string to be authentic' do
@@ -630,7 +630,7 @@ describe MAuth::Client do
               query_string: 'prm=val&prm=𝖛𝗮ḷ&パラメータ=値&매개 변수=값&參數=值'
             )
             signed_request = client.signed(request)
-            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+            expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
           it 'considers a signed request with multi-byte UTF-8 characters in the query string to be authentic' do
@@ -643,7 +643,7 @@ describe MAuth::Client do
               query_string: 'prm=val&𝛒ям=𝖛𝗮ḷ&パラメータ=値&매개 변수=값&參數=值'
             )
             signed_request = client.signed(request)
-            expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+            expect(authenticating_mc.authentic?(signed_request)).to be true
           end
 
         end
@@ -701,7 +701,7 @@ describe MAuth::Client do
 
         it 'considers a request to be authentic if mauth reports it so' do
           signed_request = client.signed(request)
-          expect(authenticating_mc.authentic?(signed_request)).to be_truthy
+          expect(authenticating_mc.authentic?(signed_request)).to be true
         end
 
         it 'considers a request to be inauthentic if mauth reports it so' do
