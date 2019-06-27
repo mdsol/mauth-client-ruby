@@ -20,7 +20,7 @@ describe MAuth::Signable do
   let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
 
 
-  describe 'string_to_sign_v1({})' do
+  describe 'string_to_sign_v1' do
     let(:const_name) { 'SIGNATURE_COMPONENTS' }
 
     context 'requests' do
