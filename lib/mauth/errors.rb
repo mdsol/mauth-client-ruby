@@ -11,24 +11,19 @@ module MAuth
 
   # used to indicate that an object was expected to be validly signed but its signature does not
   # match its contents, and so is inauthentic.
-  class InauthenticError < StandardError
-  end
+  class InauthenticError < StandardError; end
 
   # Used when the incoming request does not contain any mAuth related information
-  class MauthNotPresent < StandardError
-  end
+  class MauthNotPresent < StandardError; end
 
   # required information for signing was missing
-  class UnableToSignError < StandardError
-  end
+  class UnableToSignError < StandardError; end
 
   # used when an object has the V1 headers but not the V2 headers and the
   # V2_ONLY_AUTHENTICATE variable is set to true.
-  class MissingV2Error < StandardError
-  end
+  class MissingV2Error < StandardError; end
 
   class Client
-    class ConfigurationError < StandardError
-    end
+    class ConfigurationError < StandardError; end
   end
 end
