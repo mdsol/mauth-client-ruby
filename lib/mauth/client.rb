@@ -14,7 +14,23 @@ require 'mauth/signer'
 require 'mauth/errors'
 
 module MAuth
+  # does operations which require a private key and corresponding app uuid. this is primarily:
+  # - signing outgoing requests and responses
+  # - authenticating incoming requests and responses, which may require retrieving the appropriate
+  #   public key from mAuth (which requires a request to mAuth which is signed using the private
+  #   key)
+  #
+  # this nominally operates on request and response objects, but really the only requirements are
+  # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as
+  # appropriate)
   class Client
+    MWS_TOKEN = 'MWS'.freeze
+    MWSV2_TOKEN = 'MWSV2'.freeze
+    AUTH_HEADER_DELIMITER = ';'.freeze
+
+    include AuthenticatorBase
+    include Signer
+
     class << self
       # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in
       # standard places. all of which is overridable by options in case some defaults do not apply.
@@ -85,46 +101,6 @@ module MAuth
         mauth_config
       end
     end
-  end
-
-  class ConfigFile
-    GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
-    @config = {}
-
-    def self.load(path)
-      unless File.exist?(path)
-        raise "File #{path} not found. Please visit #{GITHUB_URL} for details."
-      end
-
-      @config[path] ||= YAML.load_file(path)
-      unless @config[path]
-        raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
-      end
-
-      @config[path]
-    end
-  end
-end
-
-module MAuth
-  # does operations which require a private key and corresponding app uuid. this is primarily:
-  # - signing outgoing requests and responses
-  # - authenticating incoming requests and responses, which may require retrieving the appropriate
-  #   public key from mAuth (which requires a request to mAuth which is signed using the private
-  #   key)
-  #
-  # this nominally operates on request and response objects, but really the only requirements are
-  # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as
-  # appropriate)
-  class Client
-    class ConfigurationError < StandardError; end
-
-    MWS_TOKEN = 'MWS'.freeze
-    MWSV2_TOKEN = 'MWSV2'.freeze
-    AUTH_HEADER_DELIMITER = ';'.freeze
-
-    include AuthenticatorBase
-    include Signer
 
     # new client with the given App UUID and public key. config may include the following (all
     # config keys may be strings or symbols):
@@ -251,6 +227,24 @@ module MAuth
         hash[(key.to_sym rescue key) || key] = hash.delete(key)
       end
       hash
+    end
+  end
+
+  class ConfigFile
+    GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
+    @config = {}
+
+    def self.load(path)
+      unless File.exist?(path)
+        raise "File #{path} not found. Please visit #{GITHUB_URL} for details."
+      end
+
+      @config[path] ||= YAML.load_file(path)
+      unless @config[path]
+        raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
+      end
+
+      @config[path]
     end
   end
 end

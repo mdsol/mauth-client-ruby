@@ -26,4 +26,9 @@ module MAuth
   # V2_ONLY_AUTHENTICATE variable is set to true.
   class MissingV2Error < StandardError
   end
+
+  class Client
+    class ConfigurationError < StandardError
+    end
+  end
 end
