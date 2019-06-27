@@ -56,19 +56,25 @@ task :benchmark do
   average_body = short_body * 1_000
   huge_body = average_body * 100
 
+  qs = 'don=quixote&quixote=don'
+
   short_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body)
+  qs_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body, query_string: qs)
   average_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: average_body)
   huge_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: huge_body)
 
   v1_short_signed_request = mc.signed_v1(short_request)
+  v1_qs_signed_request = mc.signed_v1(qs_request)
   v1_average_signed_request = mc.signed_v1(average_request)
   v1_huge_signed_request = mc.signed_v1(huge_request)
 
   v2_short_signed_request = mc.signed_v2(short_request)
+  v2_qs_signed_request = mc.signed_v1(qs_request)
   v2_average_signed_request = mc.signed_v2(average_request)
   v2_huge_signed_request = mc.signed_v1(huge_request)
 
   short_signed_request = mc.signed(short_request)
+  qs_signed_request = mc.signed(qs_request)
   average_signed_request = mc.signed(average_request)
   huge_signed_request = mc.signed(huge_request)
 
@@ -76,6 +82,9 @@ task :benchmark do
     bm.report('v1-sign-short') { mc.signed_v1(short_request) }
     bm.report('v2-sign-short') { mc.signed_v2(short_request) }
     bm.report('both-sign-short') { mc.signed(short_request) }
+    bm.report('v1-sign-qs') { mc.signed_v1(qs_request) }
+    bm.report('v2-sign-qs') { mc.signed_v2(qs_request) }
+    bm.report('both-sign-qs') { mc.signed(qs_request) }
     bm.report('v1-sign-average') { mc.signed_v1(average_request) }
     bm.report('v2-sign-average') { mc.signed_v2(average_request) }
     bm.report('both-sign-average') { mc.signed(average_request) }
@@ -90,6 +99,8 @@ task :benchmark do
   Benchmark.ips do |bm|
     bm.report('v1-authenticate-short') { authenticating_mc.authentic?(v1_short_signed_request) }
     bm.report('v2-authenticate-short') { authenticating_mc.authentic?(v2_short_signed_request) }
+    bm.report('v1-authenticate-qs') { authenticating_mc.authentic?(v1_qs_signed_request) }
+    bm.report('v2-authenticate-qs') { authenticating_mc.authentic?(v2_qs_signed_request) }
     bm.report('v1-authenticate-average') { authenticating_mc.authentic?(v1_average_signed_request) }
     bm.report('v2-authenticate-average') { authenticating_mc.authentic?(v2_average_signed_request) }
     bm.report('v1-authenticate-huge') { authenticating_mc.authentic?(v1_huge_signed_request) }
