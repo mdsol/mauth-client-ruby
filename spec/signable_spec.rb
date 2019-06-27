@@ -13,6 +13,7 @@ describe MAuth::Signable do
     class Dummy
       include MAuth::Signable
     end
+    Dummy.send(:remove_const, const_name) if Dummy.const_defined?(const_name)
     Dummy.const_set(const_name, sig_components)
     Dummy
   end
