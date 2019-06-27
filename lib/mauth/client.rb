@@ -228,7 +228,7 @@ module MAuth
     end
   end
 
-  class ConfigFile
+  module ConfigFile
     GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
     @config = {}
 
