@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'mauth/request_and_response'
 require 'mauth/client'
-require 'byebug'
 
 describe MAuth::Signable do
   let(:more_attrs) { { time: Time.now, app_uuid: 'signer' } }
