@@ -58,6 +58,15 @@ task :benchmark do
 
   qs = 'don=quixote&quixote=don'
 
+  puts <<-MSG
+
+    A short request has a body of 60 chars.
+    An average request has a body of 60,000 chars.
+    A huge request has a body of 6,000,000 chars.
+    A qs request has a body of 60 chars and a query string with two k/v pairs.
+    
+    MSG
+
   short_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body)
   qs_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body, query_string: qs)
   average_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: average_body)
