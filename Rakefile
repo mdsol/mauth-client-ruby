@@ -50,7 +50,7 @@ task :benchmark do
     builder.adapter(:test, stubs)
   end
   stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }
-  Faraday.stub(:new) { test_faraday }
+  allow(Faraday).to receive(:new).and_return(test_faraday)
 
   short_body = 'Somewhere in La Mancha, in a place I do not care to remember'
   average_body = short_body * 1_000
@@ -64,8 +64,8 @@ task :benchmark do
     An average request has a body of 60,000 chars.
     A huge request has a body of 6,000,000 chars.
     A qs request has a body of 60 chars and a query string with two k/v pairs.
-    
-    MSG
+
+  MSG
 
   short_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body)
   qs_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: short_body, query_string: qs)
@@ -80,11 +80,6 @@ task :benchmark do
   v2_qs_signed_request = mc.signed_v1(qs_request)
   v2_average_signed_request = mc.signed_v2(average_request)
   v2_huge_signed_request = mc.signed_v1(huge_request)
-
-  short_signed_request = mc.signed(short_request)
-  qs_signed_request = mc.signed(qs_request)
-  average_signed_request = mc.signed(average_request)
-  huge_signed_request = mc.signed(huge_request)
 
   Benchmark.ips do |bm|
     bm.report('v1-sign-short') { mc.signed_v1(short_request) }
