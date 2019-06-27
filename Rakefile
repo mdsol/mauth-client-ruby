@@ -64,7 +64,6 @@ task :benchmark do
   huge_request = TestSignableRequest.new(verb: 'PUT', request_url: '/', body: huge_body)
 
   v1_short_signed_request = mc.signed_v1(short_request)
-  v1_qs_signed_request = mc.signed_v1(qs_request)
   v1_average_signed_request = mc.signed_v1(average_request)
   v1_huge_signed_request = mc.signed_v1(huge_request)
 
@@ -82,7 +81,6 @@ task :benchmark do
     bm.report('v1-sign-short') { mc.signed_v1(short_request) }
     bm.report('v2-sign-short') { mc.signed_v2(short_request) }
     bm.report('both-sign-short') { mc.signed(short_request) }
-    bm.report('v1-sign-qs') { mc.signed_v1(qs_request) }
     bm.report('v2-sign-qs') { mc.signed_v2(qs_request) }
     bm.report('both-sign-qs') { mc.signed(qs_request) }
     bm.report('v1-sign-average') { mc.signed_v1(average_request) }
@@ -99,7 +97,6 @@ task :benchmark do
   Benchmark.ips do |bm|
     bm.report('v1-authenticate-short') { authenticating_mc.authentic?(v1_short_signed_request) }
     bm.report('v2-authenticate-short') { authenticating_mc.authentic?(v2_short_signed_request) }
-    bm.report('v1-authenticate-qs') { authenticating_mc.authentic?(v1_qs_signed_request) }
     bm.report('v2-authenticate-qs') { authenticating_mc.authentic?(v2_qs_signed_request) }
     bm.report('v1-authenticate-average') { authenticating_mc.authentic?(v1_average_signed_request) }
     bm.report('v2-authenticate-average') { authenticating_mc.authentic?(v2_average_signed_request) }
