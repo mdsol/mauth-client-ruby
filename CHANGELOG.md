@@ -2,6 +2,7 @@
 - Add support for MWSV2 protocol.
 - Change request signing to sign with both V1 and V2 protocols by default.
 - Update log message for authentication request to include protocol version used.
+- Added `benchmark` rake task to benchmark request signing and authentication.
 
 ## v4.1.1
 - Use warning level instead of error level for logs about missing mauth header.
