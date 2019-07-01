@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'mauth/request_and_response'
 require 'mauth/client'
-require 'byebug'
 
 describe MAuth::Signable do
   let(:more_attrs) { { time: Time.now, app_uuid: 'signer' } }
@@ -14,13 +13,14 @@ describe MAuth::Signable do
     class Dummy
       include MAuth::Signable
     end
+    Dummy.send(:remove_const, const_name) if Dummy.const_defined?(const_name)
     Dummy.const_set(const_name, sig_components)
     Dummy
   end
   let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
 
 
-  describe 'string_to_sign_v1({})' do
+  describe 'string_to_sign_v1' do
     let(:const_name) { 'SIGNATURE_COMPONENTS' }
 
     context 'requests' do
