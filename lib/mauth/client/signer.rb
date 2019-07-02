@@ -54,7 +54,7 @@ module MAuth
 
       def signature_v2(string_to_sign)
         assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
-        digest = OpenSSL::Digest::SHA256.new
+        digest = OpenSSL::Digest::SHA512.new
         Base64.encode64(private_key.sign(digest, string_to_sign)).delete("\n")
       end
     end

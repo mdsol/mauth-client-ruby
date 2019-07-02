@@ -93,7 +93,7 @@ module MAuth
 
       def verify_signature!(object, data)
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-        digest = OpenSSL::Digest::SHA256.new
+        digest = OpenSSL::Digest::SHA512.new
 
         begin
           pubkey.verify(digest, Base64.decode64(object.signature), data)
