@@ -1,3 +1,6 @@
+require 'openssl'
+
+
 # methods to sign requests and responses. part of MAuth::Client
 
 module MAuth
@@ -31,23 +34,29 @@ module MAuth
       def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v1(attributes)
-        signature = self.signature(string_to_sign)
+        signature = self.signature_v1(string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
       end
 
       def signed_headers_v2(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v2(attributes)
-        signature = self.signature(string_to_sign)
+        signature = self.signature_v2(string_to_sign)
         {
           'MCC-Authentication' => "#{MWSV2_TOKEN} #{client_app_uuid}:#{signature}#{AUTH_HEADER_DELIMITER}",
           'MCC-Time' => attributes[:time]
         }
       end
 
-      def signature(string_to_sign)
+      def signature_v1(string_to_sign)
         assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
         Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
+      end
+
+      def signature_v2(string_to_sign)
+        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
+        digest = OpenSSL::Digest::SHA256.new
+        Base64.encode64(private_key.sign(digest, string_to_sign)).delete("\n")
       end
     end
   end
