@@ -1,4 +1,5 @@
 require 'mauth/client/security_token_cacher'
+require 'openssl'
 
 # methods to verify the authenticity of signed requests and responses locally, retrieving
 # public keys from the mAuth service as needed

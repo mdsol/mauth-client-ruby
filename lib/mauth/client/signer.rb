@@ -1,6 +1,5 @@
 require 'openssl'
 
-
 # methods to sign requests and responses. part of MAuth::Client
 
 module MAuth
