@@ -80,4 +80,43 @@ describe MAuth::Client::Signer do
     end
   end
 
+  describe 'signature methods' do
+    let(:string_to_sign) { 'dummy str' }
+    let(:mock_pkey) { double('private_key', sign: 'encoded_message', private_encrypt: 'encoded') }
+
+    before do
+      allow(client).to receive(:private_key).and_return(mock_pkey)
+    end
+
+    describe '#signature_v1' do
+      it 'it base 64 encodes the signed digest' do
+        signature = client.signature_v1(string_to_sign)
+        expect(Base64.decode64(signature)).to eq('encoded')
+      end
+
+      it 'handles newlines appropriately' do
+        signature = client.signature_v1(string_to_sign)
+        expect(signature !~ /\n/).to be(true)
+      end
+    end
+
+    describe '#signature_v2' do
+      it 'it base 64 encodes the signed digest' do
+        signature = client.signature_v2(string_to_sign)
+        expect(Base64.decode64(signature)).to eq('encoded_message')
+      end
+
+      it 'handles newlines appropriately' do
+        signature = client.signature_v2(string_to_sign)
+        expect(signature !~ /\n/).to be(true)
+      end
+
+      it 'calls `sign` with an OpenSSL SHA512 digest' do
+        expect(mock_pkey).to receive(:sign)
+          .with(an_instance_of(OpenSSL::Digest::SHA512), string_to_sign)
+        client.signature_v2(string_to_sign)
+      end
+    end
+  end
+
 end
