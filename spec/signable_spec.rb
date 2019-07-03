@@ -91,7 +91,7 @@ describe MAuth::Signable do
         dummy_req = dummy_cls.new(req_attrs)
         str = dummy_req.string_to_sign_v2({})
 
-        string_to_sign.split("\n\r").each do |component|
+        str.split("\n\r").each do |component|
           expect(component.encoding.to_s).to eq('UTF-8')
         end
       end
@@ -133,7 +133,7 @@ describe MAuth::Signable do
         dummy_req = dummy_cls.new(resp_attrs)
         str = dummy_req.string_to_sign_v2({})
 
-        string_to_sign.split("\n\r").each do |component|
+        str.split("\n\r").each do |component|
           expect(component.encoding.to_s).to eq('UTF-8')
         end
       end
