@@ -89,7 +89,7 @@ describe MAuth::Client::Signer do
     end
 
     describe '#signature_v1' do
-      it 'it base 64 encodes the signed digest' do
+      it 'base 64 encodes the signed digest' do
         signature = client.signature_v1(string_to_sign)
         expect(Base64.decode64(signature)).to eq('encoded')
       end
@@ -101,7 +101,7 @@ describe MAuth::Client::Signer do
     end
 
     describe '#signature_v2' do
-      it 'it base 64 encodes the signed digest' do
+      it 'base 64 encodes the signed digest' do
         signature = client.signature_v2(string_to_sign)
         expect(Base64.decode64(signature)).to eq('encoded_message')
       end

@@ -5,6 +5,8 @@ require 'openssl'
 module MAuth
   class Client
     module Signer
+      SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
+
       # takes an outgoing request or response object, and returns an object of the same class
       # whose headers are updated to include mauth's signature headers
       def signed(object, attributes = {})
@@ -32,8 +34,8 @@ module MAuth
 
       def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
-        string_to_sign = object.string_to_sign_v1(attributes)
-        signature = self.signature_v1(string_to_sign)
+        hashed_string_to_sign = object.string_to_sign_v1(attributes)
+        signature = self.signature_v1(hashed_string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
       end
 
@@ -54,8 +56,7 @@ module MAuth
 
       def signature_v2(string_to_sign)
         assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
-        digest = OpenSSL::Digest::SHA512.new
-        Base64.encode64(private_key.sign(digest, string_to_sign)).delete("\n")
+        Base64.encode64(private_key.sign(SIGNING_DIGEST, string_to_sign)).delete("\n")
       end
     end
   end
