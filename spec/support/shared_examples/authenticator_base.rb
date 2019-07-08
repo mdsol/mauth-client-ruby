@@ -19,11 +19,13 @@ shared_examples MAuth::Client::AuthenticatorBase do
     end
 
     it "considers an authentically-signed request to be authentic when it's within the allowed time range" do
+      Timecop.freeze(Time.now)
       [-300, -299, 299, 300].each do |time_offset|
         signed_request = client.signed(request, time: Time.now.to_i + time_offset)
         message = "expected request signed at #{time_offset} seconds to be authentic"
         expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
       end
+      Timecop.return
     end
 
     it "considers an authentically-signed request to be inauthentic when it has no MCC-time" do
@@ -90,11 +92,13 @@ shared_examples MAuth::Client::AuthenticatorBase do
     end
 
     it "considers an authentically-signed request to be authentic when it's within the allowed time range" do
+      Timecop.freeze(Time.now)
       [-300, -299, 299, 300].each do |time_offset|
         signed_request = client.signed_v1(request, time: Time.now.to_i + time_offset)
         message = "expected request signed at #{time_offset} seconds to be authentic"
         expect(authenticating_mc.authentic?(signed_request)).to eq(true), message
       end
+      Timecop.return
     end
 
     it "considers an authentically-signed request to be inauthentic when it has no x-mws-time" do
