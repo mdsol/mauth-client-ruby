@@ -87,6 +87,12 @@ describe MAuth::Signable do
         end
       end
 
+      it 'hashes the request body with SHA512' do
+        expect(Digest::SHA512).to receive(:hexdigest).with(req_attrs[:body]).once
+        dummy_req = dummy_cls.new(req_attrs)
+        dummy_req.string_to_sign_v2({})
+      end
+
       it 'enforces UTF-8 encoding for all components of the string to sign' do
         dummy_req = dummy_cls.new(req_attrs)
         str = dummy_req.string_to_sign_v2({})
@@ -127,6 +133,12 @@ describe MAuth::Signable do
         resp_attrs.delete(:body_digest)
         dummy_resp = dummy_cls.new(resp_attrs)
         expect { dummy_resp.string_to_sign_v2({}) }.not_to raise_error
+      end
+
+      it 'hashes the request body with SHA512' do
+        expect(Digest::SHA512).to receive(:hexdigest).with(resp_attrs[:body]).once
+        dummy_req = dummy_cls.new(resp_attrs)
+        dummy_req.string_to_sign_v2({})
       end
 
       it 'enforces UTF-8 encoding for all components of the string to sign' do

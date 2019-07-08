@@ -1,4 +1,5 @@
 require 'openssl'
+require 'mauth/errors'
 
 # methods to sign requests and responses. part of MAuth::Client
 
