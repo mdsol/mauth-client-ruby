@@ -6,6 +6,7 @@ module MAuth
   class Client
     module Signer
       SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
+      UNABLE_TO_SIGN_ERR = UnableToSignError.new('mAuth client cannot sign without a private key!')
 
       # takes an outgoing request or response object, and returns an object of the same class
       # whose headers are updated to include mauth's signature headers
@@ -50,12 +51,12 @@ module MAuth
       end
 
       def signature_v1(string_to_sign)
-        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
+        assert_private_key(UNABLE_TO_SIGN_ERR)
         Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
       end
 
       def signature_v2(string_to_sign)
-        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
+        assert_private_key(UNABLE_TO_SIGN_ERR)
         Base64.encode64(private_key.sign(SIGNING_DIGEST, string_to_sign)).delete("\n")
       end
     end
