@@ -35,19 +35,23 @@ module MAuth
         object.attributes_for_signing[:request_url] = original_request_uri
 
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-        begin
-          actual = pubkey.public_decrypt(Base64.decode64(object.signature))
-        rescue OpenSSL::PKey::PKeyError => e
-          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
-        end
 
-        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
+        unless verify_signature_v1!(object, pubkey, expected_no_reencoding) ||
+           verify_signature_v1!(object, pubkey, expected_euresource_style_reencoding) ||
+           verify_signature_v1!(object, pubkey, expected_for_percent_reencoding)
           msg = "Signature verification failed for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
+      end
+
+      def verify_signature_v1!(object, pubkey, expected_str_to_sign)
+        hashed_str_to_sign = Digest::SHA512.hexdigest(expected_str_to_sign)
+        pubkey.public_decrypt(Base64.decode64(object.signature)) == hashed_str_to_sign
+      rescue OpenSSL::PKey::PKeyError => e
+        msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       def signature_valid_v2!(object)

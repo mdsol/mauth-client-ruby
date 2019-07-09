@@ -54,7 +54,8 @@ module MAuth
 
       def signature_v1(string_to_sign)
         assert_private_key(UNABLE_TO_SIGN_ERR)
-        Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
+        hashed_string_to_sign = Digest::SHA512.hexdigest(string_to_sign)
+        Base64.encode64(private_key.private_encrypt(hashed_string_to_sign)).delete("\n")
       end
 
       def signature_v2(string_to_sign)
