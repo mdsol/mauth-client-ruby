@@ -5,8 +5,9 @@ require 'mauth/errors'
 
 module MAuth
   class Client
+    SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
+
     module Signer
-      SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
       UNABLE_TO_SIGN_ERR = UnableToSignError.new('mAuth client cannot sign without a private key!')
 
       # takes an outgoing request or response object, and returns an object of the same class
