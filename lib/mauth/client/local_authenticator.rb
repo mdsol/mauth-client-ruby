@@ -1,4 +1,5 @@
 require 'mauth/client/security_token_cacher'
+require 'mauth/client/signer'
 require 'openssl'
 
 # methods to verify the authenticity of signed requests and responses locally, retrieving
@@ -93,10 +94,9 @@ module MAuth
 
       def verify_signature!(object, expected_str_to_sign)
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-        digest = OpenSSL::Digest::SHA512.new
 
         begin
-          pubkey.verify(digest, Base64.decode64(object.signature), expected_str_to_sign)
+          pubkey.verify(MAuth::Client::SIGNING_DIGEST, Base64.decode64(object.signature), expected_str_to_sign)
         rescue OpenSSL::PKey::PKeyError => e
           msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
           log_inauthentic(object, msg)
