@@ -37,8 +37,8 @@ module MAuth
 
       def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
-        hashed_string_to_sign = object.string_to_sign_v1(attributes)
-        signature = self.signature_v1(hashed_string_to_sign)
+        string_to_sign = object.string_to_sign_v1(attributes)
+        signature = self.signature_v1(string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
       end
 
