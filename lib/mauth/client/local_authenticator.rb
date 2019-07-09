@@ -83,25 +83,27 @@ module MAuth
           query_string: euresource_escape(original_query_string.to_s)
         )
 
-        unless verify_signature!(object, expected_no_reencoding) ||
-           verify_signature!(object, expected_euresource_style_reencoding) ||
-           verify_signature!(object, expected_for_percent_reencoding)
+        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+
+        unless verify_signature!(object, pubkey, expected_no_reencoding) ||
+           verify_signature!(object, pubkey, expected_euresource_style_reencoding) ||
+           verify_signature!(object, pubkey, expected_for_percent_reencoding)
           msg = "Signature verification failed for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
       end
 
-      def verify_signature!(object, expected_str_to_sign)
-        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-
-        begin
-          pubkey.verify(MAuth::Client::SIGNING_DIGEST, Base64.decode64(object.signature), expected_str_to_sign)
-        rescue OpenSSL::PKey::PKeyError => e
-          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
-        end
+      def verify_signature!(object, pubkey, expected_str_to_sign)
+        pubkey.verify(
+          MAuth::Client::SIGNING_DIGEST,
+          Base64.decode64(object.signature),
+          expected_str_to_sign
+        )
+      rescue OpenSSL::PKey::PKeyError => e
+        msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       # Note: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
