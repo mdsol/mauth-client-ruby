@@ -88,20 +88,21 @@ module MAuth
         )
 
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+        actual = Base64.decode64(object.signature)
 
-        unless verify_signature_v2!(object, pubkey, expected_no_reencoding) ||
-           verify_signature_v2!(object, pubkey, expected_euresource_style_reencoding) ||
-           verify_signature_v2!(object, pubkey, expected_for_percent_reencoding)
+        unless verify_signature_v2!(object, actual, pubkey, expected_no_reencoding) ||
+           verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
+           verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
           msg = "Signature verification failed for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
       end
 
-      def verify_signature_v2!(object, pubkey, expected_str_to_sign)
+      def verify_signature_v2!(object, actual, pubkey, expected_str_to_sign)
         pubkey.verify(
           MAuth::Client::SIGNING_DIGEST,
-          Base64.decode64(object.signature),
+          actual,
           expected_str_to_sign
         )
       rescue OpenSSL::PKey::PKeyError => e
