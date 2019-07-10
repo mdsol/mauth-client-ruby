@@ -95,7 +95,7 @@ module MAuth
         unless verify_signature_v2!(object, actual, pubkey, expected_no_reencoding) ||
            verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
            verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
-          msg = "Signature verification failed for #{object.class}"
+          msg = "Signature inauthentic for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
@@ -108,7 +108,7 @@ module MAuth
           expected_str_to_sign
         )
       rescue OpenSSL::PKey::PKeyError => e
-        msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
+        msg = "RSA verification of signature failed! #{e.class}: #{e.message}"
         log_inauthentic(object, msg)
         raise InauthenticError, msg
       end
