@@ -135,7 +135,7 @@ describe MAuth::Signable do
         expect { dummy_resp.string_to_sign_v2({}) }.not_to raise_error
       end
 
-      it 'hashes the request body with SHA512' do
+      it 'hashes the response body with SHA512' do
         expect(Digest::SHA512).to receive(:hexdigest).with(resp_attrs[:body]).once
         dummy_req = dummy_cls.new(resp_attrs)
         dummy_req.string_to_sign_v2({})
