@@ -1,8 +1,15 @@
+require 'openssl'
+require 'mauth/errors'
+
 # methods to sign requests and responses. part of MAuth::Client
 
 module MAuth
   class Client
+    SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
+
     module Signer
+      UNABLE_TO_SIGN_ERR = UnableToSignError.new('mAuth client cannot sign without a private key!')
+
       # takes an outgoing request or response object, and returns an object of the same class
       # whose headers are updated to include mauth's signature headers
       def signed(object, attributes = {})
@@ -31,23 +38,29 @@ module MAuth
       def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v1(attributes)
-        signature = self.signature(string_to_sign)
+        signature = self.signature_v1(string_to_sign)
         { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
       end
 
       def signed_headers_v2(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v2(attributes)
-        signature = self.signature(string_to_sign)
+        signature = self.signature_v2(string_to_sign)
         {
           'MCC-Authentication' => "#{MWSV2_TOKEN} #{client_app_uuid}:#{signature}#{AUTH_HEADER_DELIMITER}",
           'MCC-Time' => attributes[:time]
         }
       end
 
-      def signature(string_to_sign)
-        assert_private_key(UnableToSignError.new('mAuth client cannot sign without a private key!'))
-        Base64.encode64(private_key.private_encrypt(string_to_sign)).delete("\n")
+      def signature_v1(string_to_sign)
+        assert_private_key(UNABLE_TO_SIGN_ERR)
+        hashed_string_to_sign = Digest::SHA512.hexdigest(string_to_sign)
+        Base64.encode64(private_key.private_encrypt(hashed_string_to_sign)).delete("\n")
+      end
+
+      def signature_v2(string_to_sign)
+        assert_private_key(UNABLE_TO_SIGN_ERR)
+        Base64.encode64(private_key.sign(SIGNING_DIGEST, string_to_sign)).delete("\n")
       end
     end
   end

@@ -89,24 +89,17 @@ describe MAuth::Signable do
 
       it 'hashes the request body with SHA512' do
         expect(Digest::SHA512).to receive(:hexdigest).with(req_attrs[:body]).once
-        # this spec fails unless we expect Digest::SHA512 to be called again
-        # with the concatenated signature components
-        expect(Digest::SHA512).to receive(:hexdigest).with(anything)
         dummy_req = dummy_cls.new(req_attrs)
         dummy_req.string_to_sign_v2({})
       end
 
       it 'enforces UTF-8 encoding for all components of the string to sign' do
-        # this spec fails unless we expect Digest::SHA512 to be on the body first
-        expect(Digest::SHA512).to receive(:hexdigest).with(req_attrs[:body]).once
-        expect(Digest::SHA512).to receive(:hexdigest) do |string_to_sign|
-          string_to_sign.split("\n\r").each do |component|
-            expect(component.encoding.to_s).to eq('UTF-8')
-          end
-        end
-
         dummy_req = dummy_cls.new(req_attrs)
-        dummy_req.string_to_sign_v2({})
+        str = dummy_req.string_to_sign_v2({})
+
+        str.split("\n\r").each do |component|
+          expect(component.encoding.to_s).to eq('UTF-8')
+        end
       end
 
       # we have this spec because Faraday and Rack handle empty request bodies
@@ -142,13 +135,19 @@ describe MAuth::Signable do
         expect { dummy_resp.string_to_sign_v2({}) }.not_to raise_error
       end
 
-      it 'hashes the request body with SHA512' do
+      it 'hashes the response body with SHA512' do
         expect(Digest::SHA512).to receive(:hexdigest).with(resp_attrs[:body]).once
-        # this spec fails unless we expect Digest::SHA512 to be called again
-        # with the concatenated signature components
-        expect(Digest::SHA512).to receive(:hexdigest).with(anything)
-        dummy_resp = dummy_cls.new(resp_attrs)
-        dummy_resp.string_to_sign_v2({})
+        dummy_req = dummy_cls.new(resp_attrs)
+        dummy_req.string_to_sign_v2({})
+      end
+
+      it 'enforces UTF-8 encoding for all components of the string to sign' do
+        dummy_req = dummy_cls.new(resp_attrs)
+        str = dummy_req.string_to_sign_v2({})
+
+        str.split("\n\r").each do |component|
+          expect(component.encoding.to_s).to eq('UTF-8')
+        end
       end
     end
   end

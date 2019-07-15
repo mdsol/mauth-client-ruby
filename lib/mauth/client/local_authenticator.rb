@@ -1,4 +1,6 @@
 require 'mauth/client/security_token_cacher'
+require 'mauth/client/signer'
+require 'openssl'
 
 # methods to verify the authenticity of signed requests and responses locally, retrieving
 # public keys from the mAuth service as needed
@@ -32,8 +34,8 @@ module MAuth
         # reset the object original request_uri, just in case we need it again
         object.attributes_for_signing[:request_url] = original_request_uri
 
-        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         begin
+          pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
           actual = pubkey.public_decrypt(Base64.decode64(object.signature))
         rescue OpenSSL::PKey::PKeyError => e
           msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
@@ -41,11 +43,17 @@ module MAuth
           raise InauthenticError, msg
         end
 
-        unless expected_no_reencoding == actual || expected_euresource_style_reencoding == actual || expected_for_percent_reencoding == actual
+        unless verify_signature_v1!(actual, expected_no_reencoding) ||
+           verify_signature_v1!(actual, expected_euresource_style_reencoding) ||
+           verify_signature_v1!(actual, expected_for_percent_reencoding)
           msg = "Signature verification failed for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
+      end
+
+      def verify_signature_v1!(actual, expected_str_to_sign)
+        actual == Digest::SHA512.hexdigest(expected_str_to_sign)
       end
 
       def signature_valid_v2!(object)
@@ -81,27 +89,28 @@ module MAuth
           query_string: euresource_escape(original_query_string.to_s)
         )
 
-        actual = actual_string_to_sign(object)
+        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
+        actual = Base64.decode64(object.signature)
 
-        unless expected_no_reencoding == actual ||
-           expected_euresource_style_reencoding == actual ||
-           expected_for_percent_reencoding == actual
-          msg = "Signature verification failed for #{object.class}"
+        unless verify_signature_v2!(object, actual, pubkey, expected_no_reencoding) ||
+           verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
+           verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
+          msg = "Signature inauthentic for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
       end
 
-      def actual_string_to_sign(object)
-        pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
-
-        begin
-          pubkey.public_decrypt(Base64.decode64(object.signature))
-        rescue OpenSSL::PKey::PKeyError => e
-          msg = "Public key decryption of signature failed! #{e.class}: #{e.message}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
-        end
+      def verify_signature_v2!(object, actual, pubkey, expected_str_to_sign)
+        pubkey.verify(
+          MAuth::Client::SIGNING_DIGEST,
+          actual,
+          expected_str_to_sign
+        )
+      rescue OpenSSL::PKey::PKeyError => e
+        msg = "RSA verification of signature failed! #{e.class}: #{e.message}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       # Note: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"

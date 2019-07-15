@@ -35,8 +35,7 @@ module MAuth
       if missing_attributes.any?
         raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
-      string = self.class::SIGNATURE_COMPONENTS.map { |k| attributes_for_signing[k].to_s }.join("\n")
-      Digest::SHA512.hexdigest(string)
+      self.class::SIGNATURE_COMPONENTS.map { |k| attributes_for_signing[k].to_s }.join("\n")
     end
 
     # the string to sign for V2 protocol will be (where LF is line feed character)
@@ -74,10 +73,9 @@ module MAuth
         raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
 
-      string = self.class::SIGNATURE_COMPONENTS_V2.map do |k|
+      self.class::SIGNATURE_COMPONENTS_V2.map do |k|
         attrs_with_overrides[k].to_s.force_encoding('UTF-8')
       end.join("\n")
-      Digest::SHA512.hexdigest(string)
     end
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
