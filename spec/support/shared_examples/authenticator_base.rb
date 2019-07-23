@@ -163,7 +163,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers.delete('X-MWS-Authentication')
       signed_request.headers.delete('MCC-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MauthNotPresent,
+        MAuth::MAuthNotPresent,
         'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
         'header is blank, MCC-Authentication header is blank.'
       )
@@ -174,7 +174,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers['X-MWS-Authentication'] = ''
       signed_request.headers['MCC-Authentication'] = ''
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MauthNotPresent,
+        MAuth::MAuthNotPresent,
         'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
         ' header is blank, MCC-Authentication header is blank.'
       )
@@ -202,7 +202,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers.delete('MCC-Authentication')
       signed_request.headers.delete('X-MWS-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MauthNotPresent,
+        MAuth::MAuthNotPresent,
         'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
       )
     end
@@ -212,7 +212,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers['MCC-Authentication'] = ''
       signed_request.headers.delete('X-MWS-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MauthNotPresent,
+        MAuth::MAuthNotPresent,
         'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
       )
     end
