@@ -251,7 +251,7 @@ end
 
 begin
   response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
-rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError, MAuth::MauthNotPresent, MAuth::MissingV2Error => e
+rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError, MAuth::MAuthNotPresent, MAuth::MissingV2Error => e
   if $options[:color].nil? ? STDERR.tty? : $options[:color]
     class_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :intense_yellow : :intense_red)
     message_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :yellow : :red)

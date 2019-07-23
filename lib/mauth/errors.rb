@@ -14,7 +14,7 @@ module MAuth
   class InauthenticError < StandardError; end
 
   # Used when the incoming request does not contain any mAuth related information
-  class MauthNotPresent < StandardError; end
+  class MAuthNotPresent < StandardError; end
 
   # required information for signing was missing
   class UnableToSignError < StandardError; end

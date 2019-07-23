@@ -12,7 +12,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError, MauthNotPresent, MissingV2Error
+        rescue InauthenticError, MAuthNotPresent, MissingV2Error
           false
         end
       end
@@ -36,7 +36,7 @@ module MAuth
           sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
           msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
           logger.warn("mAuth signature not present on #{object.class}. Exception: #{msg}")
-          raise MauthNotPresent, msg
+          raise MAuthNotPresent, msg
         end
       end
 
