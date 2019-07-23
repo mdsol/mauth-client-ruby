@@ -74,7 +74,7 @@ module MAuth
       def response_for_missing_v2(env)
         handle_head(env) do
           body = {
-            'type' => 'errors:application_authentication:missing_v2',
+            'type' => 'errors:mauth:missing_v2',
             'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly.'
           }
           [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
