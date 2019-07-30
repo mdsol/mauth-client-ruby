@@ -86,7 +86,7 @@ module MAuth
           time: object.mcc_time,
           app_uuid: object.signature_app_uuid,
           request_url: euresource_escape(original_request_uri.to_s),
-          query_string: euresource_escape(original_query_string.to_s)
+          query_string: euresource_query_escape(original_query_string.to_s)
         )
 
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
@@ -118,6 +118,10 @@ module MAuth
       #   they are decoded back into characters here to avoid signature invalidation
       def euresource_escape(str)
         CGI.escape(str).gsub(/%2F|%23/, '%2F' => '/', '%23' => '#')
+      end
+
+      def euresource_query_escape(str)
+        CGI.escape(str).gsub(/%3D|%26/, '%3D' => '=', '%26' => '&')
       end
 
       def retrieve_public_key(app_uuid)
