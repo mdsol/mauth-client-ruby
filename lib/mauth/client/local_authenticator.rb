@@ -136,6 +136,10 @@ module MAuth
         CGI.escape(str).gsub(/%2F|%23/, '%2F' => '/', '%23' => '#')
       end
 
+      # Euresource encodes keys and values of query params but does not encode the '='
+      # that separates keys and values and the '&' that separate k/v pairs
+      # Euresource currently adds query parameters via the following method:
+      # https://www.rubydoc.info/gems/addressable/2.3.4/Addressable/URI#query_values=-instance_method
       def euresource_query_escape(str)
         CGI.escape(str).gsub(/%3D|%26/, '%3D' => '=', '%26' => '&')
       end
