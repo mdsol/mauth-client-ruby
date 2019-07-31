@@ -46,10 +46,12 @@ module MAuth
         return nil if verify_signature_v1!(actual, expected_no_reencoding)
 
         if verify_signature_v1!(actual, expected_euresource_style_reencoding)
-          logger.info('Signature successfully authenticated with euresource style reencoding')
+          logger.info("Signature successfully authenticated with euresource style reencoding." \
+            " url: '#{original_request_uri}'.")
           return nil
         elsif verify_signature_v1!(actual, expected_for_percent_reencoding)
-          logger.info('Signature successfully authenticated with simple percent reencoding')
+          logger.info("Signature successfully authenticated with simple percent reencoding." \
+          " url: '#{original_request_uri}'.")
           return nil
         end
 
@@ -101,10 +103,12 @@ module MAuth
         return nil if verify_signature_v2!(object, actual, pubkey, expected_no_reencoding)
 
         if verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding)
-          logger.info('Signature successfully authenticated with euresource style reencoding')
+          logger.info("Signature successfully authenticated with euresource style reencoding." \
+            " url: '#{original_request_uri}'. query string: '#{original_query_string}'")
           return nil
         elsif verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
-          logger.info('Signature successfully authenticated with simple percent reencoding')
+          logger.info("Signature successfully authenticated with simple percent reencoding." \
+            " url: '#{original_request_uri}'. query string: '#{original_query_string}'")
           return nil
         end
 
