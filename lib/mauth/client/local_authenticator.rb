@@ -43,13 +43,19 @@ module MAuth
           raise InauthenticError, msg
         end
 
-        unless verify_signature_v1!(actual, expected_no_reencoding) ||
-           verify_signature_v1!(actual, expected_euresource_style_reencoding) ||
-           verify_signature_v1!(actual, expected_for_percent_reencoding)
-          msg = "Signature verification failed for #{object.class}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
+        return nil if verify_signature_v1!(actual, expected_no_reencoding)
+
+        if verify_signature_v1!(actual, expected_euresource_style_reencoding)
+          logger.info('Signature successfully authenticated with euresource style reencoding')
+          return nil
+        elsif verify_signature_v1!(actual, expected_for_percent_reencoding)
+          logger.info('Signature successfully authenticated with simple percent reencoding')
+          return nil
         end
+
+        msg = "Signature verification failed for #{object.class}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       def verify_signature_v1!(actual, expected_str_to_sign)
@@ -92,13 +98,19 @@ module MAuth
         pubkey = OpenSSL::PKey::RSA.new(retrieve_public_key(object.signature_app_uuid))
         actual = Base64.decode64(object.signature)
 
-        unless verify_signature_v2!(object, actual, pubkey, expected_no_reencoding) ||
-           verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
-           verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
-          msg = "Signature inauthentic for #{object.class}"
-          log_inauthentic(object, msg)
-          raise InauthenticError, msg
+        return nil if verify_signature_v2!(object, actual, pubkey, expected_no_reencoding)
+
+        if verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding)
+          logger.info('Signature successfully authenticated with euresource style reencoding')
+          return nil
+        elsif verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
+          logger.info('Signature successfully authenticated with simple percent reencoding')
+          return nil
         end
+
+        msg = "Signature inauthentic for #{object.class}"
+        log_inauthentic(object, msg)
+        raise InauthenticError, msg
       end
 
       def verify_signature_v2!(object, actual, pubkey, expected_str_to_sign)
