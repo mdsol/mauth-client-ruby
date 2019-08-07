@@ -7,7 +7,7 @@ require_relative '../support/shared_examples/authenticator_base.rb'
 
 describe MAuth::Client::LocalAuthenticator do
   include_context 'client'
-  
+
   describe '#authentic?' do
     let(:v2_only_authenticate) { false }
     let(:authenticating_mc) do
@@ -124,7 +124,7 @@ describe MAuth::Client::LocalAuthenticator do
         ].each do |path, qs|
           # imagine what are on the requester's side now...
           signed_path = CGI.escape(path).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#") # This is what Euresource does to the path on the requester's side before the signing of the outgoing request occurs.
-          signed_qs = CGI.escape(qs).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
+          signed_qs = CGI.escape(qs).gsub(/%3D|%26/, '%3D' => '=', '%26' => '&')
           req_w_path = TestSignableRequest.new(verb: 'GET', request_url: signed_path, query_string: signed_qs)
           signed_request = client.signed(req_w_path)
 

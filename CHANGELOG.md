@@ -1,3 +1,6 @@
+## v5.0.1
+- Update euresource escaping of query string.
+
 ## v5.0.0
 - Add support for MWSV2 protocol.
 - Change request signing to sign with both V1 and V2 protocols by default.
