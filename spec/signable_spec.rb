@@ -9,6 +9,7 @@ describe MAuth::Signable do
     { verb: 'PUT', request_url: '/', body: '{}', query_string: 'k=v' }
       .merge(more_attrs)
   end
+  let(:frozen_req_attrs) { req_attrs.each_with_object({}) { |(k, v), h| h[k] = v.is_a?(String) ? v.freeze : v } }
   let(:dummy_cls) do
     class Dummy
       include MAuth::Signable
@@ -100,6 +101,11 @@ describe MAuth::Signable do
         str.split("\n\r").each do |component|
           expect(component.encoding.to_s).to eq('UTF-8')
         end
+      end
+
+      it 'does not raise when all string components of the string to sign are frozen' do
+        dummy_req = dummy_cls.new(frozen_req_attrs)
+        expect { dummy_req.string_to_sign_v2({}) }.not_to raise_error
       end
 
       # we have this spec because Faraday and Rack handle empty request bodies

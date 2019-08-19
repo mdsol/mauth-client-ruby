@@ -74,7 +74,7 @@ module MAuth
       end
 
       self.class::SIGNATURE_COMPONENTS_V2.map do |k|
-        attrs_with_overrides[k].to_s.force_encoding('UTF-8')
+        attrs_with_overrides[k].to_s.dup.force_encoding('UTF-8')
       end.join("\n")
     end
 
