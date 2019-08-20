@@ -1,3 +1,6 @@
+## v5.0.2
+- Fix to not raise FrozenError when string to sign contains frozen value.
+
 ## v5.0.1
 - Update euresource escaping of query string.
 
