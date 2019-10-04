@@ -29,6 +29,8 @@ common: &common
     SIY2exfsy7Y8NoOnBPlGiXKhgaF21T8kqV9C7R6OAuP0U6CgMJnINx/UjozvBENH
     Ux45QdvRd6vai8nHp7AgV7rr55SxXAZVgATll84uBUpfpmC6YK/j
     -----END RSA PRIVATE KEY-----
+  v2_only_authenticate: false
+  v2_only_sign_requests: false
 
 production:
   <<: *common
@@ -46,6 +48,8 @@ common: &common
   mauth_api_version: v1
   app_uuid: 123we997-0333-44d8-8fCf-5dd555c5bd51
   private_key_file: config/my_mauth_private.key
+  v2_only_authenticate: false
+  v2_only_sign_requests: false
 
 production:
   <<: *common
@@ -62,6 +66,8 @@ test:
 - `app_uuid` - Required in the same circumstances where a `private_key` is required.
 - `mauth_baseurl` - Required for authentication but not for signing. Needed for local authentication to retrieve public keys and for remote authentication. Usually this is `https://mauth.imedidata.com` for production.
 - `mauth_api_version` - Required for authentication but not for signing. only `v1` exists as of this writing.
+- `v2_only_authenticate` - If true, all outgoing requests will be signed with only the V2 protocol.
+- `v2_only_sign_requests` - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected.
 
 ## Usage in your application
 
