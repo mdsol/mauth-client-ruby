@@ -102,7 +102,7 @@ describe MAuth::Client::LocalAuthenticator do
           query_string: 'key=value&coolkey=coolvalue'
         )
       end
-      let(:binary_filepath) { 'spec/blank.jpeg' }
+      let(:binary_filepath) { 'spec/fixtures/blank.jpeg' }
       let(:binary_file_body) do
         f = File.new(binary_filepath)
         f.binmode
@@ -241,10 +241,10 @@ describe MAuth::Client::LocalAuthenticator do
         )
 
         # the signing mauth client should be able to stream large request bodies
-        # from the disk straight into the hashing funtion like so:
+        # from the disk straight into the hashing function like so:
         streamed_hash_digest = Digest::SHA512.file(binary_filepath).hexdigest
         # used the digest from streaming in the file when signing the request
-        signed_request = client.signed(request, request_body_digest: streamed_hash_digest)
+        signed_request = client.signed(request, body_digest: streamed_hash_digest)
         expect(authenticating_mc.authentic?(signed_request)).to be true
       end
     end
