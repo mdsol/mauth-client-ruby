@@ -119,4 +119,41 @@ describe MAuth::Client::Signer do
     end
   end
 
+  describe 'cross platform signature value check' do
+    let(:client) do
+      MAuth::Client.new(
+        private_key_file: 'spec/fixtures/fake.key',
+        app_uuid: app_uuid
+      )
+    end
+
+    let(:binary_file_body) { File.binread('spec/fixtures/blank.jpeg') }
+
+    let(:attributes_for_signing) do
+      {
+        app_uuid: '5ff4257e-9c16-11e0-b048-0026bbfffe5e',
+        time: 1309891855, # 2011-07-05 18:50:00 UTC
+        verb: 'PUT',
+        request_url: '/v1/pictures',
+        body: binary_file_body,
+        query_string: "key=-_.~!@#$%^*()+{}|:\"'`<>?&∞=v&キ=v&0=v&a=v&a=b&a=c&a=a&k=&k=v"
+      }
+    end
+
+    let(:request) { MAuth::Request.new(attributes_for_signing) }
+
+    it 'returns accurate v1 signature' do
+      signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
+      expect(signature_v1).to eq(
+        "hDKYDRnzPFL2gzsru4zn7c7E7KpEvexeF4F5IR+puDxYXrMmuT2/fETZty5NkGGTZQ1nI6BTYGQGsU/73TkEAm7SvbJZcB2duLSCn8H5D0S1cafory1gnL1TpMPBlY8J/lq/Mht2E17eYw+P87FcpvDShINzy8GxWHqfquBqO8ml4XtirVEtAlI0xlkAsKkVq4nj7rKZUMS85mzogjUAJn3WgpGCNXVU+EK+qElW5QXk3I9uozByZhwBcYt5Cnlg15o99+53wKzMMmdvFmVjA1DeUaSO7LMIuw4ZNLVdDcHJx7ZSpAKZ/EA34u1fYNECFcw5CSKOjdlU7JFr4o8Phw=="
+      )
+    end
+
+    it 'returns accurate v2 signature' do
+      signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
+      expect(signature_v2).to eq(
+        "kXMtivUVa2aciWcHpxWNFtIAKGHkbC2LjvQCYx5llhhiZOfFQOWNyEcy3qdHj03g27FhefGeMNke/4PThXVRD0fg06Kn+wSCZp+ZHTxUp9m1ZDjlAaNGYjS+LMkQs2oxwg/iJFFAAzvjxzZ9jIhinWM6+PXok5NfU2rvbjjaI5WfRZa8wNl0NeOYlBZPICTcARbT1G6Kr3bjkgBTixNY2dSR1s7MmvpPHzfWSAyaYFppWnJwstRAU/JsR/JzcATZNx/CIk8N+46aWN1Na5avQgLFoNJn6eenXW3W51cENQyhtw7jatvrIKnVckAMoOkygfkbHdCixNfV5G0u1LHU3w=="
+      )
+    end
+  end
 end
