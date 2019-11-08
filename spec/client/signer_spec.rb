@@ -119,4 +119,33 @@ describe MAuth::Client::Signer do
     end
   end
 
+  describe 'cross platform signature testing' do
+    let(:testing_info) { JSON.parse(IO.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true) }
+    let(:client) do
+      MAuth::Client.new(
+        private_key: testing_info[:private_key],
+        app_uuid: testing_info[:app_uuid]
+      )
+    end
+
+    let(:binary_file_body) { File.binread('spec/fixtures/blank.jpeg') }
+
+    let(:attributes_for_signing) do
+      testing_info[:attributes_for_signing].tap do |attributes|
+        attributes[:body] = binary_file_body
+      end
+    end
+
+    let(:request) { MAuth::Request.new(attributes_for_signing) }
+
+    it 'returns accurate v1 signature' do
+      signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
+      expect(signature_v1).to eq(testing_info[:signatures][:v1])
+    end
+
+    it 'returns accurate v2 signature' do
+      signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
+      expect(signature_v2).to eq(testing_info[:signatures][:v2])
+    end
+  end
 end
