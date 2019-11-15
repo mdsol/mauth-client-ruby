@@ -243,6 +243,12 @@ describe MAuth::Client::LocalAuthenticator do
         signed_request = client.signed(request, body_digest: streamed_hash_digest)
         expect(authenticating_mc.authentic?(signed_request)).to be true
       end
+
+      it 'considers a request with the wrong body_digest to be inauthentic' do
+        wrong_hash_digest = Digest::SHA512.hexdigest('abc')
+        signed_request = client.signed(request, body_digest: wrong_hash_digest)
+        expect(authenticating_mc.authentic?(signed_request)).to be false
+      end
     end
   end
 
