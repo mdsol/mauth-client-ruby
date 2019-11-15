@@ -103,11 +103,7 @@ describe MAuth::Client::LocalAuthenticator do
         )
       end
       let(:binary_filepath) { 'spec/fixtures/blank.jpeg' }
-      let(:binary_file_body) do
-        f = File.new(binary_filepath)
-        f.binmode
-        f.read
-      end
+      let(:binary_file_body) { File.binread(binary_filepath) }
 
       it 'considers an authentically-signed request to be authentic' do
         signed_request = client.signed(request)
