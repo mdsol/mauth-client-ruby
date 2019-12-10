@@ -128,24 +128,39 @@ describe MAuth::Client::Signer do
       )
     end
 
-    let(:binary_file_body) { File.binread('spec/fixtures/blank.jpeg') }
-
+    let(:request) { MAuth::Request.new(attributes_for_signing) }
     let(:attributes_for_signing) do
       testing_info[:attributes_for_signing].tap do |attributes|
-        attributes[:body] = binary_file_body
+        attributes[:body] = body
       end
     end
 
-    let(:request) { MAuth::Request.new(attributes_for_signing) }
+    describe 'binary body' do
+      let(:body) { File.binread('spec/fixtures/blank.jpeg') }
 
-    it 'returns accurate v1 signature' do
-      signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
-      expect(signature_v1).to eq(testing_info[:signatures][:v1])
+      it 'returns accurate v1 signature' do
+        signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
+        expect(signature_v1).to eq(testing_info[:signatures][:v1_binary])
+      end
+
+      it 'returns accurate v2 signature' do
+        signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
+        expect(signature_v2).to eq(testing_info[:signatures][:v2_binary])
+      end
     end
 
-    it 'returns accurate v2 signature' do
-      signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
-      expect(signature_v2).to eq(testing_info[:signatures][:v2])
+    describe 'empty body' do
+      let(:body) { '' }
+
+      it 'returns accurate v1 signature' do
+        signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
+        expect(signature_v1).to eq(testing_info[:signatures][:v1_empty])
+      end
+
+      it 'returns accurate v2 signature' do
+        signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
+        expect(signature_v2).to eq(testing_info[:signatures][:v2_empty])
+      end
     end
   end
 end
