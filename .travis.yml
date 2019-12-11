@@ -2,15 +2,13 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.3.8
   - 2.4.6
   - 2.5.5
   - 2.6.3
 
 before_install:
   - wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.3.0.1492-linux.zip
-  - unzip sonar-scanner-cli-3.3.0.1492-linux.zip
-  - export PATH=$(pwd)/sonar-scanner-cli-3.3.0.1492-linux/bin:$PATH
+  - unzip sonar-scanner-cli-3.3.0.1492-linux.zip -d /tmp
   - gem update --system -N > /dev/null && echo "Rubygems version $(gem --version)"
   - gem install bundler --force -N -v=2.0.1 && bundle --version
   - gem install rubocop --force
@@ -23,7 +21,7 @@ install:
 script:
   - rubocop --format=json --out=rubocop-result.json
   - bundle exec rspec
-  - sonar-scanner
+  - /tmp/sonar-scanner-cli-3.3.0.1492-linux/bin/sonar-scanner
   - |-
     curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_run.sh | bash -s -- -b $TRAVIS_BUILD_DIR
 
