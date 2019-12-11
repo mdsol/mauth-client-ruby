@@ -19,9 +19,9 @@ install:
     curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_install.sh | bash -s -- -b $TRAVIS_BUILD_DIR
 
 script:
-  - rubocop --format=json --out=rubocop-result.json
+  - /usr/bin/rubocop --format=json --out=rubocop-result.json
   - bundle exec rspec
-  - /tmp/sonar-scanner-cli-3.3.0.1492-linux/bin/sonar-scanner
+  - /tmp/sonar-scanner-3.3.0.1492-linux/bin/sonar-scanner
   - |-
     curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_run.sh | bash -s -- -b $TRAVIS_BUILD_DIR
 
