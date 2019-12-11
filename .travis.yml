@@ -8,6 +8,9 @@ rvm:
   - 2.6.3
 
 before_install:
+  - wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.3.0.1492-linux.zip
+  - unzip sonar-scanner-cli-3.3.0.1492-linux.zip
+  - export PATH=$(pwd)/sonar-scanner-cli-3.3.0.1492-linux/bin:$PATH
   - gem update --system -N > /dev/null && echo "Rubygems version $(gem --version)"
   - gem install bundler --force -N -v=2.0.1 && bundle --version
   - gem install rubocop --force
