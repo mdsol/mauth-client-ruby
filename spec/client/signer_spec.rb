@@ -120,46 +120,44 @@ describe MAuth::Client::Signer do
   end
 
   describe 'cross platform signature testing' do
-    let(:testing_info) { JSON.parse(IO.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true) }
+    testing_info = JSON.parse(IO.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true)
+
     let(:client) do
       MAuth::Client.new(
-        private_key: testing_info[:private_key],
-        app_uuid: testing_info[:app_uuid]
+        private_key: testing_info[:shared_items][:private_key],
+        app_uuid: testing_info[:shared_items][:app_uuid]
       )
     end
 
     let(:request) { MAuth::Request.new(attributes_for_signing) }
     let(:attributes_for_signing) do
-      testing_info[:attributes_for_signing].tap do |attributes|
-        attributes[:body] = body
-      end
+      {
+        **testing_info[:shared_items].slice(:app_uuid, :time, :verb, :request_url),
+        body: body,
+        query_string: query_string
+      }
     end
+    let(:binary_body) { File.binread('spec/fixtures/blank.jpeg') }
 
-    describe 'binary body' do
-      let(:body) { File.binread('spec/fixtures/blank.jpeg') }
+    testing_info[:cases].each do |test_case_name, params|
+      context "testing #{test_case_name}" do
+        let(:body) { params[:body] == "read blank.jpeg" ? binary_body : params[:body].to_s }
+        let(:query_string) { params[:query_string].to_s }
+        let(:v1_result) { params[:v1] || testing_info[:shared_items][:default_v1_result] }
 
-      it 'returns accurate v1 signature' do
-        signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
-        expect(signature_v1).to eq(testing_info[:signatures][:v1_binary])
-      end
+        it 'returns accurate v1 signature' do
+          string_to_sign_v1 = request.string_to_sign_v1({})
+          signature_v1 = client.signature_v1(string_to_sign_v1)
+          expect(signature_v1).to eq(v1_result[:signature])
+        end
 
-      it 'returns accurate v2 signature' do
-        signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
-        expect(signature_v2).to eq(testing_info[:signatures][:v2_binary])
-      end
-    end
+        it 'returns accurate v2 signature' do
+          string_to_sign_v2 = request.string_to_sign_v2({})
+          expect(string_to_sign_v2).to eq(params[:v2][:string_to_sign])
 
-    describe 'empty body' do
-      let(:body) { '' }
-
-      it 'returns accurate v1 signature' do
-        signature_v1 = client.signature_v1(request.string_to_sign_v1({}))
-        expect(signature_v1).to eq(testing_info[:signatures][:v1_empty])
-      end
-
-      it 'returns accurate v2 signature' do
-        signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
-        expect(signature_v2).to eq(testing_info[:signatures][:v2_empty])
+          signature_v2 = client.signature_v2(string_to_sign_v2)
+          expect(signature_v2).to eq(params[:v2][:signature])
+        end
       end
     end
   end

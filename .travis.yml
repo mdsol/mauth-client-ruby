@@ -8,7 +8,7 @@ rvm:
   - 2.6.3
 
 before_install:
-  - yes | gem update --system -N --force > /dev/null && echo "Rubygems version $(gem --version)"
+  - gem update --system -N --force > /dev/null && echo "Rubygems version $(gem --version)"
   - gem install bundler --force -N -v=2.0.1 && bundle --version
 
 install:
