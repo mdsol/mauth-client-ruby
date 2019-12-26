@@ -132,7 +132,10 @@ describe MAuth::Client::Signer do
     let(:request) { MAuth::Request.new(attributes_for_signing) }
     let(:attributes_for_signing) do
       {
-        **testing_info[:shared_items].slice(:app_uuid, :time, :verb, :request_url),
+        app_uuid: testing_info[:shared_items][:app_uuid],
+        time: testing_info[:shared_items][:time],
+        verb: testing_info[:shared_items][:verb],
+        request_url: testing_info[:shared_items][:request_url],
         body: body,
         query_string: query_string
       }
