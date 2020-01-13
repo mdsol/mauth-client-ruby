@@ -121,17 +121,11 @@ module MAuth
     # if it is present and if not then the X-MWS-Authentication header if it is present.
     # Note MWSV2 protocol no longer allows more than one space between the token and app uuid.
     def signature_info
-      @signature_info ||= begin
-        match = if mcc_authentication
-          mcc_authentication.match(
-            /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
-          )
-        elsif x_mws_authentication
-          x_mws_authentication.match(/\A([^ ]+) *([^:]+):([^:]+)\z/)
-        end
+      @signature_info ||= build_signature_info(mcc_data || x_mws_data)
+    end
 
-        match ? { token: match[1], app_uuid: match[2], signature: match[3] } : {}
-      end
+    def fall_back_to_mws_signature_info
+      @signature_info = build_signature_info(x_mws_data)
     end
 
     def signature_app_uuid
@@ -152,6 +146,22 @@ module MAuth
       elsif !x_mws_authentication.to_s.strip.empty?
         1
       end
+    end
+
+    private
+
+    def build_signature_info(match_data)
+      match_data ? { token: match_data[1], app_uuid: match_data[2], signature: match_data[3] } : {}
+    end
+
+    def mcc_data
+      mcc_authentication&.match(
+        /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
+      )
+    end
+
+    def x_mws_data
+      x_mws_authentication&.match(/\A([^ ]+) *([^:]+):([^:]+)\z/)
     end
   end
 

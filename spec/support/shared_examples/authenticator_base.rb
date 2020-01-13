@@ -28,21 +28,65 @@ shared_examples MAuth::Client::AuthenticatorBase do
       Timecop.return
     end
 
-    it "considers an authentically-signed request to be inauthentic when it has no MCC-time" do
-      signed_request = client.signed(request)
-      signed_request.headers.delete('MCC-Time')
-      expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::InauthenticError,
-        /Time verification failed\. No MCC-Time present\./
-      )
+    context 'v2_only_authenticate flag is set to true' do
+      let(:v2_only_authenticate) { true }
+
+      it "considers an authentically-signed request to be inauthentic when it has no MCC-time" do
+        signed_request = client.signed(request)
+        signed_request.headers.delete('MCC-Time')
+        expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+          MAuth::InauthenticError,
+          /Time verification failed\. No MCC-Time present\./
+        )
+      end
+
+      it "considers a request with a bad V2 token to be inauthentic" do
+        ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
+          signed_request = client.signed(request)
+          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
+            expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+              MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
+        end
+      end
     end
 
-    it "considers a request with a bad V2 token to be inauthentic" do
-      ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
+    context 'v2_only_authenticate flag is set to false' do
+      let(:v2_only_authenticate) { false }
+
+      it "falls back to V1 when it has no MCC-time" do
         signed_request = client.signed(request)
-        signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
-          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-            MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
+        signed_request.headers.delete('MCC-Time')
+
+        expect(authenticating_mc.logger).to receive(:info).with(
+          'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
+          'signer to app with mauth app uuid authenticator using version MWS.'
+        )
+
+        expect { authenticating_mc.authenticate!(signed_request) }.not_to raise_error
+      end
+
+      it "falls back to V1 when it has a bad V2 token" do
+        ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
+          signed_request = client.signed(request)
+          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
+
+          expect(authenticating_mc.logger).to receive(:info).with(
+            'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
+            'signer to app with mauth app uuid authenticator using version MWS.'
+          )
+
+          expect { authenticating_mc.authenticate!(signed_request) }.not_to raise_error
+        end
+      end
+
+      it "considers a request to be inauthentic when it has no MCC-time, and V1 header (X-MWS-Authentication) is missing" do
+        signed_request = client.signed(request)
+        signed_request.headers.delete('MCC-Time')
+        signed_request.headers.delete('X-MWS-Authentication')
+        expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+          MAuth::InauthenticError,
+          /Time verification failed\. No MCC-Time present\./
+        )
       end
     end
 

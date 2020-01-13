@@ -22,7 +22,17 @@ module MAuth
       # is set. Otherwise will authenticate with only the highest protocol version present
       def authenticate!(object)
         if object.protocol_version == 2
-          authenticate_v2!(object)
+          begin
+            authenticate_v2!(object)
+          rescue InauthenticError => e
+            raise e if v2_only_authenticate?
+
+            object.fall_back_to_mws_signature_info
+            raise e unless object.signature
+
+            log_authentication_request(object)
+            authenticate_v1!(object)
+          end
         elsif object.protocol_version == 1
           if v2_only_authenticate?
             # If v2 is required but not present and v1 is present we raise MissingV2Error

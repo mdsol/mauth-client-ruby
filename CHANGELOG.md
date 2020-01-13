@@ -1,3 +1,6 @@
+## v5.1.0
+- Fall back to V1 when V2 authentication fails.
+
 ## v5.0.2
 - Fix to not raise FrozenError when string to sign contains frozen value.
 
