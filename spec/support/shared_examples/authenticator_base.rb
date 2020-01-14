@@ -61,6 +61,9 @@ shared_examples MAuth::Client::AuthenticatorBase do
           'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
           'signer to app with mauth app uuid authenticator using version MWS.'
         )
+        expect(authenticating_mc.logger).to receive(:warn).with(
+          'Completed successful authentication attempt after fallback to v1'
+        )
 
         expect { authenticating_mc.authenticate!(signed_request) }.not_to raise_error
       end
@@ -73,6 +76,9 @@ shared_examples MAuth::Client::AuthenticatorBase do
           expect(authenticating_mc.logger).to receive(:info).with(
             'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
             'signer to app with mauth app uuid authenticator using version MWS.'
+          )
+          expect(authenticating_mc.logger).to receive(:warn).with(
+            'Completed successful authentication attempt after fallback to v1'
           )
 
           expect { authenticating_mc.authenticate!(signed_request) }.not_to raise_error

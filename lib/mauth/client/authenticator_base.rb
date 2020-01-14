@@ -19,7 +19,7 @@ module MAuth
 
       # raises InauthenticError unless the given object is authentic. Will only
       # authenticate with v2 if the environment variable V2_ONLY_AUTHENTICATE
-      # is set. Otherwise will authenticate with only the highest protocol version present
+      # is set. Otherwise will fallback to v1 when v2 authentication fails
       def authenticate!(object)
         if object.protocol_version == 2
           begin
@@ -32,6 +32,7 @@ module MAuth
 
             log_authentication_request(object)
             authenticate_v1!(object)
+            logger.warn("Completed successful authentication attempt after fallback to v1")
           end
         elsif object.protocol_version == 1
           if v2_only_authenticate?
