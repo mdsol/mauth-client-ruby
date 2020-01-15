@@ -14,6 +14,7 @@ describe MAuth::Client::RemoteRequestAuthenticator do
       MAuth::Client.new(
         mauth_baseurl: 'http://whatever',
         mauth_api_version: 'v1',
+        app_uuid: 'authenticator',
         v2_only_authenticate: v2_only_authenticate
       )
     end
