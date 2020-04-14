@@ -14,12 +14,12 @@ module ProtocolHelper
       attr_reader :request_time, :app_uuid, :mauth_client, :pub_key
 
       def load
-        cofig_hash = JSON.parse(File.read("#{TEST_SUITE_BASE_PATH}/signing-config.json"))
-        @request_time = cofig_hash["request_time"]
-        @app_uuid = cofig_hash["app_uuid"]
+        config_hash = JSON.parse(File.read("#{TEST_SUITE_BASE_PATH}/signing-config.json"))
+        @request_time = config_hash["request_time"]
+        @app_uuid = config_hash["app_uuid"]
         @mauth_client = MAuth::Client.new(
           app_uuid: @app_uuid,
-          private_key_file: File.join(TEST_SUITE_BASE_PATH, cofig_hash["private_key_file"])
+          private_key_file: File.join(TEST_SUITE_BASE_PATH, config_hash["private_key_file"])
         )
         @pub_key = File.read("#{TEST_SUITE_BASE_PATH}/signing-params/rsa-key-pub")
       end
