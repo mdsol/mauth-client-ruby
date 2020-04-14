@@ -65,4 +65,81 @@ module ProtocolHelper
       Dir.glob("#{CASE_PATH}/#{case_name}/*#{ext}").first
     end
   end
+
+  # utility to help write new cases
+  class CaseWriter
+    def initialize(case_name)
+      ProtocolHelper::Config.load
+      @case_name = case_name
+    end
+
+    def build_case(attrs)
+      @req_attrs = attrs
+      Dir.mkdir("#{CASE_PATH}/#{case_name}")
+      write_req
+      write_sts
+      write_sig
+      write_authz
+    end
+
+    def build_case_from_sts
+      write_sig(File.read(file_by_ext('sts')))
+    end
+
+    private
+
+    attr_reader :case_name, :req_attrs
+
+    def write_req
+      write_file('req', JSON.pretty_generate(req_attrs))
+    end
+
+    def req
+      faraday_env = {
+        method: req_attrs['verb'],
+        url: URI(req_attrs['url']),
+        body: req_attrs['body']
+      }
+
+      req = MAuth::Faraday::Request.new(faraday_env)
+    end
+
+    def sts
+      signing_info = {
+        app_uuid: ProtocolHelper::Config.app_uuid,
+        time: ProtocolHelper::Config.request_time
+      }
+      sts = req.string_to_sign_v2(signing_info)
+    end
+
+    def write_sts
+      write_file('sts', sts)
+    end
+
+    def sig(given_sts)
+      mc = ProtocolHelper::Config.mauth_client
+      mc.signature_v2(given_sts || sts)
+    end
+
+    def write_sig(given_sts = nil)
+      write_file('sig', sig(given_sts))
+    end
+
+    def auth_headers
+      mc = ProtocolHelper::Config.mauth_client
+      mc.signed_headers_v2(req, time: ProtocolHelper::Config.request_time)
+    end
+
+    def write_authz
+      write_file('authz', JSON.pretty_generate(auth_headers))
+    end
+
+    def write_file(ext, contents)
+      File.open("#{CASE_PATH}/#{case_name}/#{case_name}.#{ext}", 'w') { |f| f.write(contents) }
+    end
+
+    def file_by_ext(ext)
+      Dir.glob("#{CASE_PATH}/#{case_name}/*#{ext}").first
+    end
+  end
 end
