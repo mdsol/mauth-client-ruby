@@ -36,12 +36,11 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', integration:true d
               time: request_time
             }
             sts = faraday_req.string_to_sign_v2(signing_info)
-            verb, path, body_digest, app_uuid, time, encoded_q_prms = sts.split("\n")
             elements = sts.split("\n")
             expected_elements = expected_str_to_sign.split("\n")
 
-            elements.zip(expected_elements).each do |duple|
-              expect(duple[0]).to eq(duple[1])
+            elements.zip(expected_elements).each do |generated_sts_element, expected_sts_element|
+              expect(generated_sts_element).to eq(expected_sts_element)
             end
             expect(faraday_req.string_to_sign_v2(signing_info)).to eq(expected_str_to_sign)
           end
