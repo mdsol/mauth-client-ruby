@@ -1,6 +1,9 @@
 require 'mauth/client'
 require 'faraday'
 
+# file to handle loading and parsing of mauth protocol test suite cases in order
+# to run them as rpsec tests
+
 module ProtocolHelper
   TEST_SUITE_BASE_PATH = 'spec/fixtures/mauth-protocol-test-suite'.freeze
   CASE_PATH = "#{TEST_SUITE_BASE_PATH}/protocols/MWSV2".freeze
