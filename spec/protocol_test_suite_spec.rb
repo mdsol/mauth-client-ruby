@@ -12,13 +12,13 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', integration:true d
 
   ProtocolHelper::Config.cases.each do |case_dir|
     context "#{case_dir}" do
-      let(:runner) { ProtocolHelper::CaseParser.new(case_dir) }
-      let(:req_attrs) { runner.req_attrs }
+      let(:parser) { ProtocolHelper::CaseParser.new(case_dir) }
+      let(:req_attrs) { parser.req_attrs }
       let(:uri_obj) { URI(req_attrs['url']) }
-      let(:expected_str_to_sign) { runner.sts }
-      let(:expected_signature) { runner.sig }
-      let(:expected_auth_headers) { runner.auth_headers }
-      let(:body) { runner.req_attrs['body'] }
+      let(:expected_str_to_sign) { parser.sts }
+      let(:expected_signature) { parser.sig }
+      let(:expected_auth_headers) { parser.auth_headers }
+      let(:body) { parser.req_attrs['body'] }
       let(:faraday_env) do
         {
           method: req_attrs['verb'],
