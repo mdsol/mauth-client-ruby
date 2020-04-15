@@ -1,5 +1,30 @@
 # Contributing
 
+## Cloning the Repo
+
+This repo contains the submodule `mauth-protocol-test-suite` so requires a flag when initially cloning in order to clone and init submodules.
+
+With Git > 2.13
+
+```
+git clone --recurse-submodules git@github.com:mdsol/mauth-client-ruby.git
+```
+
+With Git < 2.13
+
+```
+git clone --recursive git@github.com:mdsol/mauth-client-ruby.git
+```
+
+If you have already cloned a version of this repo before the submodule was introduced in version 6.0.0 then run
+
+```
+cd spec/fixtures/mauth-protocol-test-suite
+git submodule update --init
+```
+
+to init the submodule.
+
 ## General Information
 
 * Check out the latest develop to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
