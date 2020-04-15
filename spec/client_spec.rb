@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'faraday'
 require 'mauth/client'
 require 'securerandom'
+require_relative './support/shared_contexts/client.rb'
 
 describe MAuth::Client do
   include_context 'client'
