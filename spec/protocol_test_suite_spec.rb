@@ -14,6 +14,8 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', integration:true d
     context "#{case_dir}" do
       let(:parser) { ProtocolHelper::CaseParser.new(case_dir) }
       let(:req_attrs) { parser.req_attrs }
+      # must have protocol and domain name so URI won't consider `//example//` test case a
+      # relative uri. Without protocol and domain here URI('//example//').path => '//'
       let(:uri_obj) { URI("https://example.com#{req_attrs['url']}") }
       let(:expected_str_to_sign) { parser.sts }
       let(:expected_signature) { parser.sig }
