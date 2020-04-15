@@ -228,4 +228,51 @@ describe MAuth::Signable do
       expect(dummy_inst.uri_escape(' ')).to eq('%20')
     end
   end
+
+  describe 'normalize_path' do
+    # normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
+    # normalizes `.` and `..` in path i.e. /./example => /example ; /example/.. => /
+    # must add String#squeeze to remove duplicated slahes i.e. /// => /
+    # Addressable::URI.parse(path).normalize.to_s.squeeze('/')
+
+    it 'normalizes self (".") in the path' do
+      path = '/./example/./.'
+      expected = '/example/'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+
+    it 'normalizes parent ("..") in path' do
+      path = '/example/sample/..'
+      expected = '/example/'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+
+    it 'normalizes parent ("..") that points to non-existent parent' do
+      path = '/example/sample/../../../..'
+      expected = '/'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+
+    it 'normalizes case of percent encoded characters' do
+      path = '/%2b'
+      # path = '%cf%80'
+      # path = '%7e'
+      expected = '/%2B'
+      # expected = '%CF%80'
+      # expected = '%7E'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+
+    it 'normalizs multiple adjacent slashes to a single slash' do
+      path = '//example///sample'
+      expected = '/example/sample'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+
+    it 'preserves trailing slashes' do
+      path = '/example/'
+      expected = '/example/'
+      expect(dummy_inst.normalize_path(path)).to eq(expected)
+    end
+  end
 end
