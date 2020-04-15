@@ -14,7 +14,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', integration:true d
     context "#{case_dir}" do
       let(:parser) { ProtocolHelper::CaseParser.new(case_dir) }
       let(:req_attrs) { parser.req_attrs }
-      let(:uri_obj) { URI(req_attrs['url']) }
+      let(:uri_obj) { URI("https://example.com#{req_attrs['url']}") }
       let(:expected_str_to_sign) { parser.sts }
       let(:expected_signature) { parser.sig }
       let(:expected_auth_headers) { parser.auth_headers }
