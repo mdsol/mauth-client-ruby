@@ -230,11 +230,6 @@ describe MAuth::Signable do
   end
 
   describe 'normalize_path' do
-    # normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
-    # normalizes `.` and `..` in path i.e. /./example => /example ; /example/.. => /
-    # must add String#squeeze to remove duplicated slahes i.e. /// => /
-    # Addressable::URI.parse(path).normalize.to_s.squeeze('/')
-
     it 'normalizes self (".") in the path' do
       path = '/./example/./.'
       expected = '/example/'
@@ -255,11 +250,7 @@ describe MAuth::Signable do
 
     it 'normalizes case of percent encoded characters' do
       path = '/%2b'
-      # path = '%cf%80'
-      # path = '%7e'
       expected = '/%2B'
-      # expected = '%CF%80'
-      # expected = '%7E'
       expect(dummy_inst.normalize_path(path)).to eq(expected)
     end
 

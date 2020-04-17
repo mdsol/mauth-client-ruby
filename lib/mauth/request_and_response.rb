@@ -1,4 +1,5 @@
 require 'digest'
+require 'addressable'
 
 module MAuth
   # module which composes a string to sign.
@@ -62,6 +63,7 @@ module MAuth
       # note that if :body is nil we hash an empty string ('')
       attrs_with_overrides[:body_digest] ||= Digest::SHA512.hexdigest(attrs_with_overrides[:body] || '')
       attrs_with_overrides[:encoded_query_params] = unescape_encode_query_string(attrs_with_overrides[:query_string] || '')
+      attrs_with_overrides[:request_url] = normalize_path(attrs_with_overrides[:request_url])
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attrs_with_overrides.dig(key)
@@ -76,6 +78,18 @@ module MAuth
       self.class::SIGNATURE_COMPONENTS_V2.map do |k|
         attrs_with_overrides[k].to_s.dup.force_encoding('UTF-8')
       end.join("\n")
+    end
+
+    # Addressable::URI.parse(path).normalize.to_s.squeeze('/')
+    def normalize_path(path)
+      return if path.nil?
+
+      # Addressable::URI.normalize_path normalizes `.` and `..` in path
+      #   i.e. /./example => /example ; /example/.. => /
+      # String#squeeze removes duplicated slahes i.e. /// => /
+      # String#gsub normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
+      Addressable::URI.normalize_path(path).squeeze('/').
+        gsub(/%[a-f0-9]{2}/) { |escape_sequence| escape_sequence.upcase }
     end
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
