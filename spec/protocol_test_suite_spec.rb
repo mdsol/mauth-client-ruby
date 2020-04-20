@@ -1,9 +1,8 @@
 require 'test_suite_parser'
 require 'faraday'
 require 'mauth/client'
-require 'byebug'
 
-describe 'MAuth Client passes the MWSV2 protocol test suite', integration:true do
+describe 'MAuth Client passes the MWSV2 protocol test suite', end_to_end: true do
   let(:app_uuid) { ProtocolHelper::Config.app_uuid }
   let(:request_time) { ProtocolHelper::Config.request_time }
   let(:mauth_client) { ProtocolHelper::Config.mauth_client }
