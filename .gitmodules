@@ -1,3 +1,0 @@
-[submodule "mauth-protocol-test-suite"]
-	path = spec/fixtures/mauth-protocol-test-suite
-	url = git@github.com:mdsol/mauth-protocol-test-suite.git
