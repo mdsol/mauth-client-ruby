@@ -111,5 +111,46 @@ describe MAuth::Client do
         end
       end
     end
+
+    it 'correctly initializes with fall_back_to_v1_on_v2_failure as true with boolean true or string "true"' do
+      [true, 'true', 'TRUE'].each do |val|
+        [{ fall_back_to_v1_on_v2_failure: val }, { 'fall_back_to_v1_on_v2_failure' => val }].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.fall_back_to_v1_on_v2_failure?).to eq(true)
+        end
+      end
+    end
+
+    it 'correctly initializes with fall_back_to_v1_on_v2_failure as false with any other values' do
+      ['tru', false, 'false', 1, 0, nil, ''].each do |val|
+        [{ fall_back_to_v1_on_v2_failure: val }, { 'fall_back_to_v1_on_v2_failure' => val }].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.fall_back_to_v1_on_v2_failure?).to eq(false)
+        end
+      end
+    end
+
+    it 'correctly initializes with v1_only_sign_requests as true with boolean true or string "true"' do
+      [true, 'true', 'TRUE'].each do |val|
+        [{ v1_only_sign_requests: val }, { 'v1_only_sign_requests' => val }].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.v1_only_sign_requests?).to eq(true)
+        end
+      end
+    end
+
+    it 'correctly initializes with v1_only_sign_requests as false with any other values' do
+      ['tru', false, 'false', 1, 0, nil, ''].each do |val|
+        [{ v1_only_sign_requests: val }, { 'v1_only_sign_requests' => val }].each do |config|
+          mc = MAuth::Client.new(config)
+          expect(mc.v1_only_sign_requests?).to eq(false)
+        end
+      end
+    end
+
+    it 'raises an error if both v1_only_sign_requests and v2_only_sign_requests are set to true' do
+      config = { v1_only_sign_requests: true, v2_only_sign_requests: true }
+      expect { MAuth::Client.new(config) }.to raise_error(MAuth::Client::ConfigurationError)
+    end
   end
 end
