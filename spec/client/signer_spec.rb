@@ -17,6 +17,16 @@ describe MAuth::Client::Signer do
       end
     end
 
+    context 'when the v1_only_sign_requests flag is true' do
+      let(:v1_only_sign_requests) { true }
+
+      it 'adds only X-MWS-Time and X-MWS-Authentication headers when signing' do
+        signed_request = client.signed(request)
+        expect(signed_request.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+        expect(signed_request.headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
+      end
+    end
+
     it 'by default adds X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers when signing' do
       signed_request = client.signed(request)
       expect(signed_request.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time','MCC-Authentication', 'MCC-Time')
@@ -55,6 +65,16 @@ describe MAuth::Client::Signer do
         signed_headers = client.signed_headers(request)
         expect(signed_headers.keys).to include('MCC-Authentication', 'MCC-Time')
         expect(signed_headers.keys).not_to include('X-MWS-Authentication', 'X-MWS-Time')
+      end
+    end
+
+    context 'when the v1_only_sign_requests flag is true' do
+      let(:v1_only_sign_requests) { true }
+
+      it 'returns only X-MWS-Time and X-MWS-Authentication headers when signing' do
+        signed_headers = client.signed_headers(request)
+        expect(signed_headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time')
+        expect(signed_headers.keys).not_to include('MCC-Authentication', 'MCC-Time')
       end
     end
 
