@@ -145,7 +145,6 @@ describe MAuth::Client::Signer do
 
       it 'returns accurate v2 signature' do
         signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
-        puts signature_v2
         expect(signature_v2).to eq(testing_info[:signatures][:v2_binary])
       end
     end
@@ -160,7 +159,6 @@ describe MAuth::Client::Signer do
 
       it 'returns accurate v2 signature' do
         signature_v2 = client.signature_v2(request.string_to_sign_v2({}))
-        puts signature_v2
         expect(signature_v2).to eq(testing_info[:signatures][:v2_empty])
       end
     end
