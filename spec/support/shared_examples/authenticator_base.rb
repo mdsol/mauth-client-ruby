@@ -1,3 +1,4 @@
+require 'byebug'
 shared_examples MAuth::Client::AuthenticatorBase do
   context 'when v2 and v1 headers are present on the object to authenticate' do
     it 'authenticates with v2' do
@@ -93,6 +94,30 @@ shared_examples MAuth::Client::AuthenticatorBase do
           MAuth::InauthenticError,
           /Time verification failed\. No MCC-Time present\./
         )
+      end
+
+      context 'disable_fallback_to_v1_on_v2_failure flag is set to true' do
+        let(:disable_fallback_to_v1_on_v2_failure) { true }
+
+        it "does not fall back to V1 when it has no MCC-time" do
+          signed_request = client.signed(request)
+          signed_request.headers.delete('MCC-Time')
+
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::InauthenticError,
+            /Time verification failed\. No MCC-Time present\./
+          )
+        end
+
+        it "falls back to V1 when it has a bad V2 token" do
+          signed_request = client.signed(request)
+          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, 'mws2')
+
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::InauthenticError,
+            /Token verification failed\./
+          )
+        end
       end
     end
 
