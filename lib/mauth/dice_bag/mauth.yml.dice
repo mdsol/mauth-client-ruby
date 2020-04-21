@@ -7,7 +7,7 @@ common: &common
   private_key_file: config/mauth_key
   v2_only_authenticate: <%= configured.v2_only_authenticate || 'false' %>
   v2_only_sign_requests: <%= configured.v2_only_sign_requests || 'false' %>
-  fall_back_to_v1_on_v2_failure: <%= configured.fall_back_to_v1_on_v2_failure || 'true' %>
+  disable_fallback_to_v1_on_v2_failure: <%= configured.disable_fallback_to_v1_on_v2_failure || 'false' %>
   v1_only_sign_requests: <%= configured.v1_only_sign_requests || 'false' %>
 
 production:

@@ -153,7 +153,7 @@ module MAuth
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
       @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.downcase == 'true'
       @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.downcase == 'true'
-      @config['fall_back_to_v1_on_v2_failure'] = given_config['fall_back_to_v1_on_v2_failure'].to_s.downcase == 'true'
+      @config['disable_fallback_to_v1_on_v2_failure'] = given_config['disable_fallback_to_v1_on_v2_failure'].to_s.downcase == 'true'
       @config['v1_only_sign_requests'] = given_config['v1_only_sign_requests'].to_s.downcase == 'true'
 
       if @config['v2_only_sign_requests'] && @config['v1_only_sign_requests']
@@ -211,8 +211,8 @@ module MAuth
       @config['v2_only_authenticate']
     end
 
-    def fall_back_to_v1_on_v2_failure?
-      @config['fall_back_to_v1_on_v2_failure']
+    def disable_fallback_to_v1_on_v2_failure?
+      @config['disable_fallback_to_v1_on_v2_failure']
     end
 
     def v1_only_sign_requests?

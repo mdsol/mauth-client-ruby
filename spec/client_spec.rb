@@ -113,20 +113,20 @@ describe MAuth::Client do
       end
     end
 
-    it 'correctly initializes with fall_back_to_v1_on_v2_failure as true with boolean true or string "true"' do
+    it 'correctly initializes with disable_fallback_to_v1_on_v2_failure as true with boolean true or string "true"' do
       [true, 'true', 'TRUE'].each do |val|
-        [{ fall_back_to_v1_on_v2_failure: val }, { 'fall_back_to_v1_on_v2_failure' => val }].each do |config|
+        [{ disable_fallback_to_v1_on_v2_failure: val }, { 'disable_fallback_to_v1_on_v2_failure' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.fall_back_to_v1_on_v2_failure?).to eq(true)
+          expect(mc.disable_fallback_to_v1_on_v2_failure?).to eq(true)
         end
       end
     end
 
-    it 'correctly initializes with fall_back_to_v1_on_v2_failure as false with any other values' do
+    it 'correctly initializes with disable_fallback_to_v1_on_v2_failure as false with any other values' do
       ['tru', false, 'false', 1, 0, nil, ''].each do |val|
-        [{ fall_back_to_v1_on_v2_failure: val }, { 'fall_back_to_v1_on_v2_failure' => val }].each do |config|
+        [{ disable_fallback_to_v1_on_v2_failure: val }, { 'disable_fallback_to_v1_on_v2_failure' => val }].each do |config|
           mc = MAuth::Client.new(config)
-          expect(mc.fall_back_to_v1_on_v2_failure?).to eq(false)
+          expect(mc.disable_fallback_to_v1_on_v2_failure?).to eq(false)
         end
       end
     end
