@@ -25,7 +25,7 @@ module ProtocolHelper
       end
 
       def cases
-        Dir.children("#{CASE_PATH}")
+        File.exist?(CASE_PATH) ? Dir.children(CASE_PATH) : []
       end
     end
   end
