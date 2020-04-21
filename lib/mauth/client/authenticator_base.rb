@@ -26,6 +26,7 @@ module MAuth
             authenticate_v2!(object)
           rescue InauthenticError => e
             raise e if v2_only_authenticate?
+            raise e unless fall_back_to_v1_on_v2_failure?
 
             object.fall_back_to_mws_signature_info
             raise e unless object.signature

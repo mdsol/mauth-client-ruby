@@ -30,6 +30,8 @@ module MAuth
       def signed_headers(object, attributes = {})
         if v2_only_sign_requests?
           signed_headers_v2(object, attributes)
+        elsif v1_only_sign_requests?
+          signed_headers_v1(object, attributes)
         else # by default sign with both the v1 and v2 protocol
           signed_headers_v1(object, attributes).merge(signed_headers_v2(object, attributes))
         end
