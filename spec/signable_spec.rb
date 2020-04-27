@@ -230,40 +230,20 @@ describe MAuth::Signable do
   end
 
   describe 'normalize_path' do
-    it 'normalizes self (".") in the path' do
-      path = '/./example/./.'
-      expected = '/example/'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
+
+    shared_examples_for "normalize_path" do |desc, path, expected|
+      it "normalize_path: #{desc}" do
+        expect(dummy_inst.normalize_path(path)).to eq(expected)
+      end
     end
 
-    it 'normalizes parent ("..") in path' do
-      path = '/example/sample/..'
-      expected = '/example/'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
-    end
-
-    it 'normalizes parent ("..") that points to non-existent parent' do
-      path = '/example/sample/../../../..'
-      expected = '/'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
-    end
-
-    it 'normalizes case of percent encoded characters' do
-      path = '/%2b'
-      expected = '/%2B'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
-    end
-
-    it 'normalizs multiple adjacent slashes to a single slash' do
-      path = '//example///sample'
-      expected = '/example/sample'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
-    end
-
-    it 'preserves trailing slashes' do
-      path = '/example/'
-      expected = '/example/'
-      expect(dummy_inst.normalize_path(path)).to eq(expected)
-    end
+    include_examples 'normalize_path', 'self (".") in the path', '/./example/./.', '/example/'
+    include_examples 'normalize_path', 'parent ("..") in path', '/example/sample/..', '/example/'
+    include_examples 'normalize_path', 'parent ("..") that points to non-existent parent',
+      '/example/sample/../../../..', '/'
+      include_examples 'normalize_path', 'case of percent encoded characters', '/%2b', '/%2B'
+    include_examples 'normalize_path', 'multiple adjacent slashes to a single slash',
+      '//example///sample', '/example/sample'
+    include_examples 'normalize_path', 'preserves trailing slashes', '/example/', '/example/'
   end
 end
