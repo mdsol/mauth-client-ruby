@@ -135,7 +135,7 @@ module ProtocolHelper
     end
 
     def write_file(ext, contents)
-      File.open("#{CASE_PATH}/#{case_name}/#{case_name}.#{ext}", 'w') { |f| f.write(contents) }
+      File.write("#{CASE_PATH}/#{case_name}/#{case_name}.#{ext}", contents)
     end
 
     def file_by_ext(ext)
