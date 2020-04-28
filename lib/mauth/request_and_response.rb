@@ -89,7 +89,7 @@ module MAuth
       # String#squeeze removes duplicated slahes i.e. /// => /
       # String#gsub normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
       Addressable::URI.normalize_path(path).squeeze('/').
-        gsub(/%[a-f0-9]{2}/) { |escape_sequence| escape_sequence.upcase }
+        gsub(/%[a-f0-9]{2}/, &:upcase)
     end
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
