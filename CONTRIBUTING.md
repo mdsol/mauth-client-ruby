@@ -19,6 +19,14 @@ Next, run the tests:
 bundle exec rspec
 ```
 
+# Running mauth-protocol-test-suite
+
+To run the mauth-protocol-test-suite clone the latest test suite onto your machine and place it in the same parent directory as this repo (or supply the ENV var `TEST_SUITE_RELATIVE_PATH` with the path to the test suite relative to this repo). Then run:
+
+```
+bundle exec rspec --tag protocol_suite
+```
+
 ## Running Benchmark
 
 If you make changes which could affect performance, please run the benchmark before and after the change as a sanity check.

@@ -1,4 +1,5 @@
 require 'digest'
+require 'addressable'
 
 module MAuth
   # module which composes a string to sign.
@@ -61,7 +62,8 @@ module MAuth
       # string_to_sign_v2 three times in client#signature_valid_v2!
       # note that if :body is nil we hash an empty string ('')
       attrs_with_overrides[:body_digest] ||= Digest::SHA512.hexdigest(attrs_with_overrides[:body] || '')
-      attrs_with_overrides[:encoded_query_params] = encode_query_string(attrs_with_overrides[:query_string] || '')
+      attrs_with_overrides[:encoded_query_params] = unescape_encode_query_string(attrs_with_overrides[:query_string] || '')
+      attrs_with_overrides[:request_url] = normalize_path(attrs_with_overrides[:request_url])
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
         attrs_with_overrides.dig(key)
@@ -78,10 +80,25 @@ module MAuth
       end.join("\n")
     end
 
+    # Addressable::URI.parse(path).normalize.to_s.squeeze('/')
+    def normalize_path(path)
+      return if path.nil?
+
+      # Addressable::URI.normalize_path normalizes `.` and `..` in path
+      #   i.e. /./example => /example ; /example/.. => /
+      # String#squeeze removes duplicated slahes i.e. /// => /
+      # String#gsub normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
+      Addressable::URI.normalize_path(path).squeeze('/').
+        gsub(/%[a-f0-9]{2}/, &:upcase)
+    end
+
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
-    def encode_query_string(q_string)
-      q_string.split('&').sort.map do |part|
+    def unescape_encode_query_string(q_string)
+      q_string.split('&').map do |part|
+        k, e, v = part.partition('=')
+        CGI.unescape(k) + e + CGI.unescape(v)
+      end.sort.map do |part|
         k, e, v = part.partition('=')
         uri_escape(k) + e + uri_escape(v)
       end.join('&')
