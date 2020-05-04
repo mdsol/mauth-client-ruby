@@ -95,12 +95,11 @@ module MAuth
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
     def unescape_encode_query_string(q_string)
-      q_string.split('&').map do |part|
-        k, e, v = part.partition('=')
-        CGI.unescape(k) + e + CGI.unescape(v)
-      end.sort.map do |part|
-        k, e, v = part.partition('=')
-        uri_escape(k) + e + uri_escape(v)
+      fir = q_string.split('&').map do |part|
+        k, _eq, v = part.partition('=')
+        [CGI.unescape(k), CGI.unescape(v)]
+      end.sort.map do |k, v|
+        "#{uri_escape(k)}=#{uri_escape(v)}"
       end.join('&')
     end
 
