@@ -1,4 +1,3 @@
-require 'byebug'
 shared_examples MAuth::Client::AuthenticatorBase do
   context 'when v2 and v1 headers are present on the object to authenticate' do
     it 'authenticates with v2' do

@@ -71,7 +71,7 @@ test:
 - `mauth_api_version` - Required for authentication but not for signing. only `v1` exists as of this writing.
 - `v2_only_sign_requests` - If true, all outgoing requests will be signed with only the V2 protocol.
 - `v2_only_authenticate` - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected.
-- `disable_fallback_to_v1_on_v2_failure` - If true, any incoming V2 requests that fail authentication will fall back to V1 authentication.
+- `disable_fallback_to_v1_on_v2_failure` - If true, any incoming V2 requests that fail authentication will not fall back to V1 authentication.
 - `v1_only_sign_requests` - If true, all outgoing requests will be signed with only the V1 protocol. Note, cannot be `true` if `v2_only_sign_requests` is also `true`.
 
 ## Usage in your application
