@@ -159,56 +159,42 @@ describe MAuth::Signable do
   end
 
   describe 'unescape_encode_query_string' do
-    it 'uri encodes special characters in keys and values of the parameters' do
-      qs = "key=-_.~!@#$%^*(){}|:\"'`<>?"
-      expected = 'key=-_.~%21%40%23%24%25%5E%2A%28%29%7B%7D%7C%3A%22%27%60%3C%3E%3F'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
+
+    shared_examples_for 'unescape_encode_query_string' do |desc, qs, expected|
+      it "unescape_encode_query_string: #{desc}" do
+        expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
+      end
     end
 
-    it 'sorts query parameters by code point in ascending order' do
-      qs = '∞=v&キ=v&0=v&a=v'
-      expected = '0=v&a=v&%E2%88%9E=v&%E3%82%AD=v'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string',
+      'uri encodes special characters in keys and values of the parameters',
+      "key=-_.~!@#$%^*(){}|:\"'`<>?", 'key=-_.~%21%40%23%24%25%5E%2A%28%29%7B%7D%7C%3A%22%27%60%3C%3E%3F'
 
-    it 'sorts query parameters by value if keys are the same' do
-      qs = 'a=b&a=c&a=a'
-      expected = 'a=a&a=b&a=c'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string', 'sorts query parameters by code point in ascending order',
+      '∞=v&キ=v&0=v&a=v', '0=v&a=v&%E2%88%9E=v&%E3%82%AD=v'
 
-    it 'properly handles query strings with empty values' do
-      qs = 'k=&k=v'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(qs)
-    end
+    include_examples 'unescape_encode_query_string', 'sorts query parameters by value if keys are the same',
+      'a=b&a=c&a=a', 'a=a&a=b&a=c'
 
-    it 'properly handles empty strings' do
-      expect(dummy_inst.unescape_encode_query_string('')).to eq('')
-    end
+    include_examples 'unescape_encode_query_string', 'sorts query with the same base string correctly',
+      'key2=value2&key=value', 'key=value&key2=value2'
 
-    it 'unescapes special characters in the query string before encoding them' do
-      qs = 'key=-_.%21%40%23%24%25%5E%2A%28%29%20%7B%7D%7C%3A%22%27%60%3C%3E%3F'
-      expected = 'key=-_.%21%40%23%24%25%5E%2A%28%29%20%7B%7D%7C%3A%22%27%60%3C%3E%3F'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string', 'properly handles query strings with empty values',
+      'k=&k=v', 'k=&k=v'
 
-    it 'unescapes "%7E" to "~"' do
-      qs = 'k=%7E'
-      expected = 'k=~'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string', 'properly handles empty strings', '', ''
 
-    it 'unescapes "+" to " "' do
-      qs = 'k=+'
-      expected = 'k=%20'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string',
+      'unescapes special characters in the query string before encoding them',
+      'key=-_.%21%40%23%24%25%5E%2A%28%29%20%7B%7D%7C%3A%22%27%60%3C%3E%3F',
+      'key=-_.%21%40%23%24%25%5E%2A%28%29%20%7B%7D%7C%3A%22%27%60%3C%3E%3F'
 
-    it 'sorts after unescaping' do
-      qs = 'k=%7E&k=~&k=%40&k=a'
-      expected = 'k=%40&k=a&k=~&k=~'
-      expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
-    end
+    include_examples 'unescape_encode_query_string', 'unescapes "%7E" to "~"', 'k=%7E', 'k=~'
+
+    include_examples 'unescape_encode_query_string', 'unescapes "+" to " "', 'k=+', 'k=%20'
+
+    include_examples 'unescape_encode_query_string', 'sorts after unescaping',
+      'k=%7E&k=~&k=%40&k=a', 'k=%40&k=a&k=~&k=~'
   end
 
   describe 'uri_escape' do
@@ -231,7 +217,7 @@ describe MAuth::Signable do
 
   describe 'normalize_path' do
 
-    shared_examples_for "normalize_path" do |desc, path, expected|
+    shared_examples_for 'normalize_path' do |desc, path, expected|
       it "normalize_path: #{desc}" do
         expect(dummy_inst.normalize_path(path)).to eq(expected)
       end
