@@ -69,10 +69,10 @@ test:
 - `app_uuid` - Required in the same circumstances where a `private_key` is required.
 - `mauth_baseurl` - Required for authentication but not for signing. Needed for local authentication to retrieve public keys and for remote authentication. Usually this is `https://mauth.imedidata.com` for production.
 - `mauth_api_version` - Required for authentication but not for signing. only `v1` exists as of this writing.
-- `v2_only_sign_requests` - If true, all outgoing requests will be signed with only the V2 protocol.
-- `v2_only_authenticate` - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected.
-- `disable_fallback_to_v1_on_v2_failure` - If true, any incoming V2 requests that fail authentication will not fall back to V1 authentication.
-- `v1_only_sign_requests` - If true, all outgoing requests will be signed with only the V1 protocol. Note, cannot be `true` if `v2_only_sign_requests` is also `true`.
+- `v2_only_sign_requests` - If true, all outgoing requests will be signed with only the V2 protocol. Defaults to false.
+- `v2_only_authenticate` - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected. Defaults to false.
+- `disable_fallback_to_v1_on_v2_failure` - If true, any incoming V2 requests that fail authentication will not fall back to V1 authentication. Defaults to false.
+- `v1_only_sign_requests` - If true, all outgoing requests will be signed with only the V1 protocol. Defaults to true. Note, cannot be `true` if `v2_only_sign_requests` is also `true`.
 
 ## Usage in your application
 
