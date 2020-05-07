@@ -15,7 +15,8 @@ describe MAuth::Client::RemoteRequestAuthenticator do
         mauth_baseurl: 'http://whatever',
         mauth_api_version: 'v1',
         app_uuid: 'authenticator',
-        v2_only_authenticate: v2_only_authenticate
+        v2_only_authenticate: v2_only_authenticate,
+        disable_fallback_to_v1_on_v2_failure: disable_fallback_to_v1_on_v2_failure
       )
     end
     let(:test_faraday) do

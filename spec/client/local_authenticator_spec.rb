@@ -16,7 +16,8 @@ describe MAuth::Client::LocalAuthenticator do
         mauth_api_version: 'v1',
         private_key: OpenSSL::PKey::RSA.generate(2048),
         app_uuid: 'authenticator',
-        v2_only_authenticate: v2_only_authenticate
+        v2_only_authenticate: v2_only_authenticate,
+        disable_fallback_to_v1_on_v2_failure: disable_fallback_to_v1_on_v2_failure
       )
     end
     let(:test_faraday) do

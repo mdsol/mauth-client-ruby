@@ -132,7 +132,7 @@ module MAuth
   # - #x_mws_time
   module Signed
     # mauth_client will authenticate with the highest protocol version present and if authentication fails,
-    # will fallback to lower protocol versions (if provided).
+    # will fall back to lower protocol versions (if provided).
     # returns a hash with keys :token, :app_uuid, and :signature parsed from the MCC-Authentication header
     # if it is present and if not then the X-MWS-Authentication header if it is present.
     # Note MWSV2 protocol no longer allows more than one space between the token and app uuid.
