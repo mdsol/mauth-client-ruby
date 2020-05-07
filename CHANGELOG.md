@@ -1,9 +1,10 @@
 ## v.6.0.0
 - Added parsing code to test with mauth-protocol-test-suite.
 - Added unescape step in query_string encoding in order to remove 'double encoding'.
-- Added normalization of paths
-- Changed V2 to V1 fallback to be configurable.
+- Added normalization of paths.
 - Added flag to sign only with V1.
+- Changed V2 to V1 fallback to be configurable.
+- Fixed bug in sorting query parameters.
 
 ## v5.1.0
 - Fall back to V1 when V2 authentication fails.
