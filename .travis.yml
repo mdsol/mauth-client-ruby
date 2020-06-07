@@ -2,24 +2,33 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.3.8
-  - 2.4.6
-  - 2.5.5
-  - 2.6.3
+  - 2.3
+  - 2.4
+  - 2.5
+  - 2.6
+  - 2.7
+
+gemfile:
+  - gemfiles/faraday_0.x.gemfile
+  - gemfiles/faraday_1.x.gemfile
 
 before_install:
   - gem update --system -N > /dev/null && echo "Rubygems version $(gem --version)"
-  - gem install bundler --force -N -v=2.0.1 && bundle --version
+  - gem install bundler --force -N -v=2.1.4 && bundle --version
 
 install:
   - bundle install --jobs=3 --retry=3
-  - |-
-    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_install.sh | bash -s -- -b $TRAVIS_BUILD_DIR
+  - >-
+    curl -H 'Cache-Control: no-cache'
+    https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_install.sh |
+    bash -s -- -b $TRAVIS_BUILD_DIR
 
 script:
   - bundle exec rspec
-  - |-
-    curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_run.sh | bash -s -- -b $TRAVIS_BUILD_DIR
+  - >-
+    curl -H 'Cache-Control: no-cache'
+    https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/master/travis_ci/fossa_run.sh |
+    bash -s -- -b $TRAVIS_BUILD_DIR
 
 deploy:
   provider: rubygems
@@ -29,4 +38,4 @@ deploy:
   on:
     tags: true
     repo: mdsol/mauth-client-ruby
-    condition: "$TRAVIS_RUBY_VERSION == 2.6.3"
+    condition: $TRAVIS_RUBY_VERSION == 2.7 && $BUNDLE_GEMFILE == $TRAVIS_BUILD_DIR/gemfiles/faraday_1.x.gemfile

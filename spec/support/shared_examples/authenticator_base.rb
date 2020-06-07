@@ -191,7 +191,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       end
     end
 
-    [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
+    [::Faraday::ConnectionFailed, ::Faraday::TimeoutError].each do |error_klass|
       it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
         allow(test_faraday).to receive(:get).and_raise(error_klass.new('')) # for the local authenticator
         allow(test_faraday).to receive(:post).and_raise(error_klass.new('')) # for the remote authenticator

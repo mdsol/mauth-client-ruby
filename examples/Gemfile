@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'faraday', '~> 0.15'
+gem 'faraday', '~> 1.0'
 gem 'mauth-client', path: '..'

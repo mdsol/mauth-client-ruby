@@ -42,7 +42,7 @@ module MAuth
       def make_mauth_request(authentication_ticket)
         begin
           response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
-        rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
+        rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
           logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
