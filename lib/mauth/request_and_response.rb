@@ -26,7 +26,7 @@ module MAuth
     # for responses:
     #   string_to_sign =
     #     status_code_string + <LF> +
-    #     response_body_digest + <LF> +
+    #     response_body + <LF> +
     #     app_uuid + <LF> +
     #     current_seconds_since_epoch
     def string_to_sign_v1(more_attributes)
