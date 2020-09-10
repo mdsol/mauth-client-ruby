@@ -13,7 +13,7 @@ gemfile:
   - gemfiles/faraday_1.x.gemfile
 
 before_install:
-  - gem update --system -N > /dev/null && echo "Rubygems version $(gem --version)"
+  - gem update --system --force -N > /dev/null && echo "Rubygems version $(gem --version)"
   - gem install bundler --force -N -v=2.1.4 && bundle --version
 
 install:
