@@ -27,7 +27,7 @@ module MAuth
             url_encoded_app_uuid = URI.escape(app_uuid, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
             begin
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
-            rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError => e
+            rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
               msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
               @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
               raise UnableToAuthenticateError, msg

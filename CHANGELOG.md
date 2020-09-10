@@ -1,4 +1,7 @@
-## v.6.0.0
+## v6.1.0
+* Allow Faraday 1.x.
+
+## v6.0.0
 - Added parsing code to test with mauth-protocol-test-suite.
 - Added unescape step in query_string encoding in order to remove 'double encoding'.
 - Added normalization of paths.

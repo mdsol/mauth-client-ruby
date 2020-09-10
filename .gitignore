@@ -6,5 +6,9 @@
 /yardoc
 /log
 
+# Appraisal related files
+/gemfiles/.bundle/
+/gemfiles/*.gemfile.lock
+
 /Gemfile.lock
 .byebug_history

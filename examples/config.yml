@@ -6,3 +6,7 @@ mauth:
   mauth_api_version: v1
   app_uuid: <APP UUID>
   private_key_file: ./mauth_key
+  v2_only_authenticate: false
+  v2_only_sign_requests: false
+  disable_fallback_to_v1_on_v2_failure: true
+  v1_only_sign_requests: false
