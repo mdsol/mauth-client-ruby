@@ -43,7 +43,7 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
 
       it 'escapes app_uuid' do
         expect_any_instance_of(Faraday::Connection)
-          .to receive(:get).with("/mauth/v1/security_tokens/!'()*%2B%2C%2F%3A%3B%3D%3F%40%5B%5D.json")
+          .to receive(:get).with("/mauth/v1/security_tokens/%21%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D.json")
           .and_return(response)
 
         subject.get(service_app_uuid)
