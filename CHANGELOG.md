@@ -1,3 +1,6 @@
+## v6.1.1
+* Replace `URI.escape` with `CGI.escape` in SecurityTokenCacher to suppress "URI.escape is obsolete" warning.
+
 ## v6.1.0
 * Allow Faraday 1.x.
 

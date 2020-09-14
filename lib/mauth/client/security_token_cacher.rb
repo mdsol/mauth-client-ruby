@@ -23,8 +23,7 @@ module MAuth
           if !@cache[app_uuid] || @cache[app_uuid].expired?
             # url-encode the app_uuid to prevent trickery like escaping upward with ../../ in a malicious
             # app_uuid - probably not exploitable, but this is the right way to do it anyway.
-            # use UNRESERVED instead of UNSAFE (the default) as UNSAFE doesn't include /
-            url_encoded_app_uuid = URI.escape(app_uuid, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
+            url_encoded_app_uuid = CGI.escape(app_uuid)
             begin
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
             rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
