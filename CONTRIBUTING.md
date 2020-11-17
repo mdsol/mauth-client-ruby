@@ -4,7 +4,7 @@
 
 This repo contains the submodule `mauth-protocol-test-suite` so requires a flag when initially cloning in order to clone and init submodules.
 
-With Git > 2.13
+With Git >= 2.13
 
 ```
 git clone --recurse-submodules git@github.com:mdsol/mauth-client-ruby.git
