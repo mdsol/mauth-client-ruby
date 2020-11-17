@@ -16,7 +16,7 @@ With Git < 2.13
 git clone --recursive git@github.com:mdsol/mauth-client-ruby.git
 ```
 
-If you have already cloned a version of this repo before the submodule was introduced in version 6.0.0 then run
+If you have already cloned a version of this repo before the submodule was introduced in version 6.1.2 then run
 
 ```
 cd spec/fixtures/mauth-protocol-test-suite

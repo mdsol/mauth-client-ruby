@@ -1,3 +1,6 @@
+## v6.1.2
+* Add mauth-protocol-test-suite as a Git submodule and run on every Travis build.
+
 ## v6.1.1
 * Replace `URI.escape` with `CGI.escape` in SecurityTokenCacher to suppress "URI.escape is obsolete" warning.
 
