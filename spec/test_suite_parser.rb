@@ -1,12 +1,14 @@
-require 'mauth/client'
-require 'faraday'
+# frozen_string_literal: true
 
 # file to handle loading and parsing of mauth protocol test suite cases in order
 # to run them as rpsec tests
 
+require 'mauth/client'
+require 'faraday'
+
 module ProtocolHelper
-  TEST_SUITE_SUBMODULE_PATH = 'spec/fixtures/mauth-protocol-test-suite'.freeze
-  CASE_PATH = "#{TEST_SUITE_SUBMODULE_PATH}/protocols/MWSV2".freeze
+  TEST_SUITE_SUBMODULE_PATH = 'spec/fixtures/mauth-protocol-test-suite'
+  CASE_PATH = "#{TEST_SUITE_SUBMODULE_PATH}/protocols/MWSV2"
 
   class Config
     class << self
