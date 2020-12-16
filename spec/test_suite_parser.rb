@@ -27,7 +27,8 @@ module ProtocolHelper
       end
 
       def cases
-        Dir.children(CASE_PATH)
+        # Dir.children(CASE_PATH) only added in ruby 2.5.0.
+        Dir.entries(CASE_PATH) - %w[. ..]
       end
     end
   end
