@@ -1,5 +1,5 @@
 ## v6.2.0
-* Drop support for Ruby < 2.5.0
+* Drop support for Ruby < 2.5.0.
 * Add mauth-protocol-test-suite as a Git submodule and run on every Travis build.
 
 ## v6.1.1
