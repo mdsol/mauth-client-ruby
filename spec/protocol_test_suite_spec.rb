@@ -29,7 +29,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
       end
       let(:faraday_req) { MAuth::Faraday::Request.new(faraday_env) }
 
-      unless case_dir.match?(/authentication-only/)
+      unless case_dir =~ /authentication-only/
         context 'signing' do
           it 'generates the corect string to sign' do
             signing_info = {
@@ -63,7 +63,9 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
         let(:path) { req_attrs['url'].split('?')[0] }
         let(:query) { req_attrs['url'].split('?')[1].to_s }
         let(:rackified_auth_headers) do
-          expected_auth_headers.transform_keys! { |k| k.upcase.gsub('-','_').prepend('HTTP_') }
+          # not supported in < Ruby 2.5
+          # expected_auth_headers.transform_keys! { |k| k.upcase.gsub('-','_').prepend('HTTP_') }
+          expected_auth_headers.map { |k, _v| [ k.upcase.gsub('-','_').prepend('HTTP_'), _v ] }.to_h
         end
         let(:mock_rack_env) do
           {
