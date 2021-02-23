@@ -1,5 +1,22 @@
 # Contributing
 
+## Cloning the Repo
+
+This repo contains the submodule `mauth-protocol-test-suite` so requires a flag when initially cloning in order to clone and init submodules.
+
+```
+git clone --recurse-submodules git@github.com:mdsol/mauth-client-ruby.git
+```
+
+If you have already cloned a version of this repo before the submodule was introduced in version 6.1.2 then run
+
+```
+cd spec/fixtures/mauth-protocol-test-suite
+git submodule update --init
+```
+
+to init the submodule.
+
 ## General Information
 
 * Check out the latest develop to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
@@ -17,14 +34,6 @@ Next, run the tests:
 
 ```
 bundle exec rspec
-```
-
-# Running mauth-protocol-test-suite
-
-To run the mauth-protocol-test-suite clone the latest test suite onto your machine and place it in the same parent directory as this repo (or supply the ENV var `TEST_SUITE_RELATIVE_PATH` with the path to the test suite relative to this repo). Then run:
-
-```
-bundle exec rspec --tag protocol_suite
 ```
 
 ## Running Benchmark

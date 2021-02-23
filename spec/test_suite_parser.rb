@@ -1,12 +1,14 @@
-require 'mauth/client'
-require 'faraday'
+# frozen_string_literal: true
 
 # file to handle loading and parsing of mauth protocol test suite cases in order
 # to run them as rpsec tests
 
+require 'mauth/client'
+require 'faraday'
+
 module ProtocolHelper
-  TEST_SUITE_RELATIVE_PATH = ENV['TEST_SUITE_RELATIVE_PATH'] || '../mauth-protocol-test-suite'
-  CASE_PATH = "#{TEST_SUITE_RELATIVE_PATH}/protocols/MWSV2".freeze
+  TEST_SUITE_SUBMODULE_PATH = 'spec/fixtures/mauth-protocol-test-suite'
+  CASE_PATH = "#{TEST_SUITE_SUBMODULE_PATH}/protocols/MWSV2"
 
   class Config
     class << self
@@ -14,18 +16,19 @@ module ProtocolHelper
       attr_reader :request_time, :app_uuid, :mauth_client, :pub_key
 
       def load
-        config_hash = JSON.parse(File.read("#{TEST_SUITE_RELATIVE_PATH}/signing-config.json"))
+        config_hash = JSON.parse(File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-config.json"))
         @request_time = config_hash["request_time"]
         @app_uuid = config_hash["app_uuid"]
         @mauth_client = MAuth::Client.new(
           app_uuid: @app_uuid,
-          private_key_file: File.join(TEST_SUITE_RELATIVE_PATH, config_hash["private_key_file"])
+          private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash["private_key_file"])
         )
-        @pub_key = File.read("#{TEST_SUITE_RELATIVE_PATH}/signing-params/rsa-key-pub")
+        @pub_key = File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-params/rsa-key-pub")
       end
 
       def cases
-        File.exist?(CASE_PATH) ? Dir.children(CASE_PATH) : []
+        # Dir.children(CASE_PATH) only added in ruby 2.5.0 and we support 2.3.
+        Dir.entries(CASE_PATH) - %w[. ..]
       end
     end
   end
