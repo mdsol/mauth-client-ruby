@@ -5,13 +5,13 @@ require_relative '../support/shared_contexts/client.rb'
 require_relative '../support/shared_examples/authenticator_base.rb'
 
 
-describe MAuth::Client::RemoteRequestAuthenticator do
+describe Mauth::Client::RemoteRequestAuthenticator do
   include_context 'client'
 
   describe '#authentic?' do
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
     let(:authenticating_mc) do
-      MAuth::Client.new(
+      Mauth::Client.new(
         mauth_baseurl: 'http://whatever',
         mauth_api_version: 'v1',
         app_uuid: 'authenticator',
@@ -35,12 +35,12 @@ describe MAuth::Client::RemoteRequestAuthenticator do
     end
 
     before do
-      expect(authenticating_mc).to be_kind_of(MAuth::Client::RemoteRequestAuthenticator)
+      expect(authenticating_mc).to be_kind_of(Mauth::Client::RemoteRequestAuthenticator)
       stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }
       allow(::Faraday).to receive(:new).and_return(test_faraday)
     end
 
-    include_examples MAuth::Client::AuthenticatorBase
+    include_examples Mauth::Client::AuthenticatorBase
 
     it 'considers a request to be authentic if mauth reports it so' do
       signed_request = client.signed(request)

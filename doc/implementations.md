@@ -1,4 +1,4 @@
-# MAuth client implementations
+# Mauth client implementations
 
 - .Net: [mauth-client-dotnet](https://github.com/mdsol/mauth-client-dotnet)
 - Clojure: [clojure-mauth-client](https://github.com/mdsol/clojure-mauth-client)

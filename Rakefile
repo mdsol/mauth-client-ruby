@@ -11,8 +11,8 @@ RSpec::Core::RakeTask.new(:spec)
 
 task default: :spec
 
-class TestSignableRequest < MAuth::Request
-  include MAuth::Signed
+class TestSignableRequest < Mauth::Request
+  include Mauth::Signed
   attr_accessor :headers
 
   def merge_headers(headers)
@@ -38,12 +38,12 @@ end
 
 desc 'Runs benchmarks for the library.'
 task :benchmark do
-  mc = MAuth::Client.new(
+  mc = Mauth::Client.new(
     private_key: OpenSSL::PKey::RSA.generate(2048),
     app_uuid: SecureRandom.uuid,
     v2_only_sign_requests: false
   )
-  authenticating_mc = MAuth::Client.new(mauth_baseurl: 'http://whatever', mauth_api_version: 'v1')
+  authenticating_mc = Mauth::Client.new(mauth_baseurl: 'http://whatever', mauth_api_version: 'v1')
 
   stubs = Faraday::Adapter::Test::Stubs.new
   test_faraday = ::Faraday.new do |builder|

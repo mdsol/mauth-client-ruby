@@ -3,7 +3,7 @@ require 'mauth/client'
 require_relative '../support/shared_contexts/client.rb'
 
 
-describe MAuth::Client::Signer do
+describe Mauth::Client::Signer do
   include_context 'client'
 
   describe '#signed' do
@@ -33,13 +33,13 @@ describe MAuth::Client::Signer do
     end
 
     it "can't sign without a private key" do
-      mc = MAuth::Client.new(app_uuid: app_uuid)
-      expect { mc.signed(request) }.to raise_error(MAuth::UnableToSignError)
+      mc = Mauth::Client.new(app_uuid: app_uuid)
+      expect { mc.signed(request) }.to raise_error(Mauth::UnableToSignError)
     end
 
     it "can't sign without an app uuid" do
-      mc = MAuth::Client.new(private_key: OpenSSL::PKey::RSA.generate(2048))
-      expect { mc.signed(request) }.to raise_error(MAuth::UnableToSignError)
+      mc = Mauth::Client.new(private_key: OpenSSL::PKey::RSA.generate(2048))
+      expect { mc.signed(request) }.to raise_error(Mauth::UnableToSignError)
     end
   end
 
@@ -142,13 +142,13 @@ describe MAuth::Client::Signer do
   describe 'cross platform signature testing' do
     let(:testing_info) { JSON.parse(IO.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true) }
     let(:client) do
-      MAuth::Client.new(
+      Mauth::Client.new(
         private_key: testing_info[:private_key],
         app_uuid: testing_info[:app_uuid]
       )
     end
 
-    let(:request) { MAuth::Request.new(attributes_for_signing) }
+    let(:request) { Mauth::Request.new(attributes_for_signing) }
     let(:attributes_for_signing) do
       testing_info[:attributes_for_signing].tap do |attributes|
         attributes[:body] = body

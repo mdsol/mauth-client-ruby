@@ -1,4 +1,4 @@
-module MAuth
+module Mauth
   autoload :Client, 'mauth/client'
   autoload :Middleware, 'mauth/middleware'
   autoload :Faraday, 'mauth/faraday'

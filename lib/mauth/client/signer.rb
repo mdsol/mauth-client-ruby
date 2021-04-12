@@ -1,9 +1,9 @@
 require 'openssl'
 require 'mauth/errors'
 
-# methods to sign requests and responses. part of MAuth::Client
+# methods to sign requests and responses. part of Mauth::Client
 
-module MAuth
+module Mauth
   class Client
     SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
 

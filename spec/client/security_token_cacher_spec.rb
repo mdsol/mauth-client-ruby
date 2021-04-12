@@ -2,10 +2,10 @@ require 'spec_helper'
 require 'faraday'
 require 'mauth/client'
 
-describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
+describe Mauth::Client::LocalAuthenticator::SecurityTokenCacher do
   subject { described_class.new(client) }
   let(:client) do
-    MAuth::Client.new(
+    Mauth::Client.new(
       mauth_baseurl: 'http://whatever',
       mauth_api_version: 'v1',
       private_key: OpenSSL::PKey::RSA.generate(2048),
@@ -33,8 +33,8 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
 
       it "logs and raises UnableToAuthenticateError" do
         expect(client.logger).to receive(:error)
-          .with(/Unable to authenticate with MAuth. Exception mAuth service did not respond; received/)
-        expect { subject.get(service_app_uuid) }.to raise_error(MAuth::UnableToAuthenticateError)
+          .with(/Unable to authenticate with Mauth. Exception mAuth service did not respond; received/)
+        expect { subject.get(service_app_uuid) }.to raise_error(Mauth::UnableToAuthenticateError)
       end
     end
 
@@ -60,8 +60,8 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
 
       it "logs and raises UnableToAuthenticateError" do
         expect(client.logger).to receive(:error)
-          .with(/Unable to authenticate with MAuth. Exception mAuth service responded with unparseable json/)
-        expect { subject.get(service_app_uuid) }.to raise_error(MAuth::UnableToAuthenticateError)
+          .with(/Unable to authenticate with Mauth. Exception mAuth service responded with unparseable json/)
+        expect { subject.get(service_app_uuid) }.to raise_error(Mauth::UnableToAuthenticateError)
       end
     end
 
@@ -71,7 +71,7 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
       it "raises InauthenticError" do
         expect { subject.get(service_app_uuid) }
           .to raise_error(
-            MAuth::InauthenticError,
+            Mauth::InauthenticError,
             "mAuth service responded with 404 looking up public key for #{service_app_uuid}"
           )
       end
@@ -81,7 +81,7 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
       let(:status) { 500 }
 
       it "raises UnableToAuthenticateError" do
-        expect { subject.get(service_app_uuid) }.to raise_error(MAuth::UnableToAuthenticateError)
+        expect { subject.get(service_app_uuid) }.to raise_error(Mauth::UnableToAuthenticateError)
       end
     end
   end

@@ -1,11 +1,11 @@
-module MAuth
+module Mauth
   # mAuth client was unable to verify the authenticity of a signed object (this does NOT mean the
   # object is inauthentic). typically due to a failure communicating with the mAuth service, in
   # which case the error may include the attribute mauth_service_response - a response from
   # the mauth service (if it was contactable at all), which may contain more information about
   # the error.
   class UnableToAuthenticateError < StandardError
-    # the response from the MAuth service encountered when attempting to retrieve authentication
+    # the response from the Mauth service encountered when attempting to retrieve authentication
     attr_accessor :mauth_service_response
   end
 
@@ -14,7 +14,7 @@ module MAuth
   class InauthenticError < StandardError; end
 
   # Used when the incoming request does not contain any mAuth related information
-  class MAuthNotPresent < StandardError; end
+  class MauthNotPresent < StandardError; end
 
   # required information for signing was missing
   class UnableToSignError < StandardError; end

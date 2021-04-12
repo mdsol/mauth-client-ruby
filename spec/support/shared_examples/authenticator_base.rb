@@ -1,4 +1,4 @@
-shared_examples MAuth::Client::AuthenticatorBase do
+shared_examples Mauth::Client::AuthenticatorBase do
   context 'when v2 and v1 headers are present on the object to authenticate' do
     it 'authenticates with v2' do
       signed_request = client.signed(request)
@@ -12,7 +12,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
         signed_request = client.signed(request, time: Time.now.to_i + time_offset)
         message = "expected request signed at #{time_offset} seconds to be inauthentic"
         expect { authenticating_mc.authenticate!(signed_request) }.to(
-          raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
+          raise_error(Mauth::InauthenticError, /Time verification failed\. .* not within 300 of/),
           message
         )
       end
@@ -35,7 +35,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
         signed_request = client.signed(request)
         signed_request.headers.delete('MCC-Time')
         expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-          MAuth::InauthenticError,
+          Mauth::InauthenticError,
           /Time verification failed\. No MCC-Time present\./
         )
       end
@@ -45,7 +45,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
           signed_request = client.signed(request)
           signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
             expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-              MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
+              Mauth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
         end
       end
     end
@@ -90,7 +90,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
         signed_request.headers.delete('MCC-Time')
         signed_request.headers.delete('X-MWS-Authentication')
         expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-          MAuth::InauthenticError,
+          Mauth::InauthenticError,
           /Time verification failed\. No MCC-Time present\./
         )
       end
@@ -103,7 +103,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
           signed_request.headers.delete('MCC-Time')
 
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-            MAuth::InauthenticError,
+            Mauth::InauthenticError,
             /Time verification failed\. No MCC-Time present\./
           )
         end
@@ -113,7 +113,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
           signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, 'mws2')
 
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-            MAuth::InauthenticError,
+            Mauth::InauthenticError,
             /Token verification failed\./
           )
         end
@@ -159,7 +159,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
         signed_request = client.signed_v1(request, time: Time.now.to_i + time_offset)
         message = "expected request signed at #{time_offset} seconds to be inauthentic"
         expect { authenticating_mc.authenticate!(signed_request) }.to(
-          raise_error(MAuth::InauthenticError, /Time verification failed\. .* not within 300 of/),
+          raise_error(Mauth::InauthenticError, /Time verification failed\. .* not within 300 of/),
           message
         )
       end
@@ -178,7 +178,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
     it "considers an authentically-signed request to be inauthentic when it has no x-mws-time" do
       v1_signed_req.headers.delete('X-MWS-Time')
       expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-          MAuth::InauthenticError,
+          Mauth::InauthenticError,
           /Time verification failed\. No x-mws-time present\./
         )
     end
@@ -187,7 +187,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
         v1_signed_req.headers['X-MWS-Authentication'] = v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
         expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-          MAuth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/)
+          Mauth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/)
       end
     end
 
@@ -195,7 +195,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
         allow(test_faraday).to receive(:get).and_raise(error_klass.new('')) # for the local authenticator
         allow(test_faraday).to receive(:post).and_raise(error_klass.new('')) # for the remote authenticator
-        expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
+        expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(Mauth::UnableToAuthenticateError)
       end
     end
 
@@ -203,7 +203,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       stubs.instance_eval{ @stack.clear } #HAX
       stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [500, {}, []] } # for the local authenticator
       stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator
-      expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
+      expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(Mauth::UnableToAuthenticateError)
     end
 
     describe 'logging requester and requestee' do
@@ -237,7 +237,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers.delete('X-MWS-Authentication')
       signed_request.headers.delete('MCC-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MAuthNotPresent,
+        Mauth::MauthNotPresent,
         'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
         'header is blank, MCC-Authentication header is blank.'
       )
@@ -248,7 +248,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers['X-MWS-Authentication'] = ''
       signed_request.headers['MCC-Authentication'] = ''
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MAuthNotPresent,
+        Mauth::MauthNotPresent,
         'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
         ' header is blank, MCC-Authentication header is blank.'
       )
@@ -267,7 +267,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
 
     it 'raises MissingV2Error if v2 headers are not present and v1 headers are present' do
       expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-        MAuth::MissingV2Error
+        Mauth::MissingV2Error
       )
     end
 
@@ -276,7 +276,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers.delete('MCC-Authentication')
       signed_request.headers.delete('X-MWS-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MAuthNotPresent,
+        Mauth::MauthNotPresent,
         'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
       )
     end
@@ -286,7 +286,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers['MCC-Authentication'] = ''
       signed_request.headers.delete('X-MWS-Authentication')
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-        MAuth::MAuthNotPresent,
+        Mauth::MauthNotPresent,
         'Authentication Failed. No mAuth signature present; MCC-Authentication header is blank.'
       )
     end

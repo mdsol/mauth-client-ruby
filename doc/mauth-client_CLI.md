@@ -1,16 +1,16 @@
-# MAuth-Client CLI Tool
+# Mauth-Client CLI Tool
 
-MAuth-Client provides a Command Line Interface (CLI) tool to make MAuth-signed requests and verify MAuth-signed responses.
+Mauth-Client provides a Command Line Interface (CLI) tool to make Mauth-signed requests and verify Mauth-signed responses.
 
 ## Installation
 
-The MAuth-Client CLI is part of the MAuth Client gem, refer to [the README](../README.md#installation) for installation instructions.
+The Mauth-Client CLI is part of the Mauth Client gem, refer to [the README](../README.md#installation) for installation instructions.
 
 ## Configuration
 
 The CLI is configured with a [mauth.yml](./mauth.yml.md) file - see its page for instructions.
 
-The MAuth-Client CLI tool looks for the configuration file in several places:
+The Mauth-Client CLI tool looks for the configuration file in several places:
 
 - if an environment variable `MAUTH_CONFIG_YML` points to an existing file, mauth-client will use that file if it exists.
 - if you have a file `~/.mauth_config.yml` then it will use that. This is useful if you have your own mauth key.
@@ -53,7 +53,7 @@ bundle exec mauth-client POST https://eureka-innovate.imedidata.com/v1/deploymen
 
 ## Output
 
-MAuth-Client CLI's default output is designed to look like the output of `curl -v`.
+Mauth-Client CLI's default output is designed to look like the output of `curl -v`.
 It includes all headers, body, and other components of the http request.
 This can be suppressed with the `-q` (quiet) option, in which case only the response body will be output.
 The normal output (not the quiet version) is colorized by default if connected to a tty device (e.g. a terminal).

@@ -74,12 +74,12 @@ unless mauth_config_yml
   abort message
 end
 
-mauth_config = MAuth::Client.default_config(:mauth_config_yml => File.expand_path(mauth_config_yml))
+mauth_config = Mauth::Client.default_config(:mauth_config_yml => File.expand_path(mauth_config_yml))
 
 # INSTANTIATE MAUTH CLIENT
 
 logger = Logger.new(STDERR)
-mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
+mauth_client = Mauth::Client.new(mauth_config.merge('logger' => logger))
 
 # OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE
 
@@ -213,10 +213,10 @@ if $options[:no_ssl_verify]
   faraday_options[:ssl] = {:verify => false}
 end
 connection = Faraday.new(faraday_options) do |builder|
-  builder.use MAuth::Faraday::MAuthClientUserAgent, "MAuth-Client CLI"
-  builder.use MAuth::Faraday::RequestSigner, :mauth_client => mauth_client
+  builder.use Mauth::Faraday::MauthClientUserAgent, "Mauth-Client CLI"
+  builder.use Mauth::Faraday::RequestSigner, :mauth_client => mauth_client
   if $options[:authenticate_response]
-    builder.use MAuth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
+    builder.use Mauth::Faraday::ResponseAuthenticator, :mauth_client => mauth_client
   end
   builder.use $options[:verbose] ? FaradayCurlVOutputter : FaradayOutputter
   builder.adapter Faraday.default_adapter
@@ -251,10 +251,10 @@ end
 
 begin
   response = connection.run_request(httpmethod.downcase.to_sym, url, body, headers)
-rescue MAuth::InauthenticError, MAuth::UnableToAuthenticateError, MAuth::MAuthNotPresent, MAuth::MissingV2Error => e
+rescue Mauth::InauthenticError, Mauth::UnableToAuthenticateError, Mauth::MauthNotPresent, Mauth::MissingV2Error => e
   if $options[:color].nil? ? STDERR.tty? : $options[:color]
-    class_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :intense_yellow : :intense_red)
-    message_color = Term::ANSIColor.method(e.is_a?(MAuth::UnableToAuthenticateError) ? :yellow : :red)
+    class_color = Term::ANSIColor.method(e.is_a?(Mauth::UnableToAuthenticateError) ? :intense_yellow : :intense_red)
+    message_color = Term::ANSIColor.method(e.is_a?(Mauth::UnableToAuthenticateError) ? :yellow : :red)
   else
     class_color = proc{|s| s }
     message_color = proc{|s| s }

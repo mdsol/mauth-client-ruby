@@ -2,7 +2,7 @@ require 'mauth/middleware'
 require 'mauth/request_and_response'
 require 'rack/utils'
 
-module MAuth
+module Mauth
   module Rack
     # middleware which will check that a request is authentically signed.
     #
@@ -13,9 +13,9 @@ module MAuth
     # - should_authenticate_check: a proc which should accept a rack env as an argument,
     #   and return true if the request should be authenticated; false if not. if the result
     #   from this is false, the request is passed to the app with no authentication performed.
-    class RequestAuthenticator < MAuth::Middleware
+    class RequestAuthenticator < Mauth::Middleware
       def call(env)
-        mauth_request = MAuth::Rack::Request.new(env)
+        mauth_request = Mauth::Rack::Request.new(env)
         env['mauth.protocol_version'] = mauth_request.protocol_version
 
         return @app.call(env) unless should_authenticate?(env)
@@ -33,7 +33,7 @@ module MAuth
           else
             response_for_inauthentic_request(env)
           end
-        rescue MAuth::UnableToAuthenticateError
+        rescue Mauth::UnableToAuthenticateError
           response_for_unable_to_authenticate(env)
         end
       end
@@ -60,7 +60,7 @@ module MAuth
       end
 
       # response when the authenticity of the request cannot be determined, due to
-      # a problem communicating with the MAuth service. responds with a status of 500 and
+      # a problem communicating with the Mauth service. responds with a status of 500 and
       # a message.
       def response_for_unable_to_authenticate(env)
         handle_head(env) do
@@ -82,7 +82,7 @@ module MAuth
       end
     end
 
-    # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status
+    # same as Mauth::Rack::RequestAuthenticator, but does not authenticate /app_status
     class RequestAuthenticatorNoAppStatus < RequestAuthenticator
       def should_authenticate?(env)
         env['PATH_INFO'] != "/app_status" && super
@@ -90,7 +90,7 @@ module MAuth
     end
 
     # signs outgoing responses with only the protocol used to sign the request.
-    class ResponseSigner < MAuth::Middleware
+    class ResponseSigner < Mauth::Middleware
       def call(env)
         unsigned_response = @app.call(env)
 
@@ -105,14 +105,14 @@ module MAuth
             # v2_only_sign_requests flag is set to true.
             :signed
           end
-        response = mauth_client.send(method, MAuth::Rack::Response.new(*unsigned_response))
+        response = mauth_client.send(method, Mauth::Rack::Response.new(*unsigned_response))
         response.status_headers_body
       end
     end
 
     # representation of a request composed from a rack request env which can be passed to a
     # Mauth::Client for authentication
-    class Request < MAuth::Request
+    class Request < Mauth::Request
       include Signed
       attr_reader :env
       def initialize(env)
@@ -152,7 +152,7 @@ module MAuth
 
     # representation of a response composed from a rack response (status, headers, body) which
     # can be passed to a Mauth::Client for signing
-    class Response < MAuth::Response
+    class Response < Mauth::Response
       def initialize(status, headers, body)
         @status = status
         @headers = headers

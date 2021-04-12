@@ -19,7 +19,7 @@ module ProtocolHelper
         config_hash = JSON.parse(File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-config.json"))
         @request_time = config_hash["request_time"]
         @app_uuid = config_hash["app_uuid"]
-        @mauth_client = MAuth::Client.new(
+        @mauth_client = Mauth::Client.new(
           app_uuid: @app_uuid,
           private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash["private_key_file"])
         )
@@ -104,7 +104,7 @@ module ProtocolHelper
         body: req_attrs['body']
       }
 
-      req = MAuth::Faraday::Request.new(faraday_env)
+      req = Mauth::Faraday::Request.new(faraday_env)
     end
 
     def sts

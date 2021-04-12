@@ -13,7 +13,7 @@ require 'mauth/client/remote_authenticator'
 require 'mauth/client/signer'
 require 'mauth/errors'
 
-module MAuth
+module Mauth
   # does operations which require a private key and corresponding app uuid. this is primarily:
   # - signing outgoing requests and responses
   # - authenticating incoming requests and responses, which may require retrieving the appropriate
@@ -21,7 +21,7 @@ module MAuth
   #   key)
   #
   # this nominally operates on request and response objects, but really the only requirements are
-  # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as
+  # that the object responds to the methods of Mauth::Signable and/or Mauth::Signed (as
   # appropriate)
   class Client
     MWS_TOKEN = 'MWS'.freeze
@@ -31,7 +31,7 @@ module MAuth
     include AuthenticatorBase
     include Signer
 
-    # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in
+    # returns a configuration (to be passed to Mauth::Client.new) which is configured from information stored in
     # standard places. all of which is overridable by options in case some defaults do not apply.
     #
     # options (may be symbols or strings) - any or all may be omitted where your usage conforms to the defaults.
@@ -40,7 +40,7 @@ module MAuth
     # - environment: the environment, pertaining to top-level keys of the configuration yaml files. by default,
     #   tries Rails.environment, ENV['RAILS_ENV'], and ENV['RACK_ENV'], and falls back to 'development' if none
     #   of these are set.
-    # - mauth_config - MAuth configuration. defaults to load this from a yaml file (see mauth_config_yml option)
+    # - mauth_config - Mauth configuration. defaults to load this from a yaml file (see mauth_config_yml option)
     #   which is assumed to be keyed with the environment at the root. if this is specified, no yaml file is
     #   loaded, and the given config is passed through with any other defaults applied. at the moment, the only
     #   other default is to set the logger.
@@ -51,7 +51,7 @@ module MAuth
       options = options.stringify_symbol_keys
 
       # find the app_root (relative to which we look for yaml files). note that this
-      # is different than MAuth::Client.root, the root of the mauth-client library.
+      # is different than Mauth::Client.root, the root of the mauth-client library.
       app_root = options['root'] || begin
         if Object.const_defined?('Rails') && ::Rails.respond_to?(:root) && ::Rails.root
           Rails.root
@@ -80,9 +80,9 @@ module MAuth
         if mauth_config_yml && File.exist?(mauth_config_yml)
           whole_config = ConfigFile.load(mauth_config_yml)
           errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
-          whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
+          whole_config[env] || raise(Mauth::Client::ConfigurationError, errmessage)
         else
-          raise MAuth::Client::ConfigurationError, "could not find mauth config yaml file. this file may be " \
+          raise Mauth::Client::ConfigurationError, "could not find mauth config yaml file. this file may be " \
             "placed in #{default_loc}, specified with the mauth_config_yml option, or specified with the " \
             "MAUTH_CONFIG_YML environment variable."
         end
@@ -104,7 +104,7 @@ module MAuth
     # config keys may be strings or symbols):
     # - private_key - required for signing and for authenticating responses. may be omitted if
     #   only remote authentication of requests is being performed (with
-    #   MAuth::Rack::RequestAuthenticator). may be given as a string or a OpenSSL::PKey::RSA
+    #   Mauth::Rack::RequestAuthenticator). may be given as a string or a OpenSSL::PKey::RSA
     #   instance.
     # - app_uuid - required in the same circumstances where a private_key is required
     # - mauth_baseurl - required. needed for local authentication to retrieve public keys; needed
@@ -130,7 +130,7 @@ module MAuth
        when OpenSSL::PKey::RSA
          given_config['private_key']
        else
-         raise MAuth::Client::ConfigurationError, "unrecognized value given for 'private_key' - this may be a " \
+         raise Mauth::Client::ConfigurationError, "unrecognized value given for 'private_key' - this may be a " \
            "String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
       end
       @config['app_uuid'] = given_config['app_uuid']
@@ -157,7 +157,7 @@ module MAuth
       @config['v1_only_sign_requests'] = given_config['v1_only_sign_requests'].to_s.downcase == 'true'
 
       if @config['v2_only_sign_requests'] && @config['v1_only_sign_requests']
-        raise MAuth::Client::ConfigurationError, "v2_only_sign_requests and v1_only_sign_requests may not both be true"
+        raise Mauth::Client::ConfigurationError, "v2_only_sign_requests and v1_only_sign_requests may not both be true"
       end
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false
@@ -165,7 +165,7 @@ module MAuth
         @config['authenticator'] = given_config['authenticator']
       else
         if client_app_uuid && private_key
-          # MAuth::Client can authenticate locally if it's provided a client_app_uuid and private_key
+          # Mauth::Client can authenticate locally if it's provided a client_app_uuid and private_key
           @config['authenticator'] = LocalAuthenticator
         else
           # otherwise, it will authenticate remotely (requests only)
@@ -184,11 +184,11 @@ module MAuth
     end
 
     def mauth_baseurl
-      @config['mauth_baseurl'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_baseurl!")
+      @config['mauth_baseurl'] || raise(Mauth::Client::ConfigurationError, "no configured mauth_baseurl!")
     end
 
     def mauth_api_version
-      @config['mauth_api_version'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_api_version!")
+      @config['mauth_api_version'] || raise(Mauth::Client::ConfigurationError, "no configured mauth_api_version!")
     end
 
     def private_key

@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'mauth/request_and_response'
 require 'mauth/client'
 
-describe MAuth::Signable do
+describe Mauth::Signable do
   let(:more_attrs) { { time: Time.now, app_uuid: 'signer' } }
   let(:resp_attrs) { { status_code: 200, body: '{"k": "v"}' }.merge(more_attrs) }
   let(:req_attrs) do
@@ -12,13 +12,13 @@ describe MAuth::Signable do
   let(:frozen_req_attrs) { req_attrs.each_with_object({}) { |(k, v), h| h[k] = v.is_a?(String) ? v.freeze : v } }
   let(:dummy_cls) do
     class Dummy
-      include MAuth::Signable
+      include Mauth::Signable
     end
     Dummy.send(:remove_const, const_name) if Dummy.const_defined?(const_name)
     Dummy.const_set(const_name, sig_components)
     Dummy
   end
-  let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
+  let(:dummy_inst) { Class.new { include Mauth::Signable }.new({}) }
 
 
   describe 'string_to_sign_v1' do
@@ -32,7 +32,7 @@ describe MAuth::Signable do
           req_attrs.delete(component)
           dummy_inst = dummy_cls.new(req_attrs)
           expect { dummy_inst.string_to_sign_v1({}) }
-            .to raise_error(MAuth::UnableToSignError)
+            .to raise_error(Mauth::UnableToSignError)
         end
       end
 
@@ -51,7 +51,7 @@ describe MAuth::Signable do
           resp_attrs.delete(component)
           dummy_inst = dummy_cls.new(resp_attrs)
           expect { dummy_inst.string_to_sign_v1({}) }
-            .to raise_error(MAuth::UnableToSignError)
+            .to raise_error(Mauth::UnableToSignError)
         end
       end
 
@@ -76,7 +76,7 @@ describe MAuth::Signable do
           req_attrs.delete(component)
           dummy_req = dummy_cls.new(req_attrs)
           expect { dummy_req.string_to_sign_v2({}) }
-            .to raise_error(MAuth::UnableToSignError)
+            .to raise_error(Mauth::UnableToSignError)
         end
       end
 
@@ -131,7 +131,7 @@ describe MAuth::Signable do
           resp_attrs.delete(component)
           dummy_resp = dummy_cls.new(resp_attrs)
           expect { dummy_resp.string_to_sign_v2({}) }
-            .to raise_error(MAuth::UnableToSignError)
+            .to raise_error(Mauth::UnableToSignError)
         end
       end
 

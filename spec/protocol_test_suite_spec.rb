@@ -2,7 +2,7 @@ require 'test_suite_parser'
 require 'faraday'
 require 'mauth/client'
 
-describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: true do
+describe 'Mauth Client passes the MWSV2 protocol test suite', protocol_suite: true do
   let(:app_uuid) { ProtocolHelper::Config.app_uuid }
   let(:request_time) { ProtocolHelper::Config.request_time }
   let(:mauth_client) { ProtocolHelper::Config.mauth_client }
@@ -27,7 +27,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
           body: body
         }
       end
-      let(:faraday_req) { MAuth::Faraday::Request.new(faraday_env) }
+      let(:faraday_req) { Mauth::Faraday::Request.new(faraday_env) }
 
       unless case_dir =~ /authentication-only/
         context 'signing' do
@@ -82,7 +82,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
         end
 
         it 'considers the authentically-signed request to be authentic' do
-          rack_req = MAuth::Rack::Request.new(mock_rack_env)
+          rack_req = Mauth::Rack::Request.new(mock_rack_env)
           expect { mauth_client.authenticate!(rack_req) }.not_to raise_error
         end
       end

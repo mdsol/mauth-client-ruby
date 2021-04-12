@@ -1,4 +1,4 @@
-module MAuth
+module Mauth
   class Client
     module LocalAuthenticator
       class SecurityTokenCacher
@@ -28,7 +28,7 @@ module MAuth
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
             rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
               msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
-              @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+              @mauth_client.logger.error("Unable to authenticate with Mauth. Exception #{msg}")
               raise UnableToAuthenticateError, msg
             end
             if response.status == 200
@@ -36,7 +36,7 @@ module MAuth
                 security_token = JSON.parse(response.body)
               rescue JSON::ParserError => e
                 msg =  "mAuth service responded with unparseable json: #{response.body}\n#{e.class}: #{e.message}"
-                @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+                @mauth_client.logger.error("Unable to authenticate with Mauth. Exception #{msg}")
                 raise UnableToAuthenticateError, msg
               end
               @cache_write_lock.synchronize do
@@ -59,8 +59,8 @@ module MAuth
           require 'mauth/faraday'
           @mauth_client.faraday_options[:ssl] = { ca_path: @mauth_client.ssl_certs_path } if @mauth_client.ssl_certs_path
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
-            builder.use MAuth::Faraday::MAuthClientUserAgent
-            builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
+            builder.use Mauth::Faraday::MauthClientUserAgent
+            builder.use Mauth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
             builder.adapter ::Faraday.default_adapter
           end
         end

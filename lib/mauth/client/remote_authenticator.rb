@@ -1,6 +1,6 @@
 # methods for remotely authenticating a request by sending it to the mauth service
 
-module MAuth
+module Mauth
   class Client
     module RemoteRequestAuthenticator
       private
@@ -8,7 +8,7 @@ module MAuth
       # takes an incoming request object (no support for responses currently), and errors if the
       # object is not authentic according to its signature
       def signature_valid_v1!(object)
-        raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
+        raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(Mauth::Request)
         authentication_ticket = {
           'verb' => object.attributes_for_signing[:verb],
           'app_uuid' => object.signature_app_uuid,
@@ -21,7 +21,7 @@ module MAuth
       end
 
       def signature_valid_v2!(object)
-        unless object.is_a?(MAuth::Request)
+        unless object.is_a?(Mauth::Request)
           msg = "Remote Authenticator can only authenticate requests; received #{object.inspect}"
           raise ArgumentError, msg
         end
@@ -44,7 +44,7 @@ module MAuth
           response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
         rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
-          logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+          logger.error("Unable to authenticate with Mauth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end
         if (200..299).cover?(response.status)
@@ -65,7 +65,7 @@ module MAuth
         require 'faraday'
         require 'faraday_middleware'
         @mauth_connection ||= ::Faraday.new(mauth_baseurl, faraday_options) do |builder|
-          builder.use MAuth::Faraday::MAuthClientUserAgent
+          builder.use Mauth::Faraday::MauthClientUserAgent
           builder.use FaradayMiddleware::EncodeJson
           builder.adapter ::Faraday.default_adapter
         end

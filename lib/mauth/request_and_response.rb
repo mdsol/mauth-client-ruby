@@ -1,7 +1,7 @@
 require 'digest'
 require 'addressable'
 
-module MAuth
+module Mauth
   # module which composes a string to sign.
   #
   # includer must provide
@@ -172,7 +172,7 @@ module MAuth
 
     def mcc_data
       mcc_authentication&.match(
-        /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
+        /\A(#{Mauth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{Mauth::Client::AUTH_HEADER_DELIMITER}\z/
       )
     end
 

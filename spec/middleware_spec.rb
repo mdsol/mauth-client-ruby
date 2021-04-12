@@ -4,7 +4,7 @@ require 'mauth/rack'
 require 'mauth/fake/rack'
 require 'mauth/faraday'
 
-shared_examples MAuth::Middleware do
+shared_examples Mauth::Middleware do
   it 'uses a given mauth_client if given' do
     mauth_client = double
     expect(mauth_client).to eq(described_class.new(double('app'), mauth_client: mauth_client).mauth_client)
@@ -19,14 +19,14 @@ shared_examples MAuth::Middleware do
   end
 end
 
-describe MAuth::Rack do
+describe Mauth::Rack do
   let(:res) { [200, {}, ['hello world']] }
   let(:rack_app) { proc { |_env| res } }
   let(:v2_only_authenticate) { false }
   let(:mw) { described_class.new(rack_app, v2_only_authenticate: v2_only_authenticate) }
 
-  describe MAuth::Rack::RequestAuthenticator do
-    include_examples MAuth::Middleware
+  describe Mauth::Rack::RequestAuthenticator do
+    include_examples Mauth::Middleware
 
     it 'calls the app without authentication if should_authenticate check indicates not to' do
       mw_auth_false = described_class.new(rack_app, should_authenticate_check: proc { false })
@@ -72,7 +72,7 @@ describe MAuth::Rack do
     end
 
     it 'returns 500 and does not call the app if unable to authenticate' do
-      expect(mw.mauth_client).to receive(:authentic?).and_raise(MAuth::UnableToAuthenticateError.new(''))
+      expect(mw.mauth_client).to receive(:authentic?).and_raise(Mauth::UnableToAuthenticateError.new(''))
       expect(rack_app).not_to receive(:call)
       status, headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
       expect(500).to eq(status)
@@ -97,7 +97,7 @@ describe MAuth::Rack do
     end
   end
 
-  describe MAuth::Rack::RequestAuthenticationFaker do
+  describe Mauth::Rack::RequestAuthenticationFaker do
     it 'does not call check authenticity for any request by default' do
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw.mauth_client).not_to receive(:authentic?)
@@ -148,8 +148,8 @@ describe MAuth::Rack do
     end
   end
 
-  describe MAuth::Rack::ResponseSigner do
-    include_examples MAuth::Middleware
+  describe Mauth::Rack::ResponseSigner do
+    include_examples Mauth::Middleware
 
     context 'request with v2 headers' do
       let(:env) do
@@ -163,8 +163,8 @@ describe MAuth::Rack do
       it 'signs the response with only v2' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
         expect(mw.mauth_client).to receive(:signed_v2).with(
-            an_instance_of(MAuth::Rack::Response)
-          ).and_return(MAuth::Rack::Response.new(*res))
+            an_instance_of(Mauth::Rack::Response)
+          ).and_return(Mauth::Rack::Response.new(*res))
         mw.call(env)
       end
     end
@@ -181,8 +181,8 @@ describe MAuth::Rack do
       it 'signs the response with only v1' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
         expect(mw.mauth_client).to receive(:signed_v1).with(
-            an_instance_of(MAuth::Rack::Response)
-          ).and_return(MAuth::Rack::Response.new(*res))
+            an_instance_of(Mauth::Rack::Response)
+          ).and_return(Mauth::Rack::Response.new(*res))
         mw.call(env)
       end
     end
@@ -198,18 +198,18 @@ describe MAuth::Rack do
       it 'signs the response with the default headers' do
         allow(rack_app).to receive(:call).with(env).and_return(res)
         expect(mw.mauth_client).to receive(:signed).with(
-            an_instance_of(MAuth::Rack::Response)
-          ).and_return(MAuth::Rack::Response.new(*res))
+            an_instance_of(Mauth::Rack::Response)
+          ).and_return(Mauth::Rack::Response.new(*res))
         mw.call(env)
       end
     end
   end
 end
 
-describe MAuth::Faraday do
+describe Mauth::Faraday do
 
-  describe MAuth::Faraday::ResponseAuthenticator do
-    include_examples MAuth::Middleware
+  describe Mauth::Faraday::ResponseAuthenticator do
+    include_examples Mauth::Middleware
     let(:faraday_app) do
       proc do
         res = Object.new
@@ -234,13 +234,13 @@ describe MAuth::Faraday do
     end
 
     it 'raises InauthenticError on inauthentic response' do
-      allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::InauthenticError.new)
-      expect{ mw.call({}) }.to raise_error(MAuth::InauthenticError)
+      allow(mw.mauth_client).to receive(:authenticate!).and_raise(Mauth::InauthenticError.new)
+      expect{ mw.call({}) }.to raise_error(Mauth::InauthenticError)
     end
 
     it 'raises UnableToAuthenticateError when unable to authenticate' do
-      allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::UnableToAuthenticateError.new)
-      expect{ mw.call({}) }.to raise_error(MAuth::UnableToAuthenticateError)
+      allow(mw.mauth_client).to receive(:authenticate!).and_raise(Mauth::UnableToAuthenticateError.new)
+      expect{ mw.call({}) }.to raise_error(Mauth::UnableToAuthenticateError)
     end
 
     it 'is usable via the name mauth_response_authenticator' do
@@ -252,8 +252,8 @@ describe MAuth::Faraday do
     end
   end
 
-  describe MAuth::Faraday::RequestSigner do
-    include_examples MAuth::Middleware
+  describe Mauth::Faraday::RequestSigner do
+    include_examples Mauth::Middleware
 
     it 'is usable via the name mauth_request_signer' do
       # if this doesn't error, that's fine; means it looked up the middleware and is using it
@@ -264,7 +264,7 @@ describe MAuth::Faraday do
     end
   end
 
-  describe MAuth::Faraday::MAuthClientUserAgent do
+  describe Mauth::Faraday::MauthClientUserAgent do
     class FakeApp
       def call(env)
       end
@@ -278,7 +278,7 @@ describe MAuth::Faraday do
       request_env = {}
       request_env[:request_headers] = request_headers
       middleware.call(request_env)
-      expected = "#{agent_base} (MAuth-Client: #{MAuth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+      expected = "#{agent_base} (Mauth-Client: #{Mauth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
       expect(request_headers['User-Agent']).to eq(expected)
     end
   end

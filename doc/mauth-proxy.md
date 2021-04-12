@@ -2,13 +2,13 @@
 
 ## Overview
 
-mauth-proxy is a command-line tool to forward requests to a service, signing each one with a MAuth signature and verifying responses from the service.
+mauth-proxy is a command-line tool to forward requests to a service, signing each one with a Mauth signature and verifying responses from the service.
 
 mauth-proxy wraps a Rack server, which listens on localhost (external connections are not allowed, for security).
-mauth-proxy takes each request, signs it with a specified MAuth configuration, and makes a request to the given service.
-The response from the service is authenticated with MAuth, and is returned as the response to the original request.
+mauth-proxy takes each request, signs it with a specified Mauth configuration, and makes a request to the given service.
+The response from the service is authenticated with Mauth, and is returned as the response to the original request.
 
-The intent is to allow users to point any HTTP or REST client they care to use at a service which authenticates with MAuth, without the client needing to know how to generate MAuth signatures or authenticate MAuth-signed responses.
+The intent is to allow users to point any HTTP or REST client they care to use at a service which authenticates with Mauth, without the client needing to know how to generate Mauth signatures or authenticate Mauth-signed responses.
 
 The proxy has two modes: single-target and browser proxy mode. In browser proxy mode, it can be configured as a HTTP proxy in a browser and will direct the requests to any URL in the request while signing requests to URLs that are listed in the command line.
 In single-target mode, all requests will be directed to the server specified in the command line.
@@ -34,7 +34,7 @@ If the beginning of the requested URL matches one of the URLs you specified, it 
 
 ## Options
 
-The location of the mauth configuration can be specified or infered automatically, see the [MAuth-Client CLI Tool doc](./mauth-client_CLI.md#configuration) for more details.
+The location of the mauth configuration can be specified or infered automatically, see the [Mauth-Client CLI Tool doc](./mauth-client_CLI.md#configuration) for more details.
 
 The last command-line argument MUST be a target URI to which requests will be forwarded.
 

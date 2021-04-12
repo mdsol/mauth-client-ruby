@@ -5,7 +5,7 @@ require 'openssl'
 # methods to verify the authenticity of signed requests and responses locally, retrieving
 # public keys from the mAuth service as needed
 
-module MAuth
+module Mauth
   class Client
     module LocalAuthenticator
       private
@@ -103,7 +103,7 @@ module MAuth
 
       def verify_signature_v2!(object, actual, pubkey, expected_str_to_sign)
         pubkey.verify(
-          MAuth::Client::SIGNING_DIGEST,
+          Mauth::Client::SIGNING_DIGEST,
           actual,
           expected_str_to_sign
         )

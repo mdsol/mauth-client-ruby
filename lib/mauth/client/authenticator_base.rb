@@ -1,6 +1,6 @@
 # methods common to RemoteRequestAuthenticator and LocalAuthenticator
 
-module MAuth
+module Mauth
   class Client
     module AuthenticatorBase
       ALLOWED_DRIFT_SECONDS = 300
@@ -12,7 +12,7 @@ module MAuth
         begin
           authenticate!(object)
           true
-        rescue InauthenticError, MAuthNotPresent, MissingV2Error
+        rescue InauthenticError, MauthNotPresent, MissingV2Error
           false
         end
       end
@@ -48,7 +48,7 @@ module MAuth
           sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
           msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
           logger.warn("mAuth signature not present on #{object.class}. Exception: #{msg}")
-          raise MAuthNotPresent, msg
+          raise MauthNotPresent, msg
         end
       end
 

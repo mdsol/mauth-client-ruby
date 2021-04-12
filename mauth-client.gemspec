@@ -4,7 +4,7 @@ require 'mauth/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'mauth-client'
-  spec.version       = MAuth::VERSION
+  spec.version       = Mauth::VERSION
   spec.authors       = ['Matthew Szenher', 'Aaron Suggs', 'Geoffrey Ducharme', 'Ethan']
   spec.email         = ['mszenher@mdsol.com']
   spec.summary       = 'Sign and authenticate requests and responses with mAuth authentication.'

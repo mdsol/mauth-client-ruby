@@ -1,8 +1,8 @@
 # mauth.yml
 
-The conventional way to configure MAuth-Client for your project is through a YAML file which lives in your project at `config/mauth.yml`.
-It is keyed on environment, and for the most part its contents are passed directly to instantiate an MAuth::Client.
-See the documentation for [MAuth::Client#initialize](../lib/mauth/client.rb) for more details of what it accepts.
+The conventional way to configure Mauth-Client for your project is through a YAML file which lives in your project at `config/mauth.yml`.
+It is keyed on environment, and for the most part its contents are passed directly to instantiate an Mauth::Client.
+See the documentation for [Mauth::Client#initialize](../lib/mauth/client.rb) for more details of what it accepts.
 
 ## Generating keys
 
@@ -76,9 +76,9 @@ test:
 
 ## Usage in your application
 
-Load mauth.yml, merge in any other configuration that is needed for your usage, and pass the config along to instantiate a `MAuth::Client` or a middleware.
+Load mauth.yml, merge in any other configuration that is needed for your usage, and pass the config along to instantiate a `Mauth::Client` or a middleware.
 See the [README](../README.md) for more detail.
 
-## Usage in MAuth-Client executables (mauth-client, mauth-proxy)
+## Usage in Mauth-Client executables (mauth-client, mauth-proxy)
 
-See the [MAuth-Client CLI Tool doc](./mauth-client_CLI.md#configuration).
+See the [Mauth-Client CLI Tool doc](./mauth-client_CLI.md#configuration).

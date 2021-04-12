@@ -1,25 +1,25 @@
 require 'mauth/middleware'
 require 'mauth/request_and_response'
 
-Faraday::Request.register_middleware(mauth_request_signer: proc { MAuth::Faraday::RequestSigner })
-Faraday::Response.register_middleware(mauth_response_authenticator: proc { MAuth::Faraday::ResponseAuthenticator })
+Faraday::Request.register_middleware(mauth_request_signer: proc { Mauth::Faraday::RequestSigner })
+Faraday::Response.register_middleware(mauth_response_authenticator: proc { Mauth::Faraday::ResponseAuthenticator })
 
-module MAuth
+module Mauth
   module Faraday
     # faraday middleware to sign outgoing requests
-    class RequestSigner < MAuth::Middleware
+    class RequestSigner < Mauth::Middleware
       def call(request_env)
-        signed_request_env = mauth_client.signed(MAuth::Faraday::Request.new(request_env)).request_env
+        signed_request_env = mauth_client.signed(Mauth::Faraday::Request.new(request_env)).request_env
         @app.call(signed_request_env)
       end
     end
 
     # faraday middleware to authenticate incoming responses
-    class ResponseAuthenticator < MAuth::Middleware
+    class ResponseAuthenticator < Mauth::Middleware
       def call(request_env)
         @app.call(request_env).on_complete do |response_env|
-          mauth_response = MAuth::Faraday::Response.new(response_env)
-          mauth_client.authenticate!(mauth_response) # raises MAuth::InauthenticError when inauthentic
+          mauth_response = Mauth::Faraday::Response.new(response_env)
+          mauth_client.authenticate!(mauth_response) # raises Mauth::InauthenticError when inauthentic
           response_env['mauth.app_uuid'] = mauth_response.signature_app_uuid
           response_env['mauth.authentic'] = true
           response_env
@@ -29,7 +29,7 @@ module MAuth
 
     # representation of a request (outgoing) composed from a Faraday request env which can be
     # passed to a Mauth::Client for signing
-    class Request < MAuth::Request
+    class Request < Mauth::Request
       attr_reader :request_env
       def initialize(request_env)
         @request_env = request_env
@@ -56,7 +56,7 @@ module MAuth
 
     # representation of a Response (incoming) composed from a Faraday response env which can be
     # passed to a Mauth::Client for authentication
-    class Response < MAuth::Response
+    class Response < Mauth::Response
       include Signed
       attr_reader :response_env
       def initialize(response_env)
@@ -84,15 +84,15 @@ module MAuth
       end
     end
 
-    # add MAuth-Client's user-agent to a request
-    class MAuthClientUserAgent
+    # add Mauth-Client's user-agent to a request
+    class MauthClientUserAgent
       def initialize(app, agent_base = "Mauth-Client")
         @app = app
         @agent_base = agent_base
       end
 
       def call(request_env)
-        agent = "#{@agent_base} (MAuth-Client: #{MAuth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
+        agent = "#{@agent_base} (Mauth-Client: #{Mauth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
         request_env[:request_headers]['User-Agent'] ||= agent
         @app.call(request_env)
       end

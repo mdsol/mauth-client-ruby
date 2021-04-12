@@ -2,29 +2,29 @@ require 'mauth/client'
 require 'faraday'
 require 'rack'
 
-module MAuth
-  # MAuth::Proxy is a simple Rack application to take incoming requests, sign them with MAuth, and
-  # proxy them to a target URI. the responses from the target may be authenticated, with MAuth
+module Mauth
+  # Mauth::Proxy is a simple Rack application to take incoming requests, sign them with Mauth, and
+  # proxy them to a target URI. the responses from the target may be authenticated, with Mauth
   # (and are by default).
   class Proxy
     # target_uri is the base relative to which requests are made.
     #
     # options:
     # - :authenticate_responses - boolean, default true. whether responses will be authenticated.
-    #   if this is true and an inauthentic response is encountered, then MAuth::InauthenticError
+    #   if this is true and an inauthentic response is encountered, then Mauth::InauthenticError
     #   will be raised.
-    # - :mauth_config - configuration passed to MAuth::Client.new (see its doc). default is
-    #   MAuth::Client.default_config
+    # - :mauth_config - configuration passed to Mauth::Client.new (see its doc). default is
+    #   Mauth::Client.default_config
     def initialize(target_uri, options = {})
       @target_uris = target_uri
       @browser_proxy = options.delete(:browser_proxy)
       @options = options
       options = { authenticate_responses: true }.merge(options)
-      options[:mauth_config] ||= MAuth::Client.default_config
+      options[:mauth_config] ||= Mauth::Client.default_config
       if @browser_proxy # Browser proxy mode
         @signer_connection = ::Faraday.new do |builder|
-          builder.use MAuth::Faraday::RequestSigner, options[:mauth_config]
-          builder.use MAuth::Faraday::ResponseAuthenticator, options[:mauth_config] if options[:authenticate_responses]
+          builder.use Mauth::Faraday::RequestSigner, options[:mauth_config]
+          builder.use Mauth::Faraday::ResponseAuthenticator, options[:mauth_config] if options[:authenticate_responses]
           builder.adapter ::Faraday.default_adapter
         end
         @unsigned_connection = ::Faraday.new do |builder|
@@ -32,8 +32,8 @@ module MAuth
         end
       else # hard-wired mode
         @connection = ::Faraday.new(target_uri) do |builder|
-          builder.use MAuth::Faraday::RequestSigner, options[:mauth_config]
-          builder.use MAuth::Faraday::ResponseAuthenticator, options[:mauth_config] if options[:authenticate_responses]
+          builder.use Mauth::Faraday::RequestSigner, options[:mauth_config]
+          builder.use Mauth::Faraday::ResponseAuthenticator, options[:mauth_config] if options[:authenticate_responses]
           builder.adapter ::Faraday.default_adapter
         end
       end

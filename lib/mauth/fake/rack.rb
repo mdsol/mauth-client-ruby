@@ -1,6 +1,6 @@
 require 'mauth/rack'
 
-module MAuth
+module Mauth
   module Rack
     # This middleware bypasses actual authentication (it does not invoke mauth_client.authentic?).  It
     # instead uses a class attr method (is_authenic?) to determine if the request should be deemed authentic or not.
@@ -12,7 +12,7 @@ module MAuth
     # Note that if your application does not use env['mauth.app_uuid'] or env['mauth.authentic'] then it
     # may be simpler to simply omit the request authentication middleware entirely in your test environment
     # (rather than switching to this fake one), as all this does is add those keys to the request env.
-    class RequestAuthenticationFaker < MAuth::Rack::RequestAuthenticator
+    class RequestAuthenticationFaker < Mauth::Rack::RequestAuthenticator
       class << self
         def is_authentic?
           @is_authentic.nil? ? true : @is_authentic
@@ -25,7 +25,7 @@ module MAuth
 
       def call(env)
         retval = if should_authenticate?(env)
-          mauth_request = MAuth::Rack::Request.new(env)
+          mauth_request = Mauth::Rack::Request.new(env)
           env['mauth.protocol_version'] = mauth_request.protocol_version
 
           if self.class.is_authentic?

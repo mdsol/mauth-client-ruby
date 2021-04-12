@@ -19,7 +19,7 @@ def get_data_from_imedidata(resource_name)
   puts "fetching #{resource_name}..."
   begin
     connection = Faraday::Connection.new(url: config["imedidata"]["host"]) do |builder|
-      builder.use MAuth::Faraday::RequestSigner, config["mauth"]
+      builder.use Mauth::Faraday::RequestSigner, config["mauth"]
       builder.adapter Faraday.default_adapter
     end
 

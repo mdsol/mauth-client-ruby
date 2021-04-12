@@ -53,7 +53,7 @@
 - Use String#bytesize method instead of Rack::Utils' one, which was removed in Rack 2.0
 
 ## v3.1.3
-- Increased the default timeout when fetching keys from MAuth from 1 second to 10 seconds
+- Increased the default timeout when fetching keys from Mauth from 1 second to 10 seconds
 - Properly honor faraday_options: timeout in mauth.yml for faraday < 0.9
 
 ## v3.1.2
@@ -63,7 +63,7 @@
 - Properly require version file. Solves exception with the Faraday middleware.
 
 ## v3.1.0
-- Updated `mauth.rb.dice` template to use `MAuth::Client.default_config` method and store the config in `MAUTH_CONF` constant
+- Updated `mauth.rb.dice` template to use `Mauth::Client.default_config` method and store the config in `MAUTH_CONF` constant
 
 ## v3.0.2
 - Always pass a private key to the `ensure_is_private_key` method
@@ -107,22 +107,22 @@
 ## v2.6.0
 - CLI option --no-ssl-verify disables SSL verification
 - Syntax highlighting with CodeRay colorizes request and response bodies of recognized media types
-- MAuth::Proxy class now lives in lib, in mauth/proxy, and may be used as a rack application
+- Mauth::Proxy class now lives in lib, in mauth/proxy, and may be used as a rack application
 - mauth-proxy executable recognizes --no-authenticate option for responses
-- MAuth::Proxy bugfix usage of REQUEST_URI; use Rack::Request#fullpath instead
+- Mauth::Proxy bugfix usage of REQUEST_URI; use Rack::Request#fullpath instead
 
 ## v2.5.0
-- MAuth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests and requests which it is unable to authenticate
-- Added MAuth::Client.default_config method
+- Mauth::Rack::RequestAuthenticator middleware responds with json (instead of text/plain) for inauthentic requests and requests which it is unable to authenticate
+- Added Mauth::Client.default_config method
 - Added mauth-proxy executable
 - Faraday middlewares are registered with Faraday
 - Rack middleware correctly handles Content-Length with HEAD requests
-- MAuth::Client raises MAuth::Client::ConfigurationError instead of ArgumentError or RuntimeError as appropriate
+- Mauth::Client raises Mauth::Client::ConfigurationError instead of ArgumentError or RuntimeError as appropriate
 
 ## v2.4.0
 - Colorized output from the mauth-client CLI
 - Add --content-type option to CLI
-- CLI rescues and prints MAuth errors instead of them bubbling up to the interpreter
+- CLI rescues and prints Mauth errors instead of them bubbling up to the interpreter
 - Improved method documentation
 - Fix default null logger on windows where /dev/null is not available
 - Improve error logging
@@ -132,7 +132,7 @@
 - More informative help messages from mauth-client CLI
 - CLI sets a user-agent
 - Handling timeout errors is fixed (previously only handled connection errors)
-- Middleware MAuth::Rack::RequestAuthenticationFaker for testing
+- Middleware Mauth::Rack::RequestAuthenticationFaker for testing
 - More and better specs
 
 ## v2.2.0
@@ -140,7 +140,7 @@
 - Improves the CLI, adding command-line options --[no-]authenticate to decide whether to authenticate responses, and --[no-]verbose to decide whether to dump the entire request and response, or just the response body. and --help to
   Remind you.
 - Fixes mauth-client CLI being registered as an executable in the gemspec - now it should be possible to just `bundle exec mauth-client` if you have the gem bundle installed (or just `mauth-client` if you have it installed as a regular gem, but that's less straightforward)
-- New middleware MAuth::Rack::RequestAuthenticatorNoAppStatus - same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status. this will be the most commonly used case, so made it its own middleware.
+- New middleware Mauth::Rack::RequestAuthenticatorNoAppStatus - same as Mauth::Rack::RequestAuthenticator, but does not authenticate /app_status. this will be the most commonly used case, so made it its own middleware.
 - Middleware responds to HEAD requests correctly in error conditions, not including a response body
 - Drops backports dependency (Ben has found some issues with this gem, and it was easier to drop the depedency entirely than figure out whether these issues affected mauth-client and if it could be fixed)
 - Fix issue with remote authentication against the currently-deployed mauth service with a request signed by a nonexistent app_uuid
@@ -149,7 +149,7 @@
 - Fix an issue in a case where the rack.input is not rewound before mauth-client attempts to read it
 
 ## v2.1.0
-- MAuth::Client handles the :private_key_file, so you can remove from your application the bit that does that - this bit can be deleted:
+- Mauth::Client handles the :private_key_file, so you can remove from your application the bit that does that - this bit can be deleted:
 ```
 if mauth_conf['private_key_file']
   mauth_conf['private_key'] = File.read(mauth_conf['private_key_file'])

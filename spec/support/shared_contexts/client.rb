@@ -9,7 +9,7 @@ shared_context 'client' do
   let(:v2_signed_req) { client.signed_v2(request) }
   let(:signing_key) { OpenSSL::PKey::RSA.generate(2048) }
   let(:client) do
-    MAuth::Client.new(
+    Mauth::Client.new(
       private_key: signing_key,
       app_uuid: app_uuid,
       v2_only_sign_requests: v2_only_sign_requests,
@@ -20,8 +20,8 @@ shared_context 'client' do
   end
 
   require 'mauth/request_and_response'
-  class TestSignableRequest < MAuth::Request
-    include MAuth::Signed
+  class TestSignableRequest < Mauth::Request
+    include Mauth::Signed
     attr_accessor :headers
 
     def merge_headers(headers)

@@ -5,13 +5,13 @@ require_relative '../support/shared_contexts/client.rb'
 require_relative '../support/shared_examples/authenticator_base.rb'
 
 
-describe MAuth::Client::LocalAuthenticator do
+describe Mauth::Client::LocalAuthenticator do
   include_context 'client'
 
   describe '#authentic?' do
     let(:v2_only_authenticate) { false }
     let(:authenticating_mc) do
-      MAuth::Client.new(
+      Mauth::Client.new(
         mauth_baseurl: 'http://whatever',
         mauth_api_version: 'v1',
         private_key: OpenSSL::PKey::RSA.generate(2048),
@@ -30,11 +30,11 @@ describe MAuth::Client::LocalAuthenticator do
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
 
     before do
-      expect(authenticating_mc).to be_kind_of(MAuth::Client::LocalAuthenticator)
+      expect(authenticating_mc).to be_kind_of(Mauth::Client::LocalAuthenticator)
       allow(::Faraday).to receive(:new).and_return(test_faraday)
     end
 
-    include_examples MAuth::Client::AuthenticatorBase
+    include_examples Mauth::Client::AuthenticatorBase
 
 
     context 'when authenticating with v1' do
@@ -76,7 +76,7 @@ describe MAuth::Client::LocalAuthenticator do
       end
 
       it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
-        bad_client = MAuth::Client.new(private_key: signing_key, app_uuid: 'nope')
+        bad_client = Mauth::Client.new(private_key: signing_key, app_uuid: 'nope')
         signed_request = bad_client.signed_v1(request)
         stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
         expect(authenticating_mc.authentic?(signed_request)).to be_falsey
@@ -169,7 +169,7 @@ describe MAuth::Client::LocalAuthenticator do
       end
 
       it 'considers a request signed by an app uuid unknown to mauth to be inauthentic' do
-        bad_client = MAuth::Client.new(private_key: signing_key, app_uuid: 'nope')
+        bad_client = Mauth::Client.new(private_key: signing_key, app_uuid: 'nope')
         signed_request = bad_client.signed(request)
         stubs.get("/mauth/v1/security_tokens/nope.json") { [404, {}, []] }
         expect(authenticating_mc.authentic?(signed_request)).to be_falsey
@@ -248,7 +248,7 @@ describe MAuth::Client::LocalAuthenticator do
     end
   end
 
-  describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
+  describe Mauth::Client::LocalAuthenticator::SecurityTokenCacher do
     describe '#signed_mauth_connection' do
       it 'properly sets the timeouts on the faraday connection' do
         config = {
@@ -256,8 +256,8 @@ describe MAuth::Client::LocalAuthenticator do
           'faraday_options' => { 'timeout' => '23', 'open_timeout' => '18' },
           'mauth_baseurl' => 'https://mauth.imedidata.net'
         }
-        mc = MAuth::Client.new(config)
-        connection = MAuth::Client::LocalAuthenticator::SecurityTokenCacher.new(mc).send(:signed_mauth_connection)
+        mc = Mauth::Client.new(config)
+        connection = Mauth::Client::LocalAuthenticator::SecurityTokenCacher.new(mc).send(:signed_mauth_connection)
         expect(connection.options[:timeout]).to eq('23')
         expect(connection.options[:open_timeout]).to eq('18')
       end
