@@ -1,5 +1,5 @@
 appraise 'faraday_0.x' do
-  gem 'faraday', '0.9.0'
+  gem 'faraday', '~> 0.17'
 end
 
 appraise 'faraday_1.x' do
