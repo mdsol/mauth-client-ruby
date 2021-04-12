@@ -8,7 +8,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
     end
 
     it "considers an authentically-signed request to be inauthentic when it's too old or too far in the future" do
-      [-301, 301].each do |time_offset|
+      [-301, 601].each do |time_offset|
         signed_request = client.signed(request, time: Time.now.to_i + time_offset)
         message = "expected request signed at #{time_offset} seconds to be inauthentic"
         expect { authenticating_mc.authenticate!(signed_request) }.to(

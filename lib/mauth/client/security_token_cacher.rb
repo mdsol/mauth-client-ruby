@@ -4,7 +4,7 @@ module MAuth
       class SecurityTokenCacher
 
         class ExpirableSecurityToken < Struct.new(:security_token, :create_time)
-          CACHE_LIFE = 60
+          CACHE_LIFE = ENV['MAUTH_CACHE_TTL'].to_i >= 60 ? ENV['MAUTH_CACHE_TTL'].to_i : 600
           def expired?
             create_time + CACHE_LIFE < Time.now
           end
