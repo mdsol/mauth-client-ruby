@@ -3,13 +3,6 @@ module MAuth
     module LocalAuthenticator
       class SecurityTokenCacher
 
-        class ExpirableSecurityToken < Struct.new(:security_token, :create_time)
-          CACHE_LIFE = 60
-          def expired?
-            create_time + CACHE_LIFE < Time.now
-          end
-        end
-
         def initialize(mauth_client)
           @mauth_client = mauth_client
           # TODO: should this be UnableToSignError?
@@ -20,7 +13,7 @@ module MAuth
         end
 
         def get(app_uuid)
-          if !@cache[app_uuid] || @cache[app_uuid].expired?
+          if !@cache[app_uuid]
             # url-encode the app_uuid to prevent trickery like escaping upward with ../../ in a malicious
             # app_uuid - probably not exploitable, but this is the right way to do it anyway.
             url_encoded_app_uuid = CGI.escape(app_uuid)
@@ -40,7 +33,7 @@ module MAuth
                 raise UnableToAuthenticateError, msg
               end
               @cache_write_lock.synchronize do
-                @cache[app_uuid] = ExpirableSecurityToken.new(security_token, Time.now)
+                @cache[app_uuid] = security_token
               end
             elsif response.status == 404
               # signing with a key mAuth doesn't know about is considered inauthentic
@@ -61,6 +54,7 @@ module MAuth
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
+            builder.use Faraday::HttpCache, store: Rails.cache, serializer: Oj, logger: Rails.logger
             builder.adapter ::Faraday.default_adapter
           end
         end

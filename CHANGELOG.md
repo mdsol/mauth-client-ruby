@@ -1,3 +1,6 @@
+## v6.2.0
+* Drop legacy security token expiry in favor of honoring server cache headers via Faraday HTTP Cache Middleware.
+
 ## v6.1.1
 * Replace `URI.escape` with `CGI.escape` in SecurityTokenCacher to suppress "URI.escape is obsolete" warning.
 
