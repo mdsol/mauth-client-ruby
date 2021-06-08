@@ -8,13 +8,10 @@ module MAuth
       # takes an incoming request or response object, and returns whether
       # the object is authentic according to its signature.
       def authentic?(object)
-        log_authentication_request(object)
-        begin
-          authenticate!(object)
-          true
-        rescue InauthenticError, MAuthNotPresent, MissingV2Error
-          false
-        end
+        authenticate!(object)
+        true
+      rescue InauthenticError, MAuthNotPresent, MissingV2Error
+        false
       end
 
       # raises InauthenticError unless the given object is authentic. Will only
@@ -31,7 +28,6 @@ module MAuth
             object.fall_back_to_mws_signature_info
             raise e unless object.signature
 
-            log_authentication_request(object)
             authenticate_v1!(object)
             logger.warn("Completed successful authentication attempt after fallback to v1")
           end
@@ -80,6 +76,7 @@ module MAuth
 
       # V1 helpers
       def authenticate_v1!(object)
+        log_authentication_request(object)
         time_valid_v1!(object)
         token_valid_v1!(object)
         signature_valid_v1!(object)
@@ -104,6 +101,7 @@ module MAuth
 
       # V2 helpers
       def authenticate_v2!(object)
+        log_authentication_request(object)
         time_valid_v2!(object)
         token_valid_v2!(object)
         signature_valid_v2!(object)
