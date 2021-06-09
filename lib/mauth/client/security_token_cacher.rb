@@ -1,3 +1,6 @@
+require 'faraday-http-cache'
+require 'oj'
+
 module MAuth
   class Client
     module LocalAuthenticator
@@ -25,15 +28,8 @@ module MAuth
               raise UnableToAuthenticateError, msg
             end
             if response.status == 200
-              begin
-                security_token = JSON.parse(response.body)
-              rescue JSON::ParserError => e
-                msg =  "mAuth service responded with unparseable json: #{response.body}\n#{e.class}: #{e.message}"
-                @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
-                raise UnableToAuthenticateError, msg
-              end
               @cache_write_lock.synchronize do
-                @cache[app_uuid] = security_token
+                @cache[app_uuid] = security_token_from(response.body)
               end
             elsif response.status == 404
               # signing with a key mAuth doesn't know about is considered inauthentic
@@ -42,10 +38,18 @@ module MAuth
               @mauth_client.send(:mauth_service_response_error, response)
             end
           end
-          @cache[app_uuid].security_token
+          @cache[app_uuid]
         end
 
         private
+
+        def security_token_from(response_body)
+          JSON.parse response_body
+        rescue JSON::ParserError => e
+          msg =  "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
+          @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+          raise UnableToAuthenticateError, msg
+        end
 
         def signed_mauth_connection
           require 'faraday'
@@ -54,7 +58,7 @@ module MAuth
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
-            builder.use Faraday::HttpCache, store: Rails.cache, serializer: Oj, logger: Rails.logger
+            builder.use :http_cache, serializer: Oj, logger: MAuth::Client.new.logger, shared_cache: false
             builder.adapter ::Faraday.default_adapter
           end
         end
