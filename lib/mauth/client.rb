@@ -7,6 +7,8 @@ require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/dice_bag/mauth_templates'
 require 'mauth/version'
+require 'faraday-http-cache'
+require 'oj'
 
 module MAuth
   class Client
@@ -405,12 +407,7 @@ module MAuth
         @security_token_cacher ||= SecurityTokenCacher.new(self)
       end
       class SecurityTokenCacher
-        class ExpirableSecurityToken < Struct.new(:security_token, :create_time)
-          CACHE_LIFE = 60
-          def expired?
-            create_time + CACHE_LIFE < Time.now
-          end
-        end
+
         def initialize(mauth_client)
           @mauth_client = mauth_client
           # TODO: should this be UnableToSignError?
@@ -421,7 +418,7 @@ module MAuth
         end
 
         def get(app_uuid)
-          if !@cache[app_uuid] || @cache[app_uuid].expired?
+          if !@cache[app_uuid]
             # url-encode the app_uuid to prevent trickery like escaping upward with ../../ in a malicious
             # app_uuid - probably not exploitable, but this is the right way to do it anyway.
             # use UNRESERVED instead of UNSAFE (the default) as UNSAFE doesn't include /
@@ -432,13 +429,8 @@ module MAuth
               raise UnableToAuthenticateError, "mAuth service did not respond; received #{$!.class}: #{$!.message}"
             end
             if response.status == 200
-              begin
-                security_token = JSON.parse(response.body)
-              rescue JSON::ParserError
-                raise UnableToAuthenticateError, "mAuth service responded with unparseable json: #{response.body}\n#{$!.class}: #{$!.message}"
-              end
               @cache_write_lock.synchronize do
-                @cache[app_uuid] = ExpirableSecurityToken.new(security_token, Time.now)
+                @cache[app_uuid] = security_token_from(response.body)
               end
             elsif response.status == 404
               # signing with a key mAuth doesn't know about is considered inauthentic
@@ -447,10 +439,18 @@ module MAuth
               @mauth_client.send(:mauth_service_response_error, response)
             end
           end
-          @cache[app_uuid].security_token
+          @cache[app_uuid]
         end
 
         private
+
+        def security_token_from(response_body)
+          JSON.parse response_body
+        rescue JSON::ParserError => e
+          msg =  "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
+          @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
+          raise UnableToAuthenticateError, msg
+        end
 
         def signed_mauth_connection
           require 'faraday'
@@ -459,6 +459,7 @@ module MAuth
           @signed_mauth_connection ||= ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
+            builder.use :http_cache, serializer: Oj, logger: MAuth::Client.new.logger, shared_cache: false
             builder.adapter ::Faraday.default_adapter
           end
         end
