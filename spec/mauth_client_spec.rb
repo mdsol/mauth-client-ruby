@@ -167,7 +167,7 @@ describe MAuth::Client do
               MAuth::InauthenticError, /Token verification failed\. Expected "MWS"; token was .*/)
         end
       end
-      [::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError].each do |error_klass|
+      [::Faraday::ConnectionFailed, ::Faraday::TimeoutError].each do |error_klass|
         it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
           allow(@test_faraday).to receive(:get).and_raise(error_klass.new(''))
           allow(@test_faraday).to receive(:post).and_raise(error_klass.new(''))

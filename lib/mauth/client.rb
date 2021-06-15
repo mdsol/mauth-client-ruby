@@ -425,7 +425,7 @@ module MAuth
             url_encoded_app_uuid = URI.escape(app_uuid, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
             begin
               response = signed_mauth_connection.get("/mauth/#{@mauth_client.mauth_api_version}/security_tokens/#{url_encoded_app_uuid}.json")
-            rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError
+            rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError
               raise UnableToAuthenticateError, "mAuth service did not respond; received #{$!.class}: #{$!.message}"
             end
             if response.status == 200
@@ -484,7 +484,7 @@ module MAuth
         }
         begin
           response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", "authentication_ticket" => authentication_ticket)
-        rescue ::Faraday::Error::ConnectionFailed, ::Faraday::Error::TimeoutError
+        rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError
           raise UnableToAuthenticateError, "mAuth service did not respond; received #{$!.class}: #{$!.message}"
         end
         if (200..299).cover?(response.status)
