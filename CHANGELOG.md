@@ -1,3 +1,6 @@
+## v4.2.0
+* Drop legacy security token expiry in favor of honoring server cache headers via Faraday HTTP Cache Middleware.
+
 ## v4.1.1
 - Use warning level instead of error level for logs about missing mauth header.
 
