@@ -1,4 +1,5 @@
 require 'faraday-http-cache'
+require 'mauth/faraday'
 
 module MAuth
   class Client
@@ -46,8 +47,6 @@ module MAuth
         end
 
         def signed_mauth_connection
-          require 'faraday'
-          require 'mauth/faraday'
           @signed_mauth_connection ||= begin
             if @mauth_client.ssl_certs_path
               @mauth_client.faraday_options[:ssl] = { ca_path: @mauth_client.ssl_certs_path }
