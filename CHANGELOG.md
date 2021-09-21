@@ -1,3 +1,6 @@
+## v4.2.1
+* Fix SecurityTokenCacher to not cache tokens forever.
+
 ## v4.2.0
 * Drop legacy security token expiry in favor of honoring server cache headers via Faraday HTTP Cache Middleware.
 

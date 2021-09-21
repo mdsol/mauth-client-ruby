@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'faraday', '>= 0.17', '< 1.0'
   spec.add_dependency 'faraday_middleware', '>= 0.9', '< 2.0'
   spec.add_dependency 'faraday-http-cache', '>= 2.0', '< 3.0'
-  spec.add_dependency 'oj', '~> 3.0'
   spec.add_dependency 'term-ansicolor', '~> 1.0'
   spec.add_dependency 'coderay', '~> 1.0'
   spec.add_dependency 'rack'
