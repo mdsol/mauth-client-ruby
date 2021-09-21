@@ -16,14 +16,17 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
   describe '#get' do
     let(:service_app_uuid) { "077dcb2b-f476-4069-adf4-f75c15018d65" }
     let(:signing_key) { OpenSSL::PKey::RSA.generate(2048) }
-    let(:response) { double(status: status, body: response_body)}
     let(:status) { 200 }
-    let(:response_body) { JSON.generate({ 'security_token' => { 'public_key_str' => signing_key.public_key.to_s } }) }
+    let(:headers) { {} }
+    let(:security_token) { { 'security_token' => { 'public_key_str' => signing_key.public_key.to_s } } }
+    let(:response_body) { JSON.generate(security_token) }
 
     before do
-      allow_any_instance_of(Faraday::Connection)
-        .to receive(:get).with("/mauth/v1/security_tokens/#{service_app_uuid}.json")
-        .and_return(response)
+      stub_request(:get, "http://whatever/mauth/v1/security_tokens/#{service_app_uuid}.json").to_return(
+        status: status,
+        headers: headers,
+        body: response_body
+      )
     end
 
     shared_examples_for 'Faraday errors' do |faraday_error|
@@ -38,13 +41,28 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
       end
     end
 
+    context 'when response status is 200' do
+      it "returns security_token" do
+        expect(subject.get(service_app_uuid)).to eq(security_token)
+      end
+    end
+
     context 'malicious app_uuid' do
       let(:service_app_uuid) { "!#$&'()*+,/:;=?@[]" }
+      let(:escaped_app_uuid) { "%21%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D" }
+
+      before do
+        stub_request(:get, "http://whatever/mauth/v1/security_tokens/#{escaped_app_uuid}.json").to_return(
+          status: status,
+          headers: headers,
+          body: response_body
+        )
+      end
 
       it 'escapes app_uuid' do
         expect_any_instance_of(Faraday::Connection)
-          .to receive(:get).with("/mauth/v1/security_tokens/%21%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D.json")
-          .and_return(response)
+          .to receive(:get).with("/mauth/v1/security_tokens/#{escaped_app_uuid}.json")
+          .and_call_original
 
         subject.get(service_app_uuid)
       end
@@ -82,6 +100,43 @@ describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
 
       it "raises UnableToAuthenticateError" do
         expect { subject.get(service_app_uuid) }.to raise_error(MAuth::UnableToAuthenticateError)
+      end
+    end
+
+    describe "caching" do
+      let(:headers) do
+        {
+          "Cache-Control" => "max-age=300, private",
+          "ETag" => 'W"e9d1e3499087ff67e169e9ee0034f5c9'
+        }
+      end
+
+      before do
+        Timecop.freeze(Time.now)
+
+        stub_request(:get, "http://whatever/mauth/v1/security_tokens/#{service_app_uuid}.json").to_return(
+          status: status,
+          headers: headers,
+          body: response_body
+        ).then.to_return(
+          status: status,
+          body: "{}"
+        )
+      end
+
+      after do
+        Timecop.return
+      end
+
+      it "caches the response" do
+        expect(subject.get(service_app_uuid)).to eq(security_token)
+        expect(subject.get(service_app_uuid)).to eq(security_token)
+      end
+
+      it "retrives again once the cache is expired" do
+        expect(subject.get(service_app_uuid)).to eq(security_token)
+        Timecop.freeze(Time.now + 301)
+        expect(subject.get(service_app_uuid)).to be_empty
       end
     end
   end
