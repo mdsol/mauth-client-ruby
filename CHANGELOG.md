@@ -1,14 +1,18 @@
+## v6.3.0
+- Support Ruby 3.0.
+- Drop support for Ruby < 2.5.0.
+
 ## v6.2.1
-* Fix SecurityTokenCacher to not cache tokens forever.
+- Fix SecurityTokenCacher to not cache tokens forever.
 
 ## v6.2.0
-* Drop legacy security token expiry in favor of honoring server cache headers via Faraday HTTP Cache Middleware.
+- Drop legacy security token expiry in favor of honoring server cache headers via Faraday HTTP Cache Middleware.
 
 ## v6.1.1
-* Replace `URI.escape` with `CGI.escape` in SecurityTokenCacher to suppress "URI.escape is obsolete" warning.
+- Replace `URI.escape` with `CGI.escape` in SecurityTokenCacher to suppress "URI.escape is obsolete" warning.
 
 ## v6.1.0
-* Allow Faraday 1.x.
+- Allow Faraday 1.x.
 
 ## v6.0.0
 - Added parsing code to test with mauth-protocol-test-suite.
