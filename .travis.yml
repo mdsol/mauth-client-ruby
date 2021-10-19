@@ -30,6 +30,7 @@ install:
 
 script:
   - bundle exec rspec
+  - bundle exec rake benchmark
   - >-
     curl -H 'Cache-Control: no-cache'
     https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/main/travis_ci/fossa_run.sh |
