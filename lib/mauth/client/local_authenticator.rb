@@ -53,7 +53,7 @@ module MAuth
       end
 
       def verify_signature_v1!(actual, expected_str_to_sign)
-        actual == Digest::SHA512.hexdigest(expected_str_to_sign)
+        actual == OpenSSL::Digest::SHA512.hexdigest(expected_str_to_sign)
       end
 
       def signature_valid_v2!(object)

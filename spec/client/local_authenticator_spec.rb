@@ -234,14 +234,14 @@ describe MAuth::Client::LocalAuthenticator do
       it 'considers a signed request with a request body of binary data that was read in from disk to be authentic' do
         # the signing mauth client should be able to stream large request bodies
         # from the disk straight into the hashing function like so:
-        streamed_hash_digest = Digest::SHA512.file(binary_filepath).hexdigest
+        streamed_hash_digest = OpenSSL::Digest::SHA512.file(binary_filepath).hexdigest
         # used the digest from streaming in the file when signing the request
         signed_request = client.signed(binary_request, body_digest: streamed_hash_digest)
         expect(authenticating_mc.authentic?(signed_request)).to be true
       end
 
       it 'considers a request with the wrong body_digest to be inauthentic' do
-        wrong_hash_digest = Digest::SHA512.hexdigest('abc')
+        wrong_hash_digest = OpenSSL::Digest::SHA512.hexdigest('abc')
         signed_request = client.signed(binary_request, body_digest: wrong_hash_digest)
         expect(authenticating_mc.authentic?(signed_request)).to be false
       end
