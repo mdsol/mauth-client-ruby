@@ -18,8 +18,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'faraday', '>= 0.9', '< 2.0'
-  spec.add_dependency 'faraday_middleware', '>= 0.9', '< 2.0'
+  spec.add_dependency 'faraday', '>= 0.9', '< 3.0'
   spec.add_dependency 'faraday-http-cache', '>= 2.0', '< 3.0'
   spec.add_dependency 'term-ansicolor', '~> 1.0'
   spec.add_dependency 'coderay', '~> 1.0'

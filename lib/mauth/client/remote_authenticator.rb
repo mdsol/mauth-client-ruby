@@ -41,7 +41,8 @@ module MAuth
 
       def make_mauth_request(authentication_ticket)
         begin
-          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
+          request_body = JSON.generate(authentication_ticket: authentication_ticket)
+          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", request_body)
         rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
           logger.error("Unable to authenticate with MAuth. Exception #{msg}")
@@ -62,12 +63,13 @@ module MAuth
       end
 
       def mauth_connection
-        require 'faraday'
-        require 'faraday_middleware'
-        @mauth_connection ||= ::Faraday.new(mauth_baseurl, faraday_options) do |builder|
-          builder.use MAuth::Faraday::MAuthClientUserAgent
-          builder.use FaradayMiddleware::EncodeJson
-          builder.adapter ::Faraday.default_adapter
+        @mauth_connection ||= begin
+          require 'faraday'
+
+          ::Faraday.new(mauth_baseurl, faraday_options.merge(headers: { 'Content-Type' => 'application/json' })) do |builder|
+            builder.use MAuth::Faraday::MAuthClientUserAgent
+            builder.adapter ::Faraday.default_adapter
+          end
         end
       end
     end

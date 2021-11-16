@@ -244,6 +244,7 @@ module MAuth
 
   module ConfigFile
     GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
+    BACKWARDS_INCOMPATIBLE_PSYCH_VERSION = '3.1.0'.freeze
     @config = {}
 
     def self.load(path)
@@ -251,12 +252,24 @@ module MAuth
         raise "File #{path} not found. Please visit #{GITHUB_URL} for details."
       end
 
-      @config[path] ||= YAML.load_file(path)
+      @config[path] ||= yaml_safe_load_file(path)
       unless @config[path]
         raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
       end
 
       @config[path]
+    end
+
+    private
+
+    def self.yaml_safe_load_file(path)
+      yml_data = File.read(path)
+      # Ruby 2.6+
+      if Gem::Version.new(Psych::VERSION) >= Gem::Version.new(BACKWARDS_INCOMPATIBLE_PSYCH_VERSION)
+        YAML.safe_load(yml_data, aliases: true)
+      else
+        YAML.safe_load(yml_data, [], [], true)
+      end
     end
   end
 end
