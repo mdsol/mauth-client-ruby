@@ -2,7 +2,6 @@
 
 $LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
 
-require 'rubygems'
 require 'mauth/proxy'
 require 'rack'
 
@@ -27,10 +26,10 @@ end
 
 rack_server_options = Rack::Server::Options.new.parse!(ARGV)
 
-# for security, this rack server will only accept local connections, so override Host 
+# for security, this rack server will only accept local connections, so override Host
 # to 127.0.0.1 (from the default of 0.0.0.0)
 #
-# this means that the '-o' / '--host' option to Rack::Server::Options is ignored. 
+# this means that the '-o' / '--host' option to Rack::Server::Options is ignored.
 rack_server_options[:Host] = "127.0.0.1"
 
 rack_server_options[:app] = MAuth::Proxy.new(target_uri, :authenticate_responses => authenticate_responses,
