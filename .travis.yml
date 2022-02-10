@@ -3,7 +3,6 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.5
   - 2.6
   - 2.7
   - 3.0
@@ -15,8 +14,6 @@ env:
 
 jobs:
   exclude:
-    - rvm: 2.5
-      gemfile: gemfiles/faraday_2.x.gemfile
     - rvm: 3.0
       gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
     - rvm: 3.1

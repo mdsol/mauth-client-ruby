@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
                        "Includes middleware for Rack and Faraday for incoming and outgoing requests and responses."
   spec.homepage      = "https://github.com/mdsol/mauth-client-ruby"
   spec.license       = "MIT"
-  spec.required_ruby_version = ">= 2.5.0"
+  spec.required_ruby_version = ">= 2.6.0"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = "exe"

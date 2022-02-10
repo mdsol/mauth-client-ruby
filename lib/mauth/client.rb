@@ -248,7 +248,6 @@ module MAuth
 
   module ConfigFile
     GITHUB_URL = "https://github.com/mdsol/mauth-client-ruby"
-    BACKWARDS_INCOMPATIBLE_PSYCH_VERSION = "3.1.0"
     @config = {}
 
     def self.load(path)
@@ -266,12 +265,7 @@ module MAuth
 
     def self.yaml_safe_load_file(path)
       yml_data = File.read(path)
-      # Ruby 2.6+
-      if Gem::Version.new(Psych::VERSION) >= Gem::Version.new(BACKWARDS_INCOMPATIBLE_PSYCH_VERSION)
-        YAML.safe_load(yml_data, aliases: true)
-      else
-        YAML.safe_load(yml_data, [], [], true)
-      end
+      YAML.safe_load(yml_data, aliases: true)
     end
   end
 end

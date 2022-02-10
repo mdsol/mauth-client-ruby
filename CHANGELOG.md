@@ -1,5 +1,6 @@
 ## v6.4.0
 - Support Ruby 3.1.
+- Drop support for Ruby < 2.6.0.
 - Allow Faraday 2.x.
 
 ## v6.3.0
