@@ -1,6 +1,12 @@
-shared_context 'client' do
-  let(:app_uuid) { 'signer' }
-  let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
+# frozen_string_literal: true
+
+require "support/shared_contexts/test_signable_request"
+
+shared_context "client" do
+  include_context "with TestSignableRequest"
+
+  let(:app_uuid) { "signer" }
+  let(:request) { TestSignableRequest.new(verb: "PUT", request_url: "/", body: "himom") }
   let(:v2_only_sign_requests) { false }
   let(:v1_only_sign_requests) { false }
   let(:v2_only_authenticate) { false }
@@ -17,31 +23,5 @@ shared_context 'client' do
       v1_only_sign_requests: v1_only_sign_requests,
       disable_fallback_to_v1_on_v2_failure: disable_fallback_to_v1_on_v2_failure
     )
-  end
-
-  require 'mauth/request_and_response'
-  class TestSignableRequest < MAuth::Request
-    include MAuth::Signed
-    attr_accessor :headers
-
-    def merge_headers(headers)
-      self.class.new(@attributes_for_signing).tap{ |r| r.headers = (@headers || {}).merge(headers) }
-    end
-
-    def x_mws_time
-      headers['X-MWS-Time']
-    end
-
-    def x_mws_authentication
-      headers['X-MWS-Authentication']
-    end
-
-    def mcc_authentication
-      headers['MCC-Authentication']
-    end
-
-    def mcc_time
-      headers['MCC-Time']
-    end
   end
 end

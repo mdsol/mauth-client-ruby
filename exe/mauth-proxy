@@ -1,27 +1,28 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
+$LOAD_PATH.unshift File.expand_path("../lib", File.dirname(__FILE__))
 
-require 'mauth/proxy'
-require 'rack'
+require "mauth/proxy"
+require "rack"
 
 headers = []
-headers_index = ARGV.find_index('--header')
-while(headers_index) do
+headers_index = ARGV.find_index("--header")
+while headers_index
   headers << ARGV[headers_index + 1]
   ARGV.delete_at(headers_index + 1)
   ARGV.delete_at(headers_index)
-  headers_index = ARGV.find_index('--header')
+  headers_index = ARGV.find_index("--header")
 end
 
-authenticate_responses = !ARGV.delete('--no-authenticate')
-browser_proxy = !(ARGV.delete('--browser_proxy').nil?)
+authenticate_responses = !ARGV.delete("--no-authenticate")
+browser_proxy = !ARGV.delete("--browser_proxy").nil?
 
 target_uri = browser_proxy ? ARGV : ARGV.pop
 
 if !target_uri || target_uri.empty?
-  abort("Usage: mauth-proxy [rack options] --browser_proxy [--no-authenticate] <target URI> <target URI> ...\n" +
-    "or: mauth-proxy [rack options] <target URI>")
+  abort("Usage: mauth-proxy [rack options] --browser_proxy [--no-authenticate] <target URI> <target URI> ...\n" \
+        "or: mauth-proxy [rack options] <target URI>")
 end
 
 rack_server_options = Rack::Server::Options.new.parse!(ARGV)
@@ -32,8 +33,8 @@ rack_server_options = Rack::Server::Options.new.parse!(ARGV)
 # this means that the '-o' / '--host' option to Rack::Server::Options is ignored.
 rack_server_options[:Host] = "127.0.0.1"
 
-rack_server_options[:app] = MAuth::Proxy.new(target_uri, :authenticate_responses => authenticate_responses,
-  :browser_proxy => browser_proxy, :headers => headers)
+rack_server_options[:app] = MAuth::Proxy.new(target_uri, authenticate_responses: authenticate_responses,
+  browser_proxy: browser_proxy, headers: headers)
 
 mauth_proxy_server = Rack::Server.new(rack_server_options)
 mauth_proxy_server.start

@@ -1,1 +1,3 @@
-require 'mauth/client'
+# frozen_string_literal: true
+
+require "mauth/client"

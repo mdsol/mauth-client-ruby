@@ -1,5 +1,7 @@
-require 'mauth/middleware'
-require 'mauth/request_and_response'
+# frozen_string_literal: true
+
+require "mauth/middleware"
+require "mauth/request_and_response"
 
 Faraday::Request.register_middleware(mauth_request_signer: proc { MAuth::Faraday::RequestSigner })
 Faraday::Response.register_middleware(mauth_response_authenticator: proc { MAuth::Faraday::ResponseAuthenticator })
@@ -20,8 +22,8 @@ module MAuth
         @app.call(request_env).on_complete do |response_env|
           mauth_response = MAuth::Faraday::Response.new(response_env)
           mauth_client.authenticate!(mauth_response) # raises MAuth::InauthenticError when inauthentic
-          response_env['mauth.app_uuid'] = mauth_response.signature_app_uuid
-          response_env['mauth.authentic'] = true
+          response_env["mauth.app_uuid"] = mauth_response.signature_app_uuid
+          response_env["mauth.authentic"] = true
           response_env
         end
       end
@@ -31,13 +33,14 @@ module MAuth
     # passed to a Mauth::Client for signing
     class Request < MAuth::Request
       attr_reader :request_env
+
       def initialize(request_env)
         @request_env = request_env
       end
 
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          request_url = @request_env[:url].path.empty? ? '/' : @request_env[:url].path
+          request_url = @request_env[:url].path.empty? ? "/" : @request_env[:url].path
           {
             verb: @request_env[:method].to_s.upcase,
             request_url: request_url,
@@ -59,6 +62,7 @@ module MAuth
     class Response < MAuth::Response
       include Signed
       attr_reader :response_env
+
       def initialize(response_env)
         @response_env = response_env
       end
@@ -68,19 +72,19 @@ module MAuth
       end
 
       def x_mws_time
-        @response_env[:response_headers]['x-mws-time']
+        @response_env[:response_headers]["x-mws-time"]
       end
 
       def x_mws_authentication
-        @response_env[:response_headers]['x-mws-authentication']
+        @response_env[:response_headers]["x-mws-authentication"]
       end
 
       def mcc_time
-        @response_env[:response_headers]['mcc-time']
+        @response_env[:response_headers]["mcc-time"]
       end
 
       def mcc_authentication
-        @response_env[:response_headers]['mcc-authentication']
+        @response_env[:response_headers]["mcc-authentication"]
       end
     end
 
@@ -93,7 +97,7 @@ module MAuth
 
       def call(request_env)
         agent = "#{@agent_base} (MAuth-Client: #{MAuth::VERSION}; Ruby: #{RUBY_VERSION}; platform: #{RUBY_PLATFORM})"
-        request_env[:request_headers]['User-Agent'] ||= agent
+        request_env[:request_headers]["User-Agent"] ||= agent
         @app.call(request_env)
       end
     end

@@ -1,4 +1,6 @@
-require 'mauth/rack'
+# frozen_string_literal: true
+
+require "mauth/rack"
 
 module MAuth
   module Rack
@@ -14,30 +16,32 @@ module MAuth
     # (rather than switching to this fake one), as all this does is add those keys to the request env.
     class RequestAuthenticationFaker < MAuth::Rack::RequestAuthenticator
       class << self
-        def is_authentic?
+        def is_authentic? # rubocop:disable Naming/PredicateName
           @is_authentic.nil? ? true : @is_authentic
         end
 
-        def authentic=(is_auth = true)
+        def authentic=(is_auth = true) # rubocop:disable Style/OptionalBooleanParameter
           @is_authentic = is_auth
         end
       end
 
       def call(env)
         retval = if should_authenticate?(env)
-          mauth_request = MAuth::Rack::Request.new(env)
-          env['mauth.protocol_version'] = mauth_request.protocol_version
+                   mauth_request = MAuth::Rack::Request.new(env)
+                   env["mauth.protocol_version"] = mauth_request.protocol_version
 
-          if self.class.is_authentic?
-            @app.call(env.merge!('mauth.app_uuid' => mauth_request.signature_app_uuid, 'mauth.authentic' => true))
-          else
-            response_for_inauthentic_request(env)
-          end
-        else
-          @app.call(env)
-        end
+                   if self.class.is_authentic?
+                     @app.call(env.merge!("mauth.app_uuid" => mauth_request.signature_app_uuid,
+                       "mauth.authentic" => true))
+                   else
+                     response_for_inauthentic_request(env)
+                   end
+                 else
+                   @app.call(env)
+                 end
 
-        # ensure that the next request is marked authenic unless the consumer of this middleware explicitly deems otherwise
+        # ensure that the next request is marked authenic unless the consumer of this middleware explicitly deems
+        # otherwise
         self.class.authentic = true
 
         retval

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # methods for remotely authenticating a request by sending it to the mauth service
 
 module MAuth
@@ -8,14 +10,18 @@ module MAuth
       # takes an incoming request object (no support for responses currently), and errors if the
       # object is not authentic according to its signature
       def signature_valid_v1!(object)
-        raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
+        unless object.is_a?(MAuth::Request)
+          raise ArgumentError,
+            "Remote Authenticator can only authenticate requests; received #{object.inspect}"
+        end
+
         authentication_ticket = {
-          'verb' => object.attributes_for_signing[:verb],
-          'app_uuid' => object.signature_app_uuid,
-          'client_signature' => object.signature,
-          'request_url' => object.attributes_for_signing[:request_url],
-          'request_time' => object.x_mws_time,
-          'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || '')
+          "verb" => object.attributes_for_signing[:verb],
+          "app_uuid" => object.signature_app_uuid,
+          "client_signature" => object.signature,
+          "request_url" => object.attributes_for_signing[:request_url],
+          "request_time" => object.x_mws_time,
+          "b64encoded_body" => Base64.encode64(object.attributes_for_signing[:body] || "")
         }
         make_mauth_request(authentication_ticket)
       end
@@ -32,7 +38,7 @@ module MAuth
           client_signature: object.signature,
           request_url: object.attributes_for_signing[:request_url],
           request_time: object.mcc_time,
-          b64encoded_body: Base64.encode64(object.attributes_for_signing[:body] || ''),
+          b64encoded_body: Base64.encode64(object.attributes_for_signing[:body] || ""),
           query_string: object.attributes_for_signing[:query_string],
           token: object.signature_token
         }
@@ -48,9 +54,10 @@ module MAuth
           logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end
-        if (200..299).cover?(response.status)
+        case response.status
+        when 200..299
           nil
-        elsif response.status == 412 || response.status == 404
+        when 412, 404
           # the mAuth service responds with 412 when the given request is not authentically signed.
           # older versions of the mAuth service respond with 404 when the given app_uuid
           # does not exist, which is also considered to not be authentically signed. newer
@@ -64,9 +71,10 @@ module MAuth
 
       def mauth_connection
         @mauth_connection ||= begin
-          require 'faraday'
+          require "faraday"
 
-          ::Faraday.new(mauth_baseurl, faraday_options.merge(headers: { 'Content-Type' => 'application/json' })) do |builder|
+          ::Faraday.new(mauth_baseurl,
+            faraday_options.merge(headers: { "Content-Type" => "application/json" })) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.adapter ::Faraday.default_adapter
           end

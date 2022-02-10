@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MAuth
   # mAuth client was unable to verify the authenticity of a signed object (this does NOT mean the
   # object is inauthentic). typically due to a failure communicating with the mAuth service, in

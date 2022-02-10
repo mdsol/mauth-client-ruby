@@ -1,5 +1,7 @@
-require 'openssl'
-require 'addressable'
+# frozen_string_literal: true
+
+require "openssl"
+require "addressable"
 
 module MAuth
   # module which composes a string to sign.
@@ -31,11 +33,15 @@ module MAuth
     #     current_seconds_since_epoch
     def string_to_sign_v1(more_attributes)
       attributes_for_signing = self.attributes_for_signing.merge(more_attributes)
-      missing_attributes = self.class::SIGNATURE_COMPONENTS.select { |key| !attributes_for_signing.key?(key) || attributes_for_signing[key].nil? }
+      missing_attributes = self.class::SIGNATURE_COMPONENTS.select do |key|
+        !attributes_for_signing.key?(key) || attributes_for_signing[key].nil?
+      end
       missing_attributes.delete(:body) # body may be omitted
       if missing_attributes.any?
-        raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
+        raise(UnableToSignError,
+          "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
+
       self.class::SIGNATURE_COMPONENTS.map { |k| attributes_for_signing[k].to_s }.join("\n")
     end
 
@@ -56,27 +62,29 @@ module MAuth
     #     app_uuid + <LF> +
     #     current_seconds_since_epoch
     def string_to_sign_v2(override_attrs)
-      attrs_with_overrides = self.attributes_for_signing.merge(override_attrs)
+      attrs_with_overrides = attributes_for_signing.merge(override_attrs)
 
       # memoization of body_digest to avoid hashing three times when we call
       # string_to_sign_v2 three times in client#signature_valid_v2!
       # note that if :body is nil we hash an empty string ('')
-      attrs_with_overrides[:body_digest] ||= OpenSSL::Digest::SHA512.hexdigest(attrs_with_overrides[:body] || '')
-      attrs_with_overrides[:encoded_query_params] = unescape_encode_query_string(attrs_with_overrides[:query_string] || '')
+      attrs_with_overrides[:body_digest] ||= OpenSSL::Digest.hexdigest("SHA512", attrs_with_overrides[:body] || "")
+      attrs_with_overrides[:encoded_query_params] =
+        unescape_encode_query_string(attrs_with_overrides[:query_string] || "")
       attrs_with_overrides[:request_url] = normalize_path(attrs_with_overrides[:request_url])
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
-        attrs_with_overrides.dig(key)
+        attrs_with_overrides[key]
       end
 
       missing_attributes.delete(:body_digest) # body may be omitted
       missing_attributes.delete(:encoded_query_params) # query_string may be omitted
       if missing_attributes.any?
-        raise(UnableToSignError, "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
+        raise(UnableToSignError,
+          "Missing required attributes to sign: #{missing_attributes.inspect}\non object to sign: #{inspect}")
       end
 
       self.class::SIGNATURE_COMPONENTS_V2.map do |k|
-        attrs_with_overrides[k].to_s.dup.force_encoding('UTF-8')
+        attrs_with_overrides[k].to_s.dup.force_encoding("UTF-8")
       end.join("\n")
     end
 
@@ -88,19 +96,19 @@ module MAuth
       #   i.e. /./example => /example ; /example/.. => /
       # String#squeeze removes duplicated slahes i.e. /// => /
       # String#gsub normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
-      Addressable::URI.normalize_path(path).squeeze('/').
-        gsub(/%[a-f0-9]{2}/, &:upcase)
+      Addressable::URI.normalize_path(path).squeeze("/")
+        .gsub(/%[a-f0-9]{2}/, &:upcase)
     end
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
     def unescape_encode_query_string(q_string)
-      fir = q_string.split('&').map do |part|
-        k, _eq, v = part.partition('=')
+      q_string.split("&").map do |part|
+        k, _eq, v = part.partition("=")
         [CGI.unescape(k), CGI.unescape(v)]
-      end.sort.map do |k, v|
+      end.sort.map do |k, v| # rubocop:disable Style/MultilineBlockChain
         "#{uri_escape(k)}=#{uri_escape(v)}"
-      end.join('&')
+      end.join("&")
     end
 
     # percent encodes special characters, preserving character encoding.
@@ -110,7 +118,7 @@ module MAuth
     # NOTE the CGI.escape spec changed in 2.5 to not escape tildes. we gsub
     # tilde encoding back to tildes to account for older Rubies
     def uri_escape(string)
-      CGI.escape(string).gsub(/\+|%7E/, '+' => '%20', '%7E' => '~')
+      CGI.escape(string).gsub(/\+|%7E/, "+" => "%20", "%7E" => "~")
     end
 
     def initialize(attributes_for_signing)
@@ -172,7 +180,7 @@ module MAuth
 
     def mcc_data
       mcc_authentication&.match(
-        /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/
+        /\A(#{MAuth::Client::MWSV2_TOKEN}) ([^:]+):([^:]+)#{MAuth::Client::AUTH_HEADER_DELIMITER}\z/o
       )
     end
 

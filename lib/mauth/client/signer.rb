@@ -1,14 +1,16 @@
-require 'openssl'
-require 'mauth/errors'
+# frozen_string_literal: true
+
+require "openssl"
+require "mauth/errors"
 
 # methods to sign requests and responses. part of MAuth::Client
 
 module MAuth
   class Client
-    SIGNING_DIGEST = OpenSSL::Digest::SHA512.new
+    SIGNING_DIGEST = OpenSSL::Digest.new("SHA512")
 
     module Signer
-      UNABLE_TO_SIGN_ERR = UnableToSignError.new('mAuth client cannot sign without a private key!')
+      UNABLE_TO_SIGN_ERR = UnableToSignError.new("mAuth client cannot sign without a private key!")
 
       # takes an outgoing request or response object, and returns an object of the same class
       # whose headers are updated to include mauth's signature headers
@@ -40,17 +42,17 @@ module MAuth
       def signed_headers_v1(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v1(attributes)
-        signature = self.signature_v1(string_to_sign)
-        { 'X-MWS-Authentication' => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", 'X-MWS-Time' => attributes[:time] }
+        signature = signature_v1(string_to_sign)
+        { "X-MWS-Authentication" => "#{MWS_TOKEN} #{client_app_uuid}:#{signature}", "X-MWS-Time" => attributes[:time] }
       end
 
       def signed_headers_v2(object, attributes = {})
         attributes = { time: Time.now.to_i.to_s, app_uuid: client_app_uuid }.merge(attributes)
         string_to_sign = object.string_to_sign_v2(attributes)
-        signature = self.signature_v2(string_to_sign)
+        signature = signature_v2(string_to_sign)
         {
-          'MCC-Authentication' => "#{MWSV2_TOKEN} #{client_app_uuid}:#{signature}#{AUTH_HEADER_DELIMITER}",
-          'MCC-Time' => attributes[:time]
+          "MCC-Authentication" => "#{MWSV2_TOKEN} #{client_app_uuid}:#{signature}#{AUTH_HEADER_DELIMITER}",
+          "MCC-Time" => attributes[:time]
         }
       end
 

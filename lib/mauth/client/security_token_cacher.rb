@@ -1,11 +1,12 @@
-require 'faraday-http-cache'
-require 'mauth/faraday'
+# frozen_string_literal: true
+
+require "faraday-http-cache"
+require "mauth/faraday"
 
 module MAuth
   class Client
     module LocalAuthenticator
       class SecurityTokenCacher
-
         def initialize(mauth_client)
           @mauth_client = mauth_client
           # TODO: should this be UnableToSignError?
@@ -41,7 +42,7 @@ module MAuth
         def security_token_from(response_body)
           JSON.parse response_body
         rescue JSON::ParserError => e
-          msg =  "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
+          msg = "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
           @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end
@@ -54,7 +55,7 @@ module MAuth
 
             ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
               builder.use MAuth::Faraday::MAuthClientUserAgent
-              builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
+              builder.use MAuth::Faraday::RequestSigner, "mauth_client" => @mauth_client
               builder.use :http_cache, logger: MAuth::Client.new.logger, shared_cache: false
               builder.adapter ::Faraday.default_adapter
             end

@@ -39,6 +39,7 @@ install:
 
 script:
   - bundle exec rspec
+  - bundle exec rubocop
   - bundle exec rake benchmark
   - >-
     curl -H 'Cache-Control: no-cache'

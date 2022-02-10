@@ -1,17 +1,19 @@
-require 'uri'
-require 'openssl'
-require 'base64'
-require 'json'
-require 'yaml'
-require 'mauth/core_ext'
-require 'mauth/autoload'
-require 'mauth/dice_bag/mauth_templates'
-require 'mauth/version'
-require 'mauth/client/authenticator_base'
-require 'mauth/client/local_authenticator'
-require 'mauth/client/remote_authenticator'
-require 'mauth/client/signer'
-require 'mauth/errors'
+# frozen_string_literal: true
+
+require "uri"
+require "openssl"
+require "base64"
+require "json"
+require "yaml"
+require "mauth/core_ext"
+require "mauth/autoload"
+require "mauth/dice_bag/mauth_templates"
+require "mauth/version"
+require "mauth/client/authenticator_base"
+require "mauth/client/local_authenticator"
+require "mauth/client/remote_authenticator"
+require "mauth/client/signer"
+require "mauth/errors"
 
 module MAuth
   # does operations which require a private key and corresponding app uuid. this is primarily:
@@ -24,9 +26,9 @@ module MAuth
   # that the object responds to the methods of MAuth::Signable and/or MAuth::Signed (as
   # appropriate)
   class Client
-    MWS_TOKEN = 'MWS'.freeze
-    MWSV2_TOKEN = 'MWSV2'.freeze
-    AUTH_HEADER_DELIMITER = ';'.freeze
+    MWS_TOKEN = "MWS"
+    MWSV2_TOKEN = "MWSV2"
+    AUTH_HEADER_DELIMITER = ";"
 
     include AuthenticatorBase
     include Signer
@@ -52,29 +54,29 @@ module MAuth
 
       # find the app_root (relative to which we look for yaml files). note that this
       # is different than MAuth::Client.root, the root of the mauth-client library.
-      app_root = options['root'] || begin
-        if Object.const_defined?('Rails') && ::Rails.respond_to?(:root) && ::Rails.root
+      app_root = options["root"] || begin
+        if Object.const_defined?(:Rails) && ::Rails.respond_to?(:root) && ::Rails.root
           Rails.root
         else
-          ENV['RAILS_ROOT'] || ENV['RACK_ROOT'] || ENV['APP_ROOT'] || '.'
+          ENV["RAILS_ROOT"] || ENV["RACK_ROOT"] || ENV["APP_ROOT"] || "."
         end
       end
 
       # find the environment (with which yaml files are keyed)
-      env = options['environment'] || begin
-        if Object.const_defined?('Rails') && ::Rails.respond_to?(:environment)
+      env = options["environment"] || begin
+        if Object.const_defined?(:Rails) && ::Rails.respond_to?(:environment)
           Rails.environment
         else
-          ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
+          ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
         end
       end
 
       # find mauth config, given on options, or in a file at
       # ENV['MAUTH_CONFIG_YML'] or config/mauth.yml in the app_root
-      mauth_config = options['mauth_config'] || begin
-        mauth_config_yml = options['mauth_config_yml']
-        mauth_config_yml ||= ENV['MAUTH_CONFIG_YML']
-        default_loc = 'config/mauth.yml'
+      mauth_config = options["mauth_config"] || begin
+        mauth_config_yml = options["mauth_config_yml"]
+        mauth_config_yml ||= ENV["MAUTH_CONFIG_YML"]
+        default_loc = "config/mauth.yml"
         default_yml = File.join(app_root, default_loc)
         mauth_config_yml ||= default_yml if File.exist?(default_yml)
         if mauth_config_yml && File.exist?(mauth_config_yml)
@@ -82,16 +84,17 @@ module MAuth
           errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
           whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
         else
-          raise MAuth::Client::ConfigurationError, "could not find mauth config yaml file. this file may be " \
+          raise MAuth::Client::ConfigurationError,
+            "could not find mauth config yaml file. this file may be " \
             "placed in #{default_loc}, specified with the mauth_config_yml option, or specified with the " \
             "MAUTH_CONFIG_YML environment variable."
         end
       end
 
-      unless mauth_config.key?('logger')
+      unless mauth_config.key?("logger")
         # the logger. Rails.logger if it exists, otherwise, no logger
-        mauth_config['logger'] = options['logger'] || begin
-          if Object.const_defined?('Rails') && ::Rails.respond_to?(:logger)
+        mauth_config["logger"] = options["logger"] || begin
+          if Object.const_defined?(:Rails) && ::Rails.respond_to?(:logger)
             Rails.logger
           end
         end
@@ -119,104 +122,105 @@ module MAuth
       given_config = config.stringify_symbol_keys
       # build a configuration which discards any irrelevant parts of the given config (small memory usage matters here)
       @config = {}
-      if given_config['private_key_file'] && !given_config['private_key']
-        given_config['private_key'] = File.read(given_config['private_key_file'])
+      if given_config["private_key_file"] && !given_config["private_key"]
+        given_config["private_key"] = File.read(given_config["private_key_file"])
       end
-      @config['private_key'] = case given_config['private_key']
-       when nil
-         nil
-       when String
-         OpenSSL::PKey::RSA.new(given_config['private_key'])
-       when OpenSSL::PKey::RSA
-         given_config['private_key']
-       else
-         raise MAuth::Client::ConfigurationError, "unrecognized value given for 'private_key' - this may be a " \
-           "String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
-      end
-      @config['app_uuid'] = given_config['app_uuid']
-      @config['mauth_baseurl'] = given_config['mauth_baseurl']
-      @config['mauth_api_version'] = given_config['mauth_api_version']
-      @config['logger'] = given_config['logger'] || begin
-        if Object.const_defined?('Rails') && Rails.logger
+      @config["private_key"] =
+        case given_config["private_key"]
+        when nil
+          nil
+        when String
+          OpenSSL::PKey::RSA.new(given_config["private_key"])
+        when OpenSSL::PKey::RSA
+          given_config["private_key"]
+        else
+          raise MAuth::Client::ConfigurationError,
+            "unrecognized value given for 'private_key' - this may be a " \
+            "String, a OpenSSL::PKey::RSA, or omitted; instead got: #{given_config['private_key'].inspect}"
+        end
+      @config["app_uuid"] = given_config["app_uuid"]
+      @config["mauth_baseurl"] = given_config["mauth_baseurl"]
+      @config["mauth_api_version"] = given_config["mauth_api_version"]
+      @config["logger"] = given_config["logger"] || begin
+        if Object.const_defined?(:Rails) && Rails.logger
           Rails.logger
         else
-          require 'logger'
+          require "logger"
           is_win = RUBY_PLATFORM =~ /mswin|windows|mingw32|cygwin/i
-          null_device = is_win ? 'NUL' : '/dev/null'
+          null_device = is_win ? "NUL" : "/dev/null"
           ::Logger.new(File.open(null_device, File::WRONLY))
         end
       end
 
       request_config = { timeout: 10, open_timeout: 10 }
-      request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
-      @config['faraday_options'] = { request: request_config } || {}
-      @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
-      @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.downcase == 'true'
-      @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.downcase == 'true'
-      @config['disable_fallback_to_v1_on_v2_failure'] = given_config['disable_fallback_to_v1_on_v2_failure'].to_s.downcase == 'true'
-      @config['v1_only_sign_requests'] = given_config['v1_only_sign_requests'].to_s.downcase == 'true'
+      request_config.merge!(symbolize_keys(given_config["faraday_options"])) if given_config["faraday_options"]
+      @config["faraday_options"] = { request: request_config } || {}
+      @config["ssl_certs_path"] = given_config["ssl_certs_path"] if given_config["ssl_certs_path"]
+      @config["v2_only_authenticate"] = given_config["v2_only_authenticate"].to_s.casecmp("true").zero?
+      @config["v2_only_sign_requests"] = given_config["v2_only_sign_requests"].to_s.casecmp("true").zero?
+      @config["disable_fallback_to_v1_on_v2_failure"] =
+        given_config["disable_fallback_to_v1_on_v2_failure"].to_s.casecmp("true").zero?
+      @config["v1_only_sign_requests"] = given_config["v1_only_sign_requests"].to_s.casecmp("true").zero?
 
-      if @config['v2_only_sign_requests'] && @config['v1_only_sign_requests']
+      if @config["v2_only_sign_requests"] && @config["v1_only_sign_requests"]
         raise MAuth::Client::ConfigurationError, "v2_only_sign_requests and v1_only_sign_requests may not both be true"
       end
 
       # if 'authenticator' was given, don't override that - including if it was given as nil / false
-      if given_config.key?('authenticator')
-        @config['authenticator'] = given_config['authenticator']
+      if given_config.key?("authenticator")
+        @config["authenticator"] = given_config["authenticator"]
+      elsif client_app_uuid && private_key
+        @config["authenticator"] = LocalAuthenticator
+      # MAuth::Client can authenticate locally if it's provided a client_app_uuid and private_key
       else
-        if client_app_uuid && private_key
-          # MAuth::Client can authenticate locally if it's provided a client_app_uuid and private_key
-          @config['authenticator'] = LocalAuthenticator
-        else
-          # otherwise, it will authenticate remotely (requests only)
-          @config['authenticator'] = RemoteRequestAuthenticator
-        end
+        # otherwise, it will authenticate remotely (requests only)
+        @config["authenticator"] = RemoteRequestAuthenticator
       end
-      extend @config['authenticator'] if @config['authenticator']
+      extend @config["authenticator"] if @config["authenticator"]
     end
 
     def logger
-      @config['logger']
+      @config["logger"]
     end
 
     def client_app_uuid
-      @config['app_uuid']
+      @config["app_uuid"]
     end
 
     def mauth_baseurl
-      @config['mauth_baseurl'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_baseurl!")
+      @config["mauth_baseurl"] || raise(MAuth::Client::ConfigurationError, "no configured mauth_baseurl!")
     end
 
     def mauth_api_version
-      @config['mauth_api_version'] || raise(MAuth::Client::ConfigurationError, "no configured mauth_api_version!")
+      @config["mauth_api_version"] || raise(MAuth::Client::ConfigurationError, "no configured mauth_api_version!")
     end
 
     def private_key
-      @config['private_key']
+      @config["private_key"]
     end
 
     def faraday_options
-      @config['faraday_options']
+      @config["faraday_options"]
     end
 
     def ssl_certs_path
-      @config['ssl_certs_path']
+      @config["ssl_certs_path"]
     end
 
     def v2_only_sign_requests?
-      @config['v2_only_sign_requests']
+      @config["v2_only_sign_requests"]
     end
 
     def v2_only_authenticate?
-      @config['v2_only_authenticate']
+      @config["v2_only_authenticate"]
     end
 
     def disable_fallback_to_v1_on_v2_failure?
-      @config['disable_fallback_to_v1_on_v2_failure']
+      @config["disable_fallback_to_v1_on_v2_failure"]
     end
 
     def v1_only_sign_requests?
-      @config['v1_only_sign_requests']
+      @config["v1_only_sign_requests"]
     end
 
     def assert_private_key(err)
@@ -235,7 +239,7 @@ module MAuth
 
     # Changes all keys in the top level of the hash to symbols.  Does not affect nested hashes inside this one.
     def symbolize_keys(hash)
-      hash.keys.each do |key|
+      hash.keys.each do |key| # rubocop:disable Style/HashEachMethods
         hash[(key.to_sym rescue key) || key] = hash.delete(key)
       end
       hash
@@ -243,8 +247,8 @@ module MAuth
   end
 
   module ConfigFile
-    GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'.freeze
-    BACKWARDS_INCOMPATIBLE_PSYCH_VERSION = '3.1.0'.freeze
+    GITHUB_URL = "https://github.com/mdsol/mauth-client-ruby"
+    BACKWARDS_INCOMPATIBLE_PSYCH_VERSION = "3.1.0"
     @config = {}
 
     def self.load(path)
@@ -259,8 +263,6 @@ module MAuth
 
       @config[path]
     end
-
-    private
 
     def self.yaml_safe_load_file(path)
       yml_data = File.read(path)

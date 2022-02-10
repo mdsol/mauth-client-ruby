@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Hash
   # like stringify_keys, but does not attempt to stringify anything other than Symbols.
   # other keys are left alone.
