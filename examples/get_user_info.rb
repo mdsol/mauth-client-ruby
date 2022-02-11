@@ -3,11 +3,11 @@
 
 abort "USAGE: ./#{__FILE__} <USER UUID>" unless ARGV.size == 1
 
-require "bundler/setup"
+require 'bundler/setup'
 Bundler.require(:default)
 
 def config
-  @config ||= YAML.safe_load(File.open("./config.yml"))
+  @config ||= YAML.safe_load(File.open('./config.yml'))
 end
 
 # get user information
@@ -19,8 +19,8 @@ end
 def get_data_from_imedidata(resource_name)
   puts "fetching #{resource_name}..."
   begin
-    connection = Faraday::Connection.new(url: config["imedidata"]["host"]) do |builder|
-      builder.use MAuth::Faraday::RequestSigner, config["mauth"]
+    connection = Faraday::Connection.new(url: config['imedidata']['host']) do |builder|
+      builder.use MAuth::Faraday::RequestSigner, config['mauth']
       builder.adapter Faraday.default_adapter
     end
 

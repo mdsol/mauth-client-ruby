@@ -16,12 +16,12 @@ module MAuth
         end
 
         authentication_ticket = {
-          "verb" => object.attributes_for_signing[:verb],
-          "app_uuid" => object.signature_app_uuid,
-          "client_signature" => object.signature,
-          "request_url" => object.attributes_for_signing[:request_url],
-          "request_time" => object.x_mws_time,
-          "b64encoded_body" => Base64.encode64(object.attributes_for_signing[:body] || "")
+          'verb' => object.attributes_for_signing[:verb],
+          'app_uuid' => object.signature_app_uuid,
+          'client_signature' => object.signature,
+          'request_url' => object.attributes_for_signing[:request_url],
+          'request_time' => object.x_mws_time,
+          'b64encoded_body' => Base64.encode64(object.attributes_for_signing[:body] || '')
         }
         make_mauth_request(authentication_ticket)
       end
@@ -38,7 +38,7 @@ module MAuth
           client_signature: object.signature,
           request_url: object.attributes_for_signing[:request_url],
           request_time: object.mcc_time,
-          b64encoded_body: Base64.encode64(object.attributes_for_signing[:body] || ""),
+          b64encoded_body: Base64.encode64(object.attributes_for_signing[:body] || ''),
           query_string: object.attributes_for_signing[:query_string],
           token: object.signature_token
         }
@@ -71,10 +71,10 @@ module MAuth
 
       def mauth_connection
         @mauth_connection ||= begin
-          require "faraday"
+          require 'faraday'
 
           ::Faraday.new(mauth_baseurl,
-            faraday_options.merge(headers: { "Content-Type" => "application/json" })) do |builder|
+            faraday_options.merge(headers: { 'Content-Type' => 'application/json' })) do |builder|
             builder.use MAuth::Faraday::MAuthClientUserAgent
             builder.adapter ::Faraday.default_adapter
           end

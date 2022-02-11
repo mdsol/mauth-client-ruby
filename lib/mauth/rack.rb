@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "mauth/middleware"
-require "mauth/request_and_response"
-require "rack/utils"
+require 'mauth/middleware'
+require 'mauth/request_and_response'
+require 'rack/utils'
 
 module MAuth
   module Rack
@@ -18,7 +18,7 @@ module MAuth
     class RequestAuthenticator < MAuth::Middleware
       def call(env)
         mauth_request = MAuth::Rack::Request.new(env)
-        env["mauth.protocol_version"] = mauth_request.protocol_version
+        env['mauth.protocol_version'] = mauth_request.protocol_version
 
         return @app.call(env) unless should_authenticate?(env)
 
@@ -29,8 +29,8 @@ module MAuth
         begin
           if mauth_client.authentic?(mauth_request)
             @app.call(env.merge!(
-              "mauth.app_uuid" => mauth_request.signature_app_uuid,
-              "mauth.authentic" => true
+              'mauth.app_uuid' => mauth_request.signature_app_uuid,
+              'mauth.authentic' => true
             ))
           else
             response_for_inauthentic_request(env)
@@ -43,21 +43,21 @@ module MAuth
       # discards the body if REQUEST_METHOD is HEAD. sets the Content-Length.
       def handle_head(env)
         status, headers, body = *yield
-        headers["Content-Length"] = body.sum(&:bytesize).to_s
-        [status, headers, env["REQUEST_METHOD"].casecmp("head").zero? ? [] : body]
+        headers['Content-Length'] = body.sum(&:bytesize).to_s
+        [status, headers, env['REQUEST_METHOD'].casecmp('head').zero? ? [] : body]
       end
 
       # whether the request needs to be authenticated
       def should_authenticate?(env)
-        @config["should_authenticate_check"] ? @config["should_authenticate_check"].call(env) : true
+        @config['should_authenticate_check'] ? @config['should_authenticate_check'].call(env) : true
       end
 
       # response when the request is inauthentic. responds with status 401 Unauthorized and a
       # message.
       def response_for_inauthentic_request(env)
         handle_head(env) do
-          body = { "errors" => { "mauth" => ["Unauthorized"] } }
-          [401, { "Content-Type" => "application/json" }, [JSON.pretty_generate(body)]]
+          body = { 'errors' => { 'mauth' => ['Unauthorized'] } }
+          [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
       end
 
@@ -66,8 +66,8 @@ module MAuth
       # a message.
       def response_for_unable_to_authenticate(env)
         handle_head(env) do
-          body = { "errors" => { "mauth" => ["Could not determine request authenticity"] } }
-          [500, { "Content-Type" => "application/json" }, [JSON.pretty_generate(body)]]
+          body = { 'errors' => { 'mauth' => ['Could not determine request authenticity'] } }
+          [500, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
       end
 
@@ -76,11 +76,11 @@ module MAuth
       def response_for_missing_v2(env)
         handle_head(env) do
           body = {
-            "type" => "errors:mauth:missing_v2",
-            "title" => "This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and " \
-                       "configure it properly."
+            'type' => 'errors:mauth:missing_v2',
+            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and ' \
+                       'configure it properly.'
           }
-          [401, { "Content-Type" => "application/json" }, [JSON.pretty_generate(body)]]
+          [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
       end
     end
@@ -88,7 +88,7 @@ module MAuth
     # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status
     class RequestAuthenticatorNoAppStatus < RequestAuthenticator
       def should_authenticate?(env)
-        env["PATH_INFO"] != "/app_status" && super
+        env['PATH_INFO'] != '/app_status' && super
       end
     end
 
@@ -98,7 +98,7 @@ module MAuth
         unsigned_response = @app.call(env)
 
         method =
-          case env["mauth.protocol_version"]
+          case env['mauth.protocol_version']
           when 2
             :signed_v2
           when 1
@@ -126,32 +126,32 @@ module MAuth
 
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          env["rack.input"].rewind
-          body = env["rack.input"].read
-          env["rack.input"].rewind
+          env['rack.input'].rewind
+          body = env['rack.input'].read
+          env['rack.input'].rewind
           {
-            verb: env["REQUEST_METHOD"],
-            request_url: env["PATH_INFO"],
+            verb: env['REQUEST_METHOD'],
+            request_url: env['PATH_INFO'],
             body: body,
-            query_string: env["QUERY_STRING"]
+            query_string: env['QUERY_STRING']
           }
         end
       end
 
       def x_mws_time
-        @env["HTTP_X_MWS_TIME"]
+        @env['HTTP_X_MWS_TIME']
       end
 
       def x_mws_authentication
-        @env["HTTP_X_MWS_AUTHENTICATION"]
+        @env['HTTP_X_MWS_AUTHENTICATION']
       end
 
       def mcc_time
-        @env["HTTP_MCC_TIME"]
+        @env['HTTP_MCC_TIME']
       end
 
       def mcc_authentication
-        @env["HTTP_MCC_AUTHENTICATION"]
+        @env['HTTP_MCC_AUTHENTICATION']
       end
     end
 
@@ -170,7 +170,7 @@ module MAuth
 
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          body = ""
+          body = ''
           # NOTE: rack only requires #each be defined on the body, so not using map or inject
           @body.each do |part|
             body << part

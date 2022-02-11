@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "mauth/core_ext"
+require 'mauth/core_ext'
 module MAuth
   # base class for middleware, common to both Faraday and Rack
   class Middleware
@@ -16,10 +16,10 @@ module MAuth
     #
     # this method may be overloaded to provide more flexibility in providing a MAuth::Client
     def mauth_client
-      require "mauth/client"
+      require 'mauth/client'
       # @mauth_client ivar only used here for caching; should not be used by other methods, in
       # order that overloading #mauth_client will work
-      @mauth_client ||= @config["mauth_client"] || MAuth::Client.new(@config)
+      @mauth_client ||= @config['mauth_client'] || MAuth::Client.new(@config)
     end
   end
 end

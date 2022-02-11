@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "mauth/client/security_token_cacher"
-require "mauth/client/signer"
-require "openssl"
+require 'mauth/client/security_token_cacher'
+require 'mauth/client/signer'
+require 'openssl'
 
 # methods to verify the authenticity of signed requests and responses locally, retrieving
 # public keys from the mAuth service as needed
@@ -121,7 +121,7 @@ module MAuth
       #   and number sign "#" as component delimiters. Since these are valid URI components,
       #   they are decoded back into characters here to avoid signature invalidation
       def euresource_escape(str)
-        CGI.escape(str).gsub(/%2F|%23/, "%2F" => "/", "%23" => "#")
+        CGI.escape(str).gsub(/%2F|%23/, '%2F' => '/', '%23' => '#')
       end
 
       # Euresource encodes keys and values of query params but does not encode the '='
@@ -129,11 +129,11 @@ module MAuth
       # Euresource currently adds query parameters via the following method:
       # https://www.rubydoc.info/gems/addressable/2.3.4/Addressable/URI#query_values=-instance_method
       def euresource_query_escape(str)
-        CGI.escape(str).gsub(/%3D|%26/, "%3D" => "=", "%26" => "&")
+        CGI.escape(str).gsub(/%3D|%26/, '%3D' => '=', '%26' => '&')
       end
 
       def retrieve_public_key(app_uuid)
-        retrieve_security_token(app_uuid)["security_token"]["public_key_str"]
+        retrieve_security_token(app_uuid)['security_token']['public_key_str']
       end
 
       def retrieve_security_token(app_uuid)

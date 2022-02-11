@@ -1,18 +1,18 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path("../lib", File.dirname(__FILE__))
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
 
-require "faraday"
-require "logger"
-require "mauth/client"
-require "mauth/faraday"
-require "yaml"
-require "term/ansicolor"
+require 'faraday'
+require 'logger'
+require 'mauth/client'
+require 'mauth/faraday'
+require 'yaml'
+require 'term/ansicolor'
 
 # OPTION PARSER
 
-require "optparse"
+require 'optparse'
 
 # $options default values
 $options = {
@@ -24,28 +24,28 @@ $options = {
 
 additional_headers = []
 opt_parser = OptionParser.new do |opts|
-  opts.banner = "Usage: mauth-client [options] <verb> <url> [body]"
+  opts.banner = 'Usage: mauth-client [options] <verb> <url> [body]'
 
-  opts.on("-v", "--[no-]verbose", "Run verbosely - output is like curl -v (this is the default)") do |v|
+  opts.on('-v', '--[no-]verbose', 'Run verbosely - output is like curl -v (this is the default)') do |v|
     $options[:verbose] = v
   end
-  opts.on("-q", "Run quietly - only outputs the response body (same as --no-verbose)") do |v|
+  opts.on('-q', 'Run quietly - only outputs the response body (same as --no-verbose)') do |v|
     $options[:verbose] = !v
   end
-  opts.on("--[no-]authenticate", "Authenticate the response received") do |v|
+  opts.on('--[no-]authenticate', 'Authenticate the response received') do |v|
     $options[:authenticate_response] = v
   end
-  opts.on("--[no-]color", "Color the output (defaults to color if the output device is a TTY)") do |v|
+  opts.on('--[no-]color', 'Color the output (defaults to color if the output device is a TTY)') do |v|
     $options[:color] = v
   end
-  opts.on("-t", "--content-type CONTENT-TYPE", "Sets the Content-Type header of the request") do |v|
+  opts.on('-t', '--content-type CONTENT-TYPE', 'Sets the Content-Type header of the request') do |v|
     $options[:content_type] = v
   end
-  opts.on("-H", "--header LINE",
+  opts.on('-H', '--header LINE',
     "accepts a json string of additional headers to included. IE 'cache-expirey: 10, other: value") do |v|
     additional_headers << v
   end
-  opts.on("--no-ssl-verify", "Disables SSL verification - use cautiously!") do
+  opts.on('--no-ssl-verify', 'Disables SSL verification - use cautiously!') do
     $options[:no_ssl_verify] = true
   end
   $options[:additional_headers] = additional_headers
@@ -57,19 +57,19 @@ abort(opt_parser.help) unless (2..3).cover?(ARGV.size)
 
 possible_mauth_config_files = [
   # whoops, I called this MAUTH_CONFIG_YML in one place and MAUTH_CONFIG_YAML in another. supporting both for now.
-  ENV["MAUTH_CONFIG_YML"],
-  ENV["MAUTH_CONFIG_YAML"],
-  "~/.mauth_config.yml",
-  "./config/mauth.yml",
-  "./mauth.yml"
+  ENV['MAUTH_CONFIG_YML'],
+  ENV['MAUTH_CONFIG_YAML'],
+  '~/.mauth_config.yml',
+  './config/mauth.yml',
+  './mauth.yml'
 ].compact
 
 mauth_config_yml = possible_mauth_config_files.detect do |filename|
   File.exist?(File.expand_path(filename))
 end
 unless mauth_config_yml
-  message = "could not find mauth config. giving up. please place a mauth config in one of the standard places, " \
-            "or point the MAUTH_CONFIG_YML environment variable at an existing one. standard places are:" +
+  message = 'could not find mauth config. giving up. please place a mauth config in one of the standard places, ' \
+            'or point the MAUTH_CONFIG_YML environment variable at an existing one. standard places are:' +
             possible_mauth_config_files.map { |f| "\n\t#{f}" }.join
   abort message
 end
@@ -79,7 +79,7 @@ mauth_config = MAuth::Client.default_config(mauth_config_yml: File.expand_path(m
 # INSTANTIATE MAUTH CLIENT
 
 logger = Logger.new($stderr)
-mauth_client = MAuth::Client.new(mauth_config.merge("logger" => logger))
+mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
 
 # OUTPUTTERS FOR FARADAY THAT SHOULD MOVE TO A LIB SOMEWHERE
 
@@ -92,7 +92,7 @@ class FaradayOutputter < Faraday::Middleware
 
   def call(request_env)
     @app.call(request_env).on_complete do |response_env|
-      @outdev.puts(response_env[:body] || "")
+      @outdev.puts(response_env[:body] || '')
     end
   end
 end
@@ -130,15 +130,15 @@ class FaradayCurlVOutputter < FaradayOutputter
 
   def call(request_env) # rubocop:disable Metrics/AbcSize
     @outdev.puts "#{info('*')} #{info_body("connect to #{request_env[:url].host} on port #{request_env[:url].port}")}"
-    @outdev.puts "#{info('*')} #{info_body("getting our SSL on")}" if request_env[:url].scheme == "https"
+    @outdev.puts "#{info('*')} #{info_body("getting our SSL on")}" if request_env[:url].scheme == 'https'
     @outdev.puts "#{request('>')} #{request_verb(request_env[:method].to_s.upcase)} #{request_env[:url].path}" \
                  "#{protocol('HTTP/1.1' || 'or something - TODO')}"
     request_env[:request_headers].each do |k, v|
       @outdev.puts "#{request('>')} #{request_header(k)}#{request(':')} #{v}"
     end
     @outdev.puts "#{request_blankline('>')} "
-    request_body = color_body_by_content_type(request_env[:body], request_env[:request_headers]["Content-Type"])
-    (request_body || "").split("\n", -1).each do |line|
+    request_body = color_body_by_content_type(request_env[:body], request_env[:request_headers]['Content-Type'])
+    (request_body || '').split("\n", -1).each do |line|
       @outdev.puts "#{request('>')} #{line}"
     end
     @app.call(request_env).on_complete do |response_env|
@@ -148,8 +148,8 @@ class FaradayCurlVOutputter < FaradayOutputter
         @outdev.puts "#{response('<')} #{response_header(k)}#{response(':')} #{v}"
       end
       @outdev.puts "#{response_blankline('<')} "
-      response_body = color_body_by_content_type(response_env[:body], response_env[:response_headers]["Content-Type"])
-      (response_body || "").split("\n", -1).each do |line|
+      response_body = color_body_by_content_type(response_env[:body], response_env[:response_headers]['Content-Type'])
+      (response_body || '').split("\n", -1).each do |line|
         @outdev.puts "#{response('<')} #{line}"
       end
     end
@@ -166,21 +166,21 @@ class FaradayCurlVOutputter < FaradayOutputter
     c: [],
     cpp: [],
     clojure: [],
-    css: ["text/css", "application/css-stylesheet"],
+    css: ['text/css', 'application/css-stylesheet'],
     delphi: [],
     diff: [],
     erb: [],
     groovy: [],
     haml: [],
-    html: ["text/html"],
+    html: ['text/html'],
     java: [],
-    java_script: ["application/javascript", "text/javascript", "application/x-javascript"],
-    json: ["application/json", %r{\Aapplication/.*\+json\z}],
+    java_script: ['application/javascript', 'text/javascript', 'application/x-javascript'],
+    json: ['application/json', %r{\Aapplication/.*\+json\z}],
     php: [],
-    python: ["text/x-python"],
+    python: ['text/x-python'],
     ruby: [],
     sql: [],
-    xml: ["text/xml", "application/xml", %r{\Aapplication/.*\+xml\z}],
+    xml: ['text/xml', 'application/xml', %r{\Aapplication/.*\+xml\z}],
     yaml: []
   }.freeze
 
@@ -190,12 +190,12 @@ class FaradayCurlVOutputter < FaradayOutputter
     return body unless body && color?
 
     # kinda hacky way to get the media_type. faraday should supply this ...
-    require "rack"
-    media_type = ::Rack::Request.new({ "CONTENT_TYPE" => content_type }).media_type
+    require 'rack'
+    media_type = ::Rack::Request.new({ 'CONTENT_TYPE' => content_type }).media_type
     coderay_scanner = CODE_RAY_FOR_MEDIA_TYPES.select { |_k, v| v.any?(media_type) }.keys.first
     return body unless coderay_scanner
 
-    require "coderay"
+    require 'coderay'
     if coderay_scanner == :json
       body = begin
         JSON.pretty_generate(JSON.parse(body))
@@ -213,7 +213,7 @@ if $options[:no_ssl_verify]
   faraday_options[:ssl] = { verify: false }
 end
 connection = Faraday.new(faraday_options) do |builder|
-  builder.use MAuth::Faraday::MAuthClientUserAgent, "MAuth-Client CLI"
+  builder.use MAuth::Faraday::MAuthClientUserAgent, 'MAuth-Client CLI'
   builder.use MAuth::Faraday::RequestSigner, mauth_client: mauth_client
   if $options[:authenticate_response]
     builder.use MAuth::Faraday::ResponseAuthenticator, mauth_client: mauth_client
@@ -230,17 +230,17 @@ end
 
 headers = {}
 if $options[:content_type]
-  headers["Content-Type"] = $options[:content_type]
+  headers['Content-Type'] = $options[:content_type]
 elsif body
-  headers["Content-Type"] = "application/json"
+  headers['Content-Type'] = 'application/json'
   # I'd rather not have a default content-type, but if none is set then the HTTP adapter sets this to
   # application/x-www-form-urlencoded anyway. application/json is a better default for our purposes.
 end
 
 $options[:additional_headers]&.each do |cur|
-  raise "Headers must be in the format of [key]:[value]" unless cur.include?(":")
+  raise 'Headers must be in the format of [key]:[value]' unless cur.include?(':')
 
-  key, _throw_away, value = cur.partition(":")
+  key, _throw_away, value = cur.partition(':')
   headers[key] = value
 end
 

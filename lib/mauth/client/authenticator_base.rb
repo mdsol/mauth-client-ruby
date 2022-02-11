@@ -36,19 +36,19 @@ module MAuth
 
             log_authentication_request(object)
             authenticate_v1!(object)
-            logger.warn("Completed successful authentication attempt after fallback to v1")
+            logger.warn('Completed successful authentication attempt after fallback to v1')
           end
         when 1
           if v2_only_authenticate?
             # If v2 is required but not present and v1 is present we raise MissingV2Error
-            msg = "This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present"
+            msg = 'This service requires mAuth v2 mcc-authentication header but only v1 x-mws-authentication is present'
             logger.error(msg)
             raise MissingV2Error, msg
           end
 
           authenticate_v1!(object)
         else
-          sub_str = v2_only_authenticate? ? "" : "X-MWS-Authentication header is blank, "
+          sub_str = v2_only_authenticate? ? '' : 'X-MWS-Authentication header is blank, '
           msg = "Authentication Failed. No mAuth signature present; #{sub_str}MCC-Authentication header is blank."
           logger.warn("mAuth signature not present on #{object.class}. Exception: #{msg}")
           raise MAuthNotPresent, msg
@@ -60,10 +60,10 @@ module MAuth
       # NOTE: This log is likely consumed downstream and the contents SHOULD NOT
       # be changed without a thorough review of downstream consumers.
       def log_authentication_request(object)
-        object_app_uuid = object.signature_app_uuid || "[none provided]"
-        object_token = object.signature_token || "[none provided]"
+        object_app_uuid = object.signature_app_uuid || '[none provided]'
+        object_token = object.signature_token || '[none provided]'
         logger.info(
-          "Mauth-client attempting to authenticate request from app with mauth" \
+          'Mauth-client attempting to authenticate request from app with mauth' \
           " app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}" \
           " using version #{object_token}."
         )
@@ -90,7 +90,7 @@ module MAuth
 
       def time_valid_v1!(object)
         if object.x_mws_time.nil?
-          msg = "Time verification failed. No x-mws-time present."
+          msg = 'Time verification failed. No x-mws-time present.'
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end
@@ -114,7 +114,7 @@ module MAuth
 
       def time_valid_v2!(object)
         if object.mcc_time.nil?
-          msg = "Time verification failed. No MCC-Time present."
+          msg = 'Time verification failed. No MCC-Time present.'
           log_inauthentic(object, msg)
           raise InauthenticError, msg
         end

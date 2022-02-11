@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "faraday-http-cache"
-require "mauth/faraday"
+require 'faraday-http-cache'
+require 'mauth/faraday'
 
 module MAuth
   class Client
@@ -11,7 +11,7 @@ module MAuth
           @mauth_client = mauth_client
           # TODO: should this be UnableToSignError?
           @mauth_client.assert_private_key(
-            UnableToAuthenticateError.new("Cannot fetch public keys from mAuth service without a private key!")
+            UnableToAuthenticateError.new('Cannot fetch public keys from mAuth service without a private key!')
           )
         end
 
@@ -55,7 +55,7 @@ module MAuth
 
             ::Faraday.new(@mauth_client.mauth_baseurl, @mauth_client.faraday_options) do |builder|
               builder.use MAuth::Faraday::MAuthClientUserAgent
-              builder.use MAuth::Faraday::RequestSigner, "mauth_client" => @mauth_client
+              builder.use MAuth::Faraday::RequestSigner, 'mauth_client' => @mauth_client
               builder.use :http_cache, logger: MAuth::Client.new.logger, shared_cache: false
               builder.adapter ::Faraday.default_adapter
             end

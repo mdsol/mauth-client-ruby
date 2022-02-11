@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "mauth/client"
-require "faraday"
-require "rack"
+require 'mauth/client'
+require 'faraday'
+require 'rack'
 
 module MAuth
   # MAuth::Proxy is a simple Rack application to take incoming requests, sign them with MAuth, and
@@ -43,29 +43,29 @@ module MAuth
       end
       @persistent_headers = {}
       options[:headers]&.each do |cur|
-        raise "Headers must be in the format of [key]:[value]" unless cur.include?(":")
+        raise 'Headers must be in the format of [key]:[value]' unless cur.include?(':')
 
-        key, _throw_away, value = cur.partition(":")
+        key, _throw_away, value = cur.partition(':')
         @persistent_headers[key.strip] = value.strip
       end
     end
 
     def call(request_env)
       request = ::Rack::Request.new(request_env)
-      request_method = request_env["REQUEST_METHOD"].downcase.to_sym
-      request_env["rack.input"].rewind
-      request_body = request_env["rack.input"].read
-      request_env["rack.input"].rewind
+      request_method = request_env['REQUEST_METHOD'].downcase.to_sym
+      request_env['rack.input'].rewind
+      request_body = request_env['rack.input'].read
+      request_env['rack.input'].rewind
       request_headers = {}
       request_env.each do |k, v|
-        if k.start_with?("HTTP_") && k != "HTTP_HOST"
-          name = k.delete_prefix("HTTP_")
+        if k.start_with?('HTTP_') && k != 'HTTP_HOST'
+          name = k.delete_prefix('HTTP_')
           request_headers[name] = v
         end
       end
       request_headers.merge!(@persistent_headers)
       if @browser_proxy
-        target_uri = request_env["REQUEST_URI"]
+        target_uri = request_env['REQUEST_URI']
         connection = @target_uris.any? { |u| target_uri.start_with? u } ? @signer_connection : @unsigned_connection
         response = connection.run_request(request_method, target_uri, request_body, request_headers)
       else
@@ -74,7 +74,7 @@ module MAuth
       response_headers = response.headers.reject do |name, _value|
         EXCLUDED_RESPONSE_HEADERS.include?(name.downcase)
       end
-      [response.status, response_headers, [response.body || ""]]
+      [response.status, response_headers, [response.body || '']]
     end
   end
 end

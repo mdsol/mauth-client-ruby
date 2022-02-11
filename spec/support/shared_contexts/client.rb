@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "support/shared_contexts/test_signable_request"
+require 'support/shared_contexts/test_signable_request'
 
-shared_context "client" do
-  include_context "with TestSignableRequest"
+shared_context 'client' do
+  include_context 'with TestSignableRequest'
 
-  let(:app_uuid) { "signer" }
-  let(:request) { TestSignableRequest.new(verb: "PUT", request_url: "/", body: "himom") }
+  let(:app_uuid) { 'signer' }
+  let(:request) { TestSignableRequest.new(verb: 'PUT', request_url: '/', body: 'himom') }
   let(:v2_only_sign_requests) { false }
   let(:v1_only_sign_requests) { false }
   let(:v2_only_authenticate) { false }

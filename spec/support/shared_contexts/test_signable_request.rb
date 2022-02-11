@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "mauth/request_and_response"
+require 'mauth/request_and_response'
 
-RSpec.shared_context "with TestSignableRequest" do
+RSpec.shared_context 'with TestSignableRequest' do
   before do
     stub_const(
-      "TestSignableRequest",
+      'TestSignableRequest',
       Class.new(MAuth::Request) do
         include MAuth::Signed
         attr_accessor :headers
@@ -15,19 +15,19 @@ RSpec.shared_context "with TestSignableRequest" do
         end
 
         def x_mws_time
-          headers["X-MWS-Time"]
+          headers['X-MWS-Time']
         end
 
         def x_mws_authentication
-          headers["X-MWS-Authentication"]
+          headers['X-MWS-Authentication']
         end
 
         def mcc_authentication
-          headers["MCC-Authentication"]
+          headers['MCC-Authentication']
         end
 
         def mcc_time
-          headers["MCC-Time"]
+          headers['MCC-Time']
         end
       end
     )

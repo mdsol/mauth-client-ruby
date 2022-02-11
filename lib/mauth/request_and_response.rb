@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "openssl"
-require "addressable"
+require 'openssl'
+require 'addressable'
 
 module MAuth
   # module which composes a string to sign.
@@ -67,9 +67,9 @@ module MAuth
       # memoization of body_digest to avoid hashing three times when we call
       # string_to_sign_v2 three times in client#signature_valid_v2!
       # note that if :body is nil we hash an empty string ('')
-      attrs_with_overrides[:body_digest] ||= OpenSSL::Digest.hexdigest("SHA512", attrs_with_overrides[:body] || "")
+      attrs_with_overrides[:body_digest] ||= OpenSSL::Digest.hexdigest('SHA512', attrs_with_overrides[:body] || '')
       attrs_with_overrides[:encoded_query_params] =
-        unescape_encode_query_string(attrs_with_overrides[:query_string] || "")
+        unescape_encode_query_string(attrs_with_overrides[:query_string] || '')
       attrs_with_overrides[:request_url] = normalize_path(attrs_with_overrides[:request_url])
 
       missing_attributes = self.class::SIGNATURE_COMPONENTS_V2.reject do |key|
@@ -84,7 +84,7 @@ module MAuth
       end
 
       self.class::SIGNATURE_COMPONENTS_V2.map do |k|
-        attrs_with_overrides[k].to_s.dup.force_encoding("UTF-8")
+        attrs_with_overrides[k].to_s.dup.force_encoding('UTF-8')
       end.join("\n")
     end
 
@@ -96,19 +96,19 @@ module MAuth
       #   i.e. /./example => /example ; /example/.. => /
       # String#squeeze removes duplicated slahes i.e. /// => /
       # String#gsub normalizes percent encoding to uppercase i.e. %cf%80 => %CF%80
-      Addressable::URI.normalize_path(path).squeeze("/")
+      Addressable::URI.normalize_path(path).squeeze('/')
         .gsub(/%[a-f0-9]{2}/, &:upcase)
     end
 
     # sorts query string parameters by codepoint, uri encodes keys and values,
     # and rejoins parameters into a query string
     def unescape_encode_query_string(q_string)
-      q_string.split("&").map do |part|
-        k, _eq, v = part.partition("=")
+      q_string.split('&').map do |part|
+        k, _eq, v = part.partition('=')
         [CGI.unescape(k), CGI.unescape(v)]
       end.sort.map do |k, v| # rubocop:disable Style/MultilineBlockChain
         "#{uri_escape(k)}=#{uri_escape(v)}"
-      end.join("&")
+      end.join('&')
     end
 
     # percent encodes special characters, preserving character encoding.
@@ -118,7 +118,7 @@ module MAuth
     # NOTE the CGI.escape spec changed in 2.5 to not escape tildes. we gsub
     # tilde encoding back to tildes to account for older Rubies
     def uri_escape(string)
-      CGI.escape(string).gsub(/\+|%7E/, "+" => "%20", "%7E" => "~")
+      CGI.escape(string).gsub(/\+|%7E/, '+' => '%20', '%7E' => '~')
     end
 
     def initialize(attributes_for_signing)

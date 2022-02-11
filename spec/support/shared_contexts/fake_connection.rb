@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-RSpec.shared_context "with FakeConnection" do
+RSpec.shared_context 'with FakeConnection' do
   before do
     stub_const(
-      "FakeResponse",
+      'FakeResponse',
       Class.new do
         attr_accessor :headers, :status, :body
 
@@ -15,7 +15,7 @@ RSpec.shared_context "with FakeConnection" do
     )
 
     stub_const(
-      "FakeConnection",
+      'FakeConnection',
       Class.new do
         attr_accessor :headers
 

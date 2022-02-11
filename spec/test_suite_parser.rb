@@ -3,11 +3,11 @@
 # file to handle loading and parsing of mauth protocol test suite cases in order
 # to run them as rpsec tests
 
-require "mauth/client"
-require "faraday"
+require 'mauth/client'
+require 'faraday'
 
 module ProtocolHelper
-  TEST_SUITE_SUBMODULE_PATH = "spec/fixtures/mauth-protocol-test-suite"
+  TEST_SUITE_SUBMODULE_PATH = 'spec/fixtures/mauth-protocol-test-suite'
   CASE_PATH = "#{TEST_SUITE_SUBMODULE_PATH}/protocols/MWSV2"
 
   class Config
@@ -16,11 +16,11 @@ module ProtocolHelper
 
       def load
         config_hash = JSON.parse(File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-config.json"))
-        @request_time = config_hash["request_time"]
-        @app_uuid = config_hash["app_uuid"]
+        @request_time = config_hash['request_time']
+        @app_uuid = config_hash['app_uuid']
         @mauth_client = MAuth::Client.new(
           app_uuid: @app_uuid,
-          private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash["private_key_file"])
+          private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash['private_key_file'])
         )
         @pub_key = File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-params/rsa-key-pub")
       end
@@ -38,23 +38,23 @@ module ProtocolHelper
     end
 
     def req_attrs
-      @req_attrs ||= JSON.parse(File.read(file_by_ext("req"))).tap do |attrs|
-        if attrs.key?("body_filepath")
-          attrs["body"] = File.read("#{CASE_PATH}/#{case_name}/#{attrs['body_filepath']}")
+      @req_attrs ||= JSON.parse(File.read(file_by_ext('req'))).tap do |attrs|
+        if attrs.key?('body_filepath')
+          attrs['body'] = File.read("#{CASE_PATH}/#{case_name}/#{attrs['body_filepath']}")
         end
       end
     end
 
     def sts
-      File.read(file_by_ext("sts"))
+      File.read(file_by_ext('sts'))
     end
 
     def sig
-      File.read(file_by_ext("sig"))
+      File.read(file_by_ext('sig'))
     end
 
     def auth_headers
-      JSON.parse(File.read(file_by_ext("authz")))
+      JSON.parse(File.read(file_by_ext('authz')))
     end
 
     private
@@ -83,7 +83,7 @@ module ProtocolHelper
     end
 
     def build_case_from_sts
-      write_sig(File.read(file_by_ext("sts")))
+      write_sig(File.read(file_by_ext('sts')))
     end
 
     private
@@ -91,14 +91,14 @@ module ProtocolHelper
     attr_reader :case_name, :req_attrs
 
     def write_req
-      write_file("req", JSON.pretty_generate(req_attrs))
+      write_file('req', JSON.pretty_generate(req_attrs))
     end
 
     def req
       faraday_env = {
-        method: req_attrs["verb"],
-        url: URI(req_attrs["url"]),
-        body: req_attrs["body"]
+        method: req_attrs['verb'],
+        url: URI(req_attrs['url']),
+        body: req_attrs['body']
       }
 
       MAuth::Faraday::Request.new(faraday_env)
@@ -113,7 +113,7 @@ module ProtocolHelper
     end
 
     def write_sts
-      write_file("sts", sts)
+      write_file('sts', sts)
     end
 
     def sig(given_sts)
@@ -122,7 +122,7 @@ module ProtocolHelper
     end
 
     def write_sig(given_sts = nil)
-      write_file("sig", sig(given_sts))
+      write_file('sig', sig(given_sts))
     end
 
     def auth_headers
@@ -131,7 +131,7 @@ module ProtocolHelper
     end
 
     def write_authz
-      write_file("authz", JSON.pretty_generate(auth_headers))
+      write_file('authz', JSON.pretty_generate(auth_headers))
     end
 
     def write_file(ext, contents)
