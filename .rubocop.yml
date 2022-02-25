@@ -1,0 +1,53 @@
+inherit_gem:
+  rubocop-mdsol: rubocop.yml
+
+require:
+  - rubocop-performance
+
+AllCops:
+  Exclude:
+    - gemfiles/**/*
+
+Gemspec/RequireMFA:
+  Enabled: false
+
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/LineLength:
+  Exclude:
+    - spec/client/local_authenticator_spec.rb
+
+Lint/MissingSuper:
+  Exclude:
+    - exe/mauth-client
+    - lib/mauth/faraday.rb
+    - lib/mauth/rack.rb
+
+Metrics/AbcSize:
+  Exclude:
+    - lib/mauth/client.rb
+    - lib/mauth/client/local_authenticator.rb
+    - lib/mauth/proxy.rb
+
+Metrics/MethodLength:
+  Exclude:
+    - lib/mauth/client.rb
+
+Naming/FileName:
+  Exclude:
+    - lib/mauth-client.rb
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/GlobalVars:
+  Exclude:
+    - exe/mauth-client
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: single_quotes

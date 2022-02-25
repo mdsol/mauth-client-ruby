@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mauth/client/security_token_cacher'
 require 'mauth/client/signer'
 require 'openssl'
@@ -25,11 +27,13 @@ module MAuth
 
         # do a simple percent reencoding variant of the path
         object.attributes_for_signing[:request_url] = CGI.escape(original_request_uri.to_s)
-        expected_for_percent_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_for_percent_reencoding = object.string_to_sign_v1(time: object.x_mws_time,
+          app_uuid: object.signature_app_uuid)
 
         # do a moderately complex Euresource-style reencoding of the path
         object.attributes_for_signing[:request_url] = euresource_escape(original_request_uri.to_s)
-        expected_euresource_style_reencoding = object.string_to_sign_v1(time: object.x_mws_time, app_uuid: object.signature_app_uuid)
+        expected_euresource_style_reencoding = object.string_to_sign_v1(time: object.x_mws_time,
+          app_uuid: object.signature_app_uuid)
 
         # reset the object original request_uri, just in case we need it again
         object.attributes_for_signing[:request_url] = original_request_uri
@@ -44,8 +48,8 @@ module MAuth
         end
 
         unless verify_signature_v1!(actual, expected_no_reencoding) ||
-           verify_signature_v1!(actual, expected_euresource_style_reencoding) ||
-           verify_signature_v1!(actual, expected_for_percent_reencoding)
+               verify_signature_v1!(actual, expected_euresource_style_reencoding) ||
+               verify_signature_v1!(actual, expected_for_percent_reencoding)
           msg = "Signature verification failed for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
@@ -93,8 +97,8 @@ module MAuth
         actual = Base64.decode64(object.signature)
 
         unless verify_signature_v2!(object, actual, pubkey, expected_no_reencoding) ||
-           verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
-           verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
+               verify_signature_v2!(object, actual, pubkey, expected_euresource_style_reencoding) ||
+               verify_signature_v2!(object, actual, pubkey, expected_for_percent_reencoding)
           msg = "Signature inauthentic for #{object.class}"
           log_inauthentic(object, msg)
           raise InauthenticError, msg
@@ -113,7 +117,7 @@ module MAuth
         raise InauthenticError, msg
       end
 
-      # Note: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
+      # NOTE: RFC 3986 (https://www.ietf.org/rfc/rfc3986.txt) reserves the forward slash "/"
       #   and number sign "#" as component delimiters. Since these are valid URI components,
       #   they are decoded back into characters here to avoid signature invalidation
       def euresource_escape(str)
@@ -139,7 +143,6 @@ module MAuth
       def security_token_cacher
         @security_token_cacher ||= SecurityTokenCacher.new(self)
       end
-
     end
   end
 end

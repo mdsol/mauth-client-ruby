@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 abort "USAGE: ./#{__FILE__} <USER UUID>" unless ARGV.size == 1
 
@@ -6,7 +7,7 @@ require 'bundler/setup'
 Bundler.require(:default)
 
 def config
-  @conf ||= YAML.load(File.open("./config.yml"))
+  @config ||= YAML.safe_load(File.open('./config.yml'))
 end
 
 # get user information
@@ -18,8 +19,8 @@ end
 def get_data_from_imedidata(resource_name)
   puts "fetching #{resource_name}..."
   begin
-    connection = Faraday::Connection.new(url: config["imedidata"]["host"]) do |builder|
-      builder.use MAuth::Faraday::RequestSigner, config["mauth"]
+    connection = Faraday::Connection.new(url: config['imedidata']['host']) do |builder|
+      builder.use MAuth::Faraday::RequestSigner, config['mauth']
       builder.adapter Faraday.default_adapter
     end
 
@@ -44,15 +45,14 @@ end
 
 get_user_info_mauth(ARGV[0])
 
-
 ### OTHER EXAMPLES
 
 #### get study groups for an user
 def get_study_groups_mauth(user_uuid)
- get_data_from_imedidata "users/#{user_uuid}/study_groups.json"
+  get_data_from_imedidata "users/#{user_uuid}/study_groups.json"
 end
 
 #### get roles for a user in an application study
 def get_user_study_roles_mauth(user_uuid, study_uuid)
- get_data_from_imedidata "users/#{user_uuid}/studies/#{study_uuid}/apps/#{config["mauth"]["app_uuid"]}/roles.json"
+  get_data_from_imedidata "users/#{user_uuid}/studies/#{study_uuid}/apps/#{config["mauth"]["app_uuid"]}/roles.json"
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # methods for remotely authenticating a request by sending it to the mauth service
 
 module MAuth
@@ -8,7 +10,11 @@ module MAuth
       # takes an incoming request object (no support for responses currently), and errors if the
       # object is not authentic according to its signature
       def signature_valid_v1!(object)
-        raise ArgumentError, "Remote Authenticator can only authenticate requests; received #{object.inspect}" unless object.is_a?(MAuth::Request)
+        unless object.is_a?(MAuth::Request)
+          raise ArgumentError,
+            "Remote Authenticator can only authenticate requests; received #{object.inspect}"
+        end
+
         authentication_ticket = {
           'verb' => object.attributes_for_signing[:verb],
           'app_uuid' => object.signature_app_uuid,
@@ -41,15 +47,17 @@ module MAuth
 
       def make_mauth_request(authentication_ticket)
         begin
-          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", 'authentication_ticket' => authentication_ticket)
+          request_body = JSON.generate(authentication_ticket: authentication_ticket)
+          response = mauth_connection.post("/mauth/#{mauth_api_version}/authentication_tickets.json", request_body)
         rescue ::Faraday::ConnectionFailed, ::Faraday::TimeoutError => e
           msg = "mAuth service did not respond; received #{e.class}: #{e.message}"
           logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end
-        if (200..299).cover?(response.status)
+        case response.status
+        when 200..299
           nil
-        elsif response.status == 412 || response.status == 404
+        when 412, 404
           # the mAuth service responds with 412 when the given request is not authentically signed.
           # older versions of the mAuth service respond with 404 when the given app_uuid
           # does not exist, which is also considered to not be authentically signed. newer
@@ -62,12 +70,14 @@ module MAuth
       end
 
       def mauth_connection
-        require 'faraday'
-        require 'faraday_middleware'
-        @mauth_connection ||= ::Faraday.new(mauth_baseurl, faraday_options) do |builder|
-          builder.use MAuth::Faraday::MAuthClientUserAgent
-          builder.use FaradayMiddleware::EncodeJson
-          builder.adapter ::Faraday.default_adapter
+        @mauth_connection ||= begin
+          require 'faraday'
+
+          ::Faraday.new(mauth_baseurl,
+            faraday_options.merge(headers: { 'Content-Type' => 'application/json' })) do |builder|
+            builder.use MAuth::Faraday::MAuthClientUserAgent
+            builder.adapter ::Faraday.default_adapter
+          end
         end
       end
     end

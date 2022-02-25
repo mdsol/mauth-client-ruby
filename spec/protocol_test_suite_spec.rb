@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_suite_parser'
 require 'faraday'
 require 'mauth/client'
@@ -10,7 +12,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
   before(:all) { ProtocolHelper::Config.load }
 
   ProtocolHelper::Config.cases.each do |case_dir|
-    context "#{case_dir}" do
+    context case_dir.to_s do
       let(:parser) { ProtocolHelper::CaseParser.new(case_dir) }
       let(:req_attrs) { parser.req_attrs }
       # must have protocol and domain name so URI won't consider `//example//` test case a
@@ -29,7 +31,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
       end
       let(:faraday_req) { MAuth::Faraday::Request.new(faraday_env) }
 
-      unless case_dir =~ /authentication-only/
+      unless /authentication-only/.match?(case_dir)
         context 'signing' do
           it 'generates the corect string to sign' do
             signing_info = {
@@ -65,7 +67,7 @@ describe 'MAuth Client passes the MWSV2 protocol test suite', protocol_suite: tr
         let(:rackified_auth_headers) do
           # not supported in < Ruby 2.5
           # expected_auth_headers.transform_keys! { |k| k.upcase.gsub('-','_').prepend('HTTP_') }
-          expected_auth_headers.map { |k, _v| [ k.upcase.gsub('-','_').prepend('HTTP_'), _v ] }.to_h
+          expected_auth_headers.transform_keys { |k| k.upcase.tr('-', '_').prepend('HTTP_') }
         end
         let(:mock_rack_env) do
           {

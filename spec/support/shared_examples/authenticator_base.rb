@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 shared_examples MAuth::Client::AuthenticatorBase do
   context 'when v2 and v1 headers are present on the object to authenticate' do
     it 'authenticates with v2' do
@@ -31,7 +33,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
     context 'v2_only_authenticate flag is set to true' do
       let(:v2_only_authenticate) { true }
 
-      it "considers an authentically-signed request to be inauthentic when it has no MCC-time" do
+      it 'considers an authentically-signed request to be inauthentic when it has no MCC-time' do
         signed_request = client.signed(request)
         signed_request.headers.delete('MCC-Time')
         expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
@@ -40,12 +42,14 @@ shared_examples MAuth::Client::AuthenticatorBase do
         )
       end
 
-      it "considers a request with a bad V2 token to be inauthentic" do
+      it 'considers a request with a bad V2 token to be inauthentic' do
         ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
           signed_request = client.signed(request)
-          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
-            expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
-              MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/)
+          signed_request.headers['MCC-Authentication'] =
+            signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
+          expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
+            MAuth::InauthenticError, /Token verification failed\. Expected MWSV2; token was .*/
+          )
         end
       end
     end
@@ -53,7 +57,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
     context 'v2_only_authenticate flag is set to false' do
       let(:v2_only_authenticate) { false }
 
-      it "falls back to V1 when it has no MCC-time" do
+      it 'falls back to V1 when it has no MCC-time' do
         signed_request = client.signed(request)
         signed_request.headers.delete('MCC-Time')
 
@@ -68,10 +72,11 @@ shared_examples MAuth::Client::AuthenticatorBase do
         expect { authenticating_mc.authenticate!(signed_request) }.not_to raise_error
       end
 
-      it "falls back to V1 when it has a bad V2 token" do
+      it 'falls back to V1 when it has a bad V2 token' do
         ['mws2', 'm.w.s', 'm w s', 'NWSv2', ' MWS'].each do |bad_token|
           signed_request = client.signed(request)
-          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
+          signed_request.headers['MCC-Authentication'] =
+            signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, bad_token)
 
           expect(authenticating_mc.logger).to receive(:info).with(
             'Mauth-client attempting to authenticate request from app with mauth app uuid ' \
@@ -85,7 +90,8 @@ shared_examples MAuth::Client::AuthenticatorBase do
         end
       end
 
-      it "considers a request to be inauthentic when it has no MCC-time, and V1 header (X-MWS-Authentication) is missing" do
+      it 'considers a request to be inauthentic when it has no MCC-time, ' \
+         'and V1 header (X-MWS-Authentication) is missing' do
         signed_request = client.signed(request)
         signed_request.headers.delete('MCC-Time')
         signed_request.headers.delete('X-MWS-Authentication')
@@ -98,7 +104,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       context 'disable_fallback_to_v1_on_v2_failure flag is set to true' do
         let(:disable_fallback_to_v1_on_v2_failure) { true }
 
-        it "does not fall back to V1 when it has no MCC-time" do
+        it 'does not fall back to V1 when it has no MCC-time' do
           signed_request = client.signed(request)
           signed_request.headers.delete('MCC-Time')
 
@@ -108,9 +114,10 @@ shared_examples MAuth::Client::AuthenticatorBase do
           )
         end
 
-        it "falls back to V1 when it has a bad V2 token" do
+        it 'falls back to V1 when it has a bad V2 token' do
           signed_request = client.signed(request)
-          signed_request.headers['MCC-Authentication'] = signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, 'mws2')
+          signed_request.headers['MCC-Authentication'] =
+            signed_request.headers['MCC-Authentication'].sub(/\AMWSV2/, 'mws2')
 
           expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
             MAuth::InauthenticError,
@@ -147,7 +154,6 @@ shared_examples MAuth::Client::AuthenticatorBase do
   end
 
   context 'when only v1 headers are present on the object to authenticate' do
-
     it 'authenticates with v1' do
       expect(authenticating_mc).to receive(:signature_valid_v1!).with(v1_signed_req)
       expect(authenticating_mc).not_to receive(:signature_valid_v2!)
@@ -175,19 +181,21 @@ shared_examples MAuth::Client::AuthenticatorBase do
       Timecop.return
     end
 
-    it "considers an authentically-signed request to be inauthentic when it has no x-mws-time" do
+    it 'considers an authentically-signed request to be inauthentic when it has no x-mws-time' do
       v1_signed_req.headers.delete('X-MWS-Time')
       expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-          MAuth::InauthenticError,
-          /Time verification failed\. No x-mws-time present\./
-        )
+        MAuth::InauthenticError,
+        /Time verification failed\. No x-mws-time present\./
+      )
     end
 
-    it "considers a request with a bad MWS token to be inauthentic" do
+    it 'considers a request with a bad MWS token to be inauthentic' do
       ['mws', 'm.w.s', 'm w s', 'NWS', ' MWS'].each do |bad_token|
-        v1_signed_req.headers['X-MWS-Authentication'] = v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
+        v1_signed_req.headers['X-MWS-Authentication'] =
+          v1_signed_req.headers['X-MWS-Authentication'].sub(/\AMWS/, bad_token)
         expect { authenticating_mc.authenticate!(v1_signed_req) }.to raise_error(
-          MAuth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/)
+          MAuth::InauthenticError, /Token verification failed\. Expected MWS; token was .*/
+        )
       end
     end
 
@@ -199,8 +207,8 @@ shared_examples MAuth::Client::AuthenticatorBase do
       end
     end
 
-    it "raises UnableToAuthenticate if mauth errors" do
-      stubs.instance_eval{ @stack.clear } #HAX
+    it 'raises UnableToAuthenticate if mauth errors' do
+      stubs.instance_eval { @stack.clear } # HAX
       stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [500, {}, []] } # for the local authenticator
       stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator
       expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
@@ -227,12 +235,11 @@ shared_examples MAuth::Client::AuthenticatorBase do
         )
         authenticating_mc.authentic?(v1_signed_req) rescue nil
       end
-
     end
   end
 
   context 'when no headers are present on the object to authenticate' do
-    it "considers a request without v1 and v2 headers to be inauthentic" do
+    it 'considers a request without v1 and v2 headers to be inauthentic' do
       signed_request = client.signed(request)
       signed_request.headers.delete('X-MWS-Authentication')
       signed_request.headers.delete('MCC-Authentication')
@@ -243,7 +250,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       )
     end
 
-    it "considers a request with empty v1 and v2 headers to be inauthentic" do
+    it 'considers a request with empty v1 and v2 headers to be inauthentic' do
       signed_request = client.signed(request)
       signed_request.headers['X-MWS-Authentication'] = ''
       signed_request.headers['MCC-Authentication'] = ''

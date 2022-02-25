@@ -3,26 +3,32 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.5
   - 2.6
   - 2.7
   - 3.0
+  - 3.1
+
+env:
+  global:
+    - BUNDLE_JOBS=4
 
 jobs:
   exclude:
     - rvm: 3.0
       gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
+    - rvm: 3.1
+      gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
 
 gemfile:
   - gemfiles/faraday_0.x.gemfile
   - gemfiles/faraday_1.x.gemfile
+  - gemfiles/faraday_2.x.gemfile
 
 before_install:
-  - gem update --system --force -N > /dev/null && echo "Rubygems version $(gem --version)"
-  - gem install bundler --force -N && bundle --version
+  - gem update --system --force -N > /dev/null && echo "Rubygems version $(gem --version)" && bundle --version
 
 install:
-  - bundle install --jobs=3 --retry=3
+  - bundle install
   - >-
     curl -H 'Cache-Control: no-cache'
     https://raw.githubusercontent.com/mdsol/fossa_ci_scripts/main/travis_ci/fossa_install.sh |
@@ -30,6 +36,7 @@ install:
 
 script:
   - bundle exec rspec
+  - bundle exec rubocop
   - bundle exec rake benchmark
   - >-
     curl -H 'Cache-Control: no-cache'
@@ -44,4 +51,4 @@ deploy:
   on:
     tags: true
     repo: mdsol/mauth-client-ruby
-    condition: $TRAVIS_RUBY_VERSION == 3.0 && $BUNDLE_GEMFILE == $TRAVIS_BUILD_DIR/gemfiles/faraday_1.x.gemfile
+    condition: $TRAVIS_RUBY_VERSION == 3.1 && $BUNDLE_GEMFILE == $TRAVIS_BUILD_DIR/gemfiles/faraday_1.x.gemfile

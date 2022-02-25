@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'faraday-http-cache'
 require 'mauth/faraday'
 
@@ -5,12 +7,11 @@ module MAuth
   class Client
     module LocalAuthenticator
       class SecurityTokenCacher
-
         def initialize(mauth_client)
           @mauth_client = mauth_client
           # TODO: should this be UnableToSignError?
           @mauth_client.assert_private_key(
-            UnableToAuthenticateError.new("Cannot fetch public keys from mAuth service without a private key!")
+            UnableToAuthenticateError.new('Cannot fetch public keys from mAuth service without a private key!')
           )
         end
 
@@ -41,7 +42,7 @@ module MAuth
         def security_token_from(response_body)
           JSON.parse response_body
         rescue JSON::ParserError => e
-          msg =  "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
+          msg = "mAuth service responded with unparseable json: #{response_body}\n#{e.class}: #{e.message}"
           @mauth_client.logger.error("Unable to authenticate with MAuth. Exception #{msg}")
           raise UnableToAuthenticateError, msg
         end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'timecop'
 require 'json'
 require 'rack/mock'
@@ -7,7 +9,7 @@ require 'webmock/rspec'
 require 'simplecov'
 SimpleCov.start
 
-MAUTH_CONFIG_YML = File.expand_path('../config_root/config/mauth.yml', __FILE__).freeze
+MAUTH_CONFIG_YML = File.expand_path('config_root/config/mauth.yml', __dir__).freeze
 
 RSpec.configure do |config|
   config.before do

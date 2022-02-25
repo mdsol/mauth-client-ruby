@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mauth/middleware'
 require 'mauth/request_and_response'
 
@@ -31,6 +33,7 @@ module MAuth
     # passed to a Mauth::Client for signing
     class Request < MAuth::Request
       attr_reader :request_env
+
       def initialize(request_env)
         @request_env = request_env
       end
@@ -59,6 +62,7 @@ module MAuth
     class Response < MAuth::Response
       include Signed
       attr_reader :response_env
+
       def initialize(response_env)
         @response_env = response_env
       end
@@ -86,7 +90,7 @@ module MAuth
 
     # add MAuth-Client's user-agent to a request
     class MAuthClientUserAgent
-      def initialize(app, agent_base = "Mauth-Client")
+      def initialize(app, agent_base = 'Mauth-Client')
         @app = app
         @agent_base = agent_base
       end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 require 'mauth/request_and_response'
@@ -16,7 +18,7 @@ class TestSignableRequest < MAuth::Request
   attr_accessor :headers
 
   def merge_headers(headers)
-    self.class.new(@attributes_for_signing).tap{|r| r.headers = (@headers || {}).merge(headers) }
+    self.class.new(@attributes_for_signing).tap { |r| r.headers = (@headers || {}).merge(headers) }
   end
 
   def x_mws_time
@@ -37,7 +39,7 @@ class TestSignableRequest < MAuth::Request
 end
 
 desc 'Runs benchmarks for the library.'
-task :benchmark do
+task :benchmark do # rubocop:disable Metrics/BlockLength
   mc = MAuth::Client.new(
     private_key: OpenSSL::PKey::RSA.generate(2048),
     app_uuid: SecureRandom.uuid,

@@ -12,16 +12,15 @@ module ProtocolHelper
 
   class Config
     class << self
-
       attr_reader :request_time, :app_uuid, :mauth_client, :pub_key
 
       def load
         config_hash = JSON.parse(File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-config.json"))
-        @request_time = config_hash["request_time"]
-        @app_uuid = config_hash["app_uuid"]
+        @request_time = config_hash['request_time']
+        @app_uuid = config_hash['app_uuid']
         @mauth_client = MAuth::Client.new(
           app_uuid: @app_uuid,
-          private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash["private_key_file"])
+          private_key_file: File.join(TEST_SUITE_SUBMODULE_PATH, config_hash['private_key_file'])
         )
         @pub_key = File.read("#{TEST_SUITE_SUBMODULE_PATH}/signing-params/rsa-key-pub")
       end
@@ -39,11 +38,9 @@ module ProtocolHelper
     end
 
     def req_attrs
-      @req_attrs ||= begin
-        JSON.parse(File.read(file_by_ext('req'))).tap do |attrs|
-          if attrs.has_key?('body_filepath')
-            attrs['body'] = File.read("#{CASE_PATH}/#{case_name}/#{attrs['body_filepath']}")
-          end
+      @req_attrs ||= JSON.parse(File.read(file_by_ext('req'))).tap do |attrs|
+        if attrs.key?('body_filepath')
+          attrs['body'] = File.read("#{CASE_PATH}/#{case_name}/#{attrs['body_filepath']}")
         end
       end
     end
@@ -104,7 +101,7 @@ module ProtocolHelper
         body: req_attrs['body']
       }
 
-      req = MAuth::Faraday::Request.new(faraday_env)
+      MAuth::Faraday::Request.new(faraday_env)
     end
 
     def sts
@@ -112,7 +109,7 @@ module ProtocolHelper
         app_uuid: ProtocolHelper::Config.app_uuid,
         time: ProtocolHelper::Config.request_time
       }
-      sts = req.string_to_sign_v2(signing_info)
+      req.string_to_sign_v2(signing_info)
     end
 
     def write_sts

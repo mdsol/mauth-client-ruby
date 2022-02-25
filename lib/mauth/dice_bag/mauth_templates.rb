@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'dice_bag'
 
 class MauthTemplate < DiceBag::AvailableTemplates
@@ -14,6 +16,6 @@ class MauthInitializerTemplate < DiceBag::AvailableTemplates
   end
 
   def templates
-    [File.join(File.dirname(__FILE__), 'mauth.rb.dice')] if Object.const_defined?('Rails')
+    [File.join(File.dirname(__FILE__), 'mauth.rb.dice')] if Object.const_defined?(:Rails)
   end
 end

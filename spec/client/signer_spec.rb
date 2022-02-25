@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'mauth/client'
-require_relative '../support/shared_contexts/client.rb'
-
+require_relative '../support/shared_contexts/client'
 
 describe MAuth::Client::Signer do
   include_context 'client'
@@ -29,7 +30,8 @@ describe MAuth::Client::Signer do
 
     it 'by default adds X-MWS-Time, X-MWS-Authentication, MCC-Time, MCC-Authentication headers when signing' do
       signed_request = client.signed(request)
-      expect(signed_request.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time','MCC-Authentication', 'MCC-Time')
+      expect(signed_request.headers.keys).to include('X-MWS-Authentication', 'X-MWS-Time', 'MCC-Authentication',
+        'MCC-Time')
     end
 
     it "can't sign without a private key" do
@@ -133,14 +135,14 @@ describe MAuth::Client::Signer do
 
       it 'calls `sign` with an OpenSSL SHA512 digest' do
         expect(mock_pkey).to receive(:sign)
-          .with(an_instance_of(OpenSSL::Digest::SHA512), string_to_sign)
+          .with(an_instance_of(OpenSSL::Digest), string_to_sign)
         client.signature_v2(string_to_sign)
       end
     end
   end
 
   describe 'cross platform signature testing' do
-    let(:testing_info) { JSON.parse(IO.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true) }
+    let(:testing_info) { JSON.parse(File.read('spec/fixtures/mauth_signature_testing.json'), symbolize_names: true) }
     let(:client) do
       MAuth::Client.new(
         private_key: testing_info[:private_key],

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module MAuth
   autoload :Client, 'mauth/client'
   autoload :Middleware, 'mauth/middleware'

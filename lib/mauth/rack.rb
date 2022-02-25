@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mauth/middleware'
 require 'mauth/request_and_response'
 require 'rack/utils'
@@ -41,7 +43,7 @@ module MAuth
       # discards the body if REQUEST_METHOD is HEAD. sets the Content-Length.
       def handle_head(env)
         status, headers, body = *yield
-        headers["Content-Length"] = body.map(&:bytesize).inject(0, &:+).to_s
+        headers['Content-Length'] = body.sum(&:bytesize).to_s
         [status, headers, env['REQUEST_METHOD'].casecmp('head').zero? ? [] : body]
       end
 
@@ -75,7 +77,8 @@ module MAuth
         handle_head(env) do
           body = {
             'type' => 'errors:mauth:missing_v2',
-            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly.'
+            'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and ' \
+                       'configure it properly.'
           }
           [401, { 'Content-Type' => 'application/json' }, [JSON.pretty_generate(body)]]
         end
@@ -85,7 +88,7 @@ module MAuth
     # same as MAuth::Rack::RequestAuthenticator, but does not authenticate /app_status
     class RequestAuthenticatorNoAppStatus < RequestAuthenticator
       def should_authenticate?(env)
-        env['PATH_INFO'] != "/app_status" && super
+        env['PATH_INFO'] != '/app_status' && super
       end
     end
 
@@ -95,9 +98,10 @@ module MAuth
         unsigned_response = @app.call(env)
 
         method =
-          if env['mauth.protocol_version'] == 2
+          case env['mauth.protocol_version']
+          when 2
             :signed_v2
-          elsif env['mauth.protocol_version'] == 1
+          when 1
             :signed_v1
           else
             # if no protocol was supplied then use `signed` which either signs
@@ -115,6 +119,7 @@ module MAuth
     class Request < MAuth::Request
       include Signed
       attr_reader :env
+
       def initialize(env)
         @env = env
       end
@@ -166,7 +171,10 @@ module MAuth
       def attributes_for_signing
         @attributes_for_signing ||= begin
           body = ''
-          @body.each { |part| body << part } # note: rack only requires #each be defined on the body, so not using map or inject
+          # NOTE: rack only requires #each be defined on the body, so not using map or inject
+          @body.each do |part|
+            body << part
+          end
           { status_code: @status.to_i, body: body }
         end
       end

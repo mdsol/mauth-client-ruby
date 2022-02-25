@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'faraday'
 require 'mauth/rack'
@@ -33,7 +35,7 @@ describe MAuth::Rack do
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw_auth_false.mauth_client).not_to receive(:authentic?)
       expect(rack_app).to receive(:call).with(env).and_return(res)
-      status, headers, body = mw_auth_false.call(env)
+      status, _headers, body = mw_auth_false.call(env)
       expect(200).to eq(status)
       expect(['hello world']).to eq(body)
     end
@@ -48,7 +50,7 @@ describe MAuth::Rack do
           'mauth.authentic' => true,
           'mauth.protocol_version' => 1
         )).and_return(res)
-        status, headers, body = mw_w_flag.call(env)
+        status, _headers, body = mw_w_flag.call(env)
         expect(status).to eq(200)
         expect(body).to eq(['hello world'])
       end
@@ -57,7 +59,7 @@ describe MAuth::Rack do
     it 'returns 401 and does not call the app if authentication fails' do
       expect(mw.mauth_client).to receive(:authentic?).and_return(false)
       expect(rack_app).not_to receive(:call)
-      status, headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
+      status, _headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
       expect(401).to eq(status)
       expect(body.join).to match(/Unauthorized/)
     end
@@ -66,7 +68,7 @@ describe MAuth::Rack do
       expect(mw.mauth_client).to receive(:authentic?).and_return(false)
       expect(rack_app).not_to receive(:call)
       status, headers, body = mw.call({ 'REQUEST_METHOD' => 'HEAD' })
-      expect(headers["Content-Length"].to_i).to be > 0
+      expect(headers['Content-Length'].to_i).to be > 0
       expect(401).to eq(status)
       expect([]).to eq(body)
     end
@@ -74,7 +76,7 @@ describe MAuth::Rack do
     it 'returns 500 and does not call the app if unable to authenticate' do
       expect(mw.mauth_client).to receive(:authentic?).and_raise(MAuth::UnableToAuthenticateError.new(''))
       expect(rack_app).not_to receive(:call)
-      status, headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
+      status, _headers, body = mw.call({ 'REQUEST_METHOD' => 'GET' })
       expect(500).to eq(status)
       expect(body.join).to match(/Could not determine request authenticity/)
     end
@@ -91,7 +93,8 @@ describe MAuth::Rack do
         expect(headers['Content-Type']).to eq('application/json')
         expect(JSON.parse(body.join)).to eq({
           'type' => 'errors:mauth:missing_v2',
-          'title' => 'This service requires mAuth v2 mcc-authentication header. Upgrade your mAuth library and configure it properly.'
+          'title' => 'This service requires mAuth v2 mcc-authentication header. ' \
+                     'Upgrade your mAuth library and configure it properly.'
         })
       end
     end
@@ -106,7 +109,7 @@ describe MAuth::Rack do
         'mauth.authentic' => true,
         'mauth.protocol_version' => 1
       })).and_return(res)
-      status, headers, body = mw.call(env)
+      status, _headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
     end
@@ -119,7 +122,7 @@ describe MAuth::Rack do
         'mauth.authentic' => true,
         'mauth.protocol_version' => 1
       })).and_return(res)
-      status, headers, body = mw.call(env)
+      status, _headers, body = mw.call(env)
       expect(status).to eq(200)
       expect(body).to eq(['hello world'])
     end
@@ -127,23 +130,23 @@ describe MAuth::Rack do
     it 'does not call the app when the request is set to be inauthentic' do
       described_class.authentic = false
       env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
-      status, headers, body = mw.call(env)
+      mw.call(env)
       expect(rack_app).not_to receive(:call)
     end
 
     it 'returns appropriate responses when the request is set to be inauthentic' do
       described_class.authentic = false
       env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
-      status, headers, body = mw.call(env)
+      status, _headers, _body = mw.call(env)
       expect(status).to eq(401)
     end
 
     it 'after an inauthentic request, the next request is authentic by default' do
       described_class.authentic = false
       env = { 'REQUEST_METHOD' => 'GET', 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
-      status, headers, body = mw.call(env)
+      status, _headers, _body = mw.call(env)
       expect(status).to eq(401)
-      status, headers, body = mw.call(env)
+      status, _headers, _body = mw.call(env)
       expect(status).to eq(200)
     end
   end
@@ -191,7 +194,7 @@ describe MAuth::Rack do
       let(:env) do
         {
           'HTTP_MCC_AUTHENTICATION' => 'MWSV500 foo:bar;',
-          'REQUEST_METHOD' => 'GET',
+          'REQUEST_METHOD' => 'GET'
         }
       end
 
@@ -207,7 +210,6 @@ describe MAuth::Rack do
 end
 
 describe MAuth::Faraday do
-
   describe MAuth::Faraday::ResponseAuthenticator do
     include_examples MAuth::Middleware
     let(:faraday_app) do
@@ -235,12 +237,12 @@ describe MAuth::Faraday do
 
     it 'raises InauthenticError on inauthentic response' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::InauthenticError.new)
-      expect{ mw.call({}) }.to raise_error(MAuth::InauthenticError)
+      expect { mw.call({}) }.to raise_error(MAuth::InauthenticError)
     end
 
     it 'raises UnableToAuthenticateError when unable to authenticate' do
       allow(mw.mauth_client).to receive(:authenticate!).and_raise(MAuth::UnableToAuthenticateError.new)
-      expect{ mw.call({}) }.to raise_error(MAuth::UnableToAuthenticateError)
+      expect { mw.call({}) }.to raise_error(MAuth::UnableToAuthenticateError)
     end
 
     it 'is usable via the name mauth_response_authenticator' do
@@ -265,12 +267,13 @@ describe MAuth::Faraday do
   end
 
   describe MAuth::Faraday::MAuthClientUserAgent do
-    class FakeApp
-      def call(env)
+    let(:fake_app) do
+      Class.new do
+        def call(env); end
       end
     end
     let(:agent_base) { 'Sallust' }
-    let(:app) { FakeApp.new }
+    let(:app) { fake_app.new }
     let(:middleware) { described_class.new(app, agent_base) }
 
     it 'sets the User-Agent request header' do

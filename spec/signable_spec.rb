@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'mauth/request_and_response'
 require 'mauth/client'
@@ -9,17 +11,16 @@ describe MAuth::Signable do
     { verb: 'PUT', request_url: '/', body: '{}', query_string: 'k=v' }
       .merge(more_attrs)
   end
-  let(:frozen_req_attrs) { req_attrs.each_with_object({}) { |(k, v), h| h[k] = v.is_a?(String) ? v.freeze : v } }
+  let(:frozen_req_attrs) { req_attrs.transform_values { |v| v.is_a?(String) ? v.freeze : v } }
   let(:dummy_cls) do
-    class Dummy
+    dummy = Class.new do
       include MAuth::Signable
     end
-    Dummy.send(:remove_const, const_name) if Dummy.const_defined?(const_name)
-    Dummy.const_set(const_name, sig_components)
-    Dummy
+    dummy.send(:remove_const, const_name) if dummy.const_defined?(const_name)
+    dummy.const_set(const_name, sig_components)
+    dummy
   end
   let(:dummy_inst) { Class.new { include MAuth::Signable }.new({}) }
-
 
   describe 'string_to_sign_v1' do
     let(:const_name) { 'SIGNATURE_COMPONENTS' }
@@ -64,7 +65,7 @@ describe MAuth::Signable do
   end
 
   describe 'string_to_sign_v2' do
-    let(:const_name) { 'SIGNATURE_COMPONENTS_V2'}
+    let(:const_name) { 'SIGNATURE_COMPONENTS_V2' }
 
     context 'requests' do
       let(:sig_components) do
@@ -89,7 +90,7 @@ describe MAuth::Signable do
       end
 
       it 'hashes the request body with SHA512' do
-        expect(OpenSSL::Digest::SHA512).to receive(:hexdigest).with(req_attrs[:body]).once
+        expect(OpenSSL::Digest).to receive(:hexdigest).with('SHA512', req_attrs[:body]).once
         dummy_req = dummy_cls.new(req_attrs)
         dummy_req.string_to_sign_v2({})
       end
@@ -142,7 +143,7 @@ describe MAuth::Signable do
       end
 
       it 'hashes the response body with SHA512' do
-        expect(OpenSSL::Digest::SHA512).to receive(:hexdigest).with(resp_attrs[:body]).once
+        expect(OpenSSL::Digest).to receive(:hexdigest).with('SHA512', resp_attrs[:body]).once
         dummy_req = dummy_cls.new(resp_attrs)
         dummy_req.string_to_sign_v2({})
       end
@@ -159,7 +160,6 @@ describe MAuth::Signable do
   end
 
   describe 'unescape_encode_query_string' do
-
     shared_examples_for 'unescape_encode_query_string' do |desc, qs, expected|
       it "unescape_encode_query_string: #{desc}" do
         expect(dummy_inst.unescape_encode_query_string(qs)).to eq(expected)
@@ -216,7 +216,6 @@ describe MAuth::Signable do
   end
 
   describe 'normalize_path' do
-
     shared_examples_for 'normalize_path' do |desc, path, expected|
       it "normalize_path: #{desc}" do
         expect(dummy_inst.normalize_path(path)).to eq(expected)
@@ -227,7 +226,7 @@ describe MAuth::Signable do
     include_examples 'normalize_path', 'parent ("..") in path', '/example/sample/..', '/example/'
     include_examples 'normalize_path', 'parent ("..") that points to non-existent parent',
       '/example/sample/../../../..', '/'
-      include_examples 'normalize_path', 'case of percent encoded characters', '/%2b', '/%2B'
+    include_examples 'normalize_path', 'case of percent encoded characters', '/%2b', '/%2B'
     include_examples 'normalize_path', 'multiple adjacent slashes to a single slash',
       '//example///sample', '/example/sample'
     include_examples 'normalize_path', 'preserves trailing slashes', '/example/', '/example/'

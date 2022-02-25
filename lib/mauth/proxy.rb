@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mauth/client'
 require 'faraday'
 require 'rack'
@@ -7,6 +9,8 @@ module MAuth
   # proxy them to a target URI. the responses from the target may be authenticated, with MAuth
   # (and are by default).
   class Proxy
+    EXCLUDED_RESPONSE_HEADERS = %w[Content-Length Transfer-Encoding].map(&:downcase)
+
     # target_uri is the base relative to which requests are made.
     #
     # options:
@@ -38,12 +42,11 @@ module MAuth
         end
       end
       @persistent_headers = {}
-      if options[:headers]
-        options[:headers].each do |cur|
-          raise "Headers must be in the format of [key]:[value]" unless cur.include?(':')
-          key, throw_away, value = cur.partition(':')
-          @persistent_headers[key.strip] = value.strip
-        end
+      options[:headers]&.each do |cur|
+        raise 'Headers must be in the format of [key]:[value]' unless cur.include?(':')
+
+        key, _throw_away, value = cur.partition(':')
+        @persistent_headers[key.strip] = value.strip
       end
     end
 
@@ -56,20 +59,20 @@ module MAuth
       request_headers = {}
       request_env.each do |k, v|
         if k.start_with?('HTTP_') && k != 'HTTP_HOST'
-          name = k.sub(/\AHTTP_/, '')
+          name = k.delete_prefix('HTTP_')
           request_headers[name] = v
         end
       end
       request_headers.merge!(@persistent_headers)
       if @browser_proxy
-        target_uri = request_env["REQUEST_URI"]
+        target_uri = request_env['REQUEST_URI']
         connection = @target_uris.any? { |u| target_uri.start_with? u } ? @signer_connection : @unsigned_connection
         response = connection.run_request(request_method, target_uri, request_body, request_headers)
       else
         response = @connection.run_request(request_method, request.fullpath, request_body, request_headers)
       end
       response_headers = response.headers.reject do |name, _value|
-        %w(Content-Length Transfer-Encoding).map(&:downcase).include?(name.downcase)
+        EXCLUDED_RESPONSE_HEADERS.include?(name.downcase)
       end
       [response.status, response_headers, [response.body || '']]
     end
