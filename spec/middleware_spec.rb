@@ -207,6 +207,31 @@ describe MAuth::Rack do
       end
     end
   end
+
+  describe MAuth::Rack::Response do
+    let(:status) { 200 }
+    let(:headers) { {} }
+    let(:body) { %w[hello world] }
+    let(:response) { described_class.new(status, headers, body) }
+
+    describe '#status_headers_body' do
+      it 'returns status, headers and body' do
+        expect(response.status_headers_body).to eq([status, headers, body])
+      end
+    end
+
+    describe '#attributes_for_signing' do
+      it 'returns attributes_for_signing' do
+        expect(response.attributes_for_signing).to eq(status_code: 200, body: 'helloworld')
+      end
+    end
+
+    describe '#merge_headers' do
+      it 'merges headers' do
+        expect(response.merge_headers('foo' => 'bar').status_headers_body).to eq([status, { 'foo' => 'bar' }, body])
+      end
+    end
+  end
 end
 
 describe MAuth::Faraday do
