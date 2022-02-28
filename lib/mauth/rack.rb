@@ -170,7 +170,7 @@ module MAuth
 
       def attributes_for_signing
         @attributes_for_signing ||= begin
-          body = ''
+          body = +''
           # NOTE: rack only requires #each be defined on the body, so not using map or inject
           @body.each do |part|
             body << part

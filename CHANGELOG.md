@@ -1,3 +1,6 @@
+## v6.4.1
+- Fix MAuth::Rack::Response to not raise FrozenError.
+
 ## v6.4.0
 - Support Ruby 3.1.
 - Drop support for Ruby < 2.6.0.
