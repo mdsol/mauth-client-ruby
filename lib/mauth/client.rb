@@ -29,7 +29,7 @@ module MAuth
     MWS_TOKEN = 'MWS'
     MWSV2_TOKEN = 'MWSV2'
     AUTH_HEADER_DELIMITER = ';'
-    RACK_ENV_APP_UUID_KEY = 'mauth.app_uuid'.freeze
+    RACK_ENV_APP_UUID_KEY = 'mauth.app_uuid'
 
     include AuthenticatorBase
     include Signer
