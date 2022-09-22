@@ -29,7 +29,7 @@ module MAuth
         begin
           if mauth_client.authentic?(mauth_request)
             @app.call(env.merge!(
-              'mauth.app_uuid' => mauth_request.signature_app_uuid,
+              MAuth::Client::RACK_ENV_APP_UUID_KEY => mauth_request.signature_app_uuid,
               'mauth.authentic' => true
             ))
           else

@@ -46,7 +46,7 @@ describe MAuth::Rack do
         env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
         expect(mw_w_flag.mauth_client).to receive(:authentic?).and_return(true)
         expect(rack_app).to receive(:call).with(env.merge(
-          'mauth.app_uuid' => 'foo',
+          MAuth::Client::RACK_ENV_APP_UUID_KEY => 'foo',
           'mauth.authentic' => true,
           'mauth.protocol_version' => 1
         )).and_return(res)
@@ -105,7 +105,7 @@ describe MAuth::Rack do
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(mw.mauth_client).not_to receive(:authentic?)
       expect(rack_app).to receive(:call).with(env.merge({
-        'mauth.app_uuid' => 'foo',
+        MAuth::Client::RACK_ENV_APP_UUID_KEY => 'foo',
         'mauth.authentic' => true,
         'mauth.protocol_version' => 1
       })).and_return(res)
@@ -118,7 +118,7 @@ describe MAuth::Rack do
       described_class.authentic = true
       env = { 'HTTP_X_MWS_AUTHENTICATION' => 'MWS foo:bar' }
       expect(rack_app).to receive(:call).with(env.merge({
-        'mauth.app_uuid' => 'foo',
+        MAuth::Client::RACK_ENV_APP_UUID_KEY => 'foo',
         'mauth.authentic' => true,
         'mauth.protocol_version' => 1
       })).and_return(res)
@@ -256,7 +256,7 @@ describe MAuth::Faraday do
       allow(mw.mauth_client).to receive(:authenticate!)
       res = mw.call({})
       expect(200).to eq(res[:status])
-      expect('foo').to eq(res['mauth.app_uuid'])
+      expect('foo').to eq(res[MAuth::Client::RACK_ENV_APP_UUID_KEY])
       expect(true).to eq(res['mauth.authentic'])
     end
 
