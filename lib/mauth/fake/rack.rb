@@ -31,7 +31,7 @@ module MAuth
                    env['mauth.protocol_version'] = mauth_request.protocol_version
 
                    if self.class.is_authentic?
-                     @app.call(env.merge!('mauth.app_uuid' => mauth_request.signature_app_uuid,
+                     @app.call(env.merge!(MAuth::Client::RACK_ENV_APP_UUID_KEY => mauth_request.signature_app_uuid,
                        'mauth.authentic' => true))
                    else
                      response_for_inauthentic_request(env)

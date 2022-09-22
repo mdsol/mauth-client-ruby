@@ -22,7 +22,7 @@ module MAuth
         @app.call(request_env).on_complete do |response_env|
           mauth_response = MAuth::Faraday::Response.new(response_env)
           mauth_client.authenticate!(mauth_response) # raises MAuth::InauthenticError when inauthentic
-          response_env['mauth.app_uuid'] = mauth_response.signature_app_uuid
+          response_env[MAuth::Client::RACK_ENV_APP_UUID_KEY] = mauth_response.signature_app_uuid
           response_env['mauth.authentic'] = true
           response_env
         end
