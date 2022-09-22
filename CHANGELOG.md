@@ -1,3 +1,6 @@
+## v6.4.2
+- Add MAuth::ServerHelper module with convenience methods for servers to access requester app uuid.
+
 ## v6.4.1
 - Fix MAuth::Rack::Response to not raise FrozenError.
 
