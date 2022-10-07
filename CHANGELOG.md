@@ -1,3 +1,6 @@
+## v6.4.3
+- Force Rack > 2.2.3 to resolve [CVE-2022-30123](https://github.com/advisories/GHSA-wq4h-7r42-5hrr).
+
 ## v6.4.2
 - Add MAuth::ServerHelper module with convenience methods for servers to access requester app uuid.
 

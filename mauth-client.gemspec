@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'dice_bag', '>= 0.9', '< 2.0'
   spec.add_dependency 'faraday', '>= 0.9', '< 3.0'
   spec.add_dependency 'faraday-http-cache', '>= 2.0', '< 3.0'
-  spec.add_dependency 'rack'
+  spec.add_dependency 'rack', '> 2.2.3'
   spec.add_dependency 'term-ansicolor', '~> 1.0'
 
   spec.add_development_dependency 'appraisal'
