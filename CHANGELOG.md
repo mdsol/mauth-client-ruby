@@ -1,3 +1,7 @@
+## v6.4.0
+- Support Ruby 3.2.
+- Drop support for Ruby < 2.7.0.
+
 ## v6.4.3
 - Force Rack > 2.2.3 to resolve [CVE-2022-30123](https://github.com/advisories/GHSA-wq4h-7r42-5hrr).
 

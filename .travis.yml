@@ -3,10 +3,10 @@ language: ruby
 cache: bundler
 
 rvm:
-  - 2.6
   - 2.7
   - 3.0
   - 3.1
+  - 3.2
 
 env:
   global:
@@ -15,9 +15,11 @@ env:
 jobs:
   exclude:
     - rvm: 3.0
-      gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
+      gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 and above (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
     - rvm: 3.1
-      gemfile: gemfiles/faraday_0.x.gemfile # Faraday v0.x does not officially support Ruby 3.0 (see: https://github.com/lostisland/faraday/releases/tag/v1.3.0)
+      gemfile: gemfiles/faraday_0.x.gemfile
+    - rvm: 3.2
+      gemfile: gemfiles/faraday_0.x.gemfile
 
 gemfile:
   - gemfiles/faraday_0.x.gemfile
@@ -51,4 +53,4 @@ deploy:
   on:
     tags: true
     repo: mdsol/mauth-client-ruby
-    condition: $TRAVIS_RUBY_VERSION == 3.1 && $BUNDLE_GEMFILE == $TRAVIS_BUILD_DIR/gemfiles/faraday_1.x.gemfile
+    condition: $TRAVIS_RUBY_VERSION == 3.2 && $BUNDLE_GEMFILE == $TRAVIS_BUILD_DIR/gemfiles/faraday_2.x.gemfile
