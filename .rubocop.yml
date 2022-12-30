@@ -5,7 +5,6 @@ require:
   - rubocop-performance
 
 AllCops:
-  TargetRubyVersion: 2.6
   Exclude:
     - gemfiles/**/*
 
@@ -41,6 +40,11 @@ Metrics/MethodLength:
 Naming/FileName:
   Exclude:
     - lib/mauth-client.rb
+
+Style/FetchEnvVar:
+  Exclude:
+    - exe/mauth-client
+    - lib/mauth/client.rb
 
 Style/FrozenStringLiteralComment:
   Enabled: true

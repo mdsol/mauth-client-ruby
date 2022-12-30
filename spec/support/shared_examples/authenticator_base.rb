@@ -199,7 +199,7 @@ shared_examples MAuth::Client::AuthenticatorBase do
       end
     end
 
-    [::Faraday::ConnectionFailed, ::Faraday::TimeoutError].each do |error_klass|
+    [Faraday::ConnectionFailed, Faraday::TimeoutError].each do |error_klass|
       it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
         allow(test_faraday).to receive(:get).and_raise(error_klass.new('')) # for the local authenticator
         allow(test_faraday).to receive(:post).and_raise(error_klass.new('')) # for the remote authenticator
@@ -221,8 +221,8 @@ shared_examples MAuth::Client::AuthenticatorBase do
 
       it 'logs the mauth app uuid of the requester and requestee when they both have such uuids' do
         expect(authenticating_mc.logger).to receive(:info).with(
-          'Mauth-client attempting to authenticate request from app with mauth app' \
-          ' uuid signer to app with mauth app uuid authenticator using version MWS.'
+          'Mauth-client attempting to authenticate request from app with mauth app ' \
+          'uuid signer to app with mauth app uuid authenticator using version MWS.'
         )
         authenticating_mc.authentic?(v1_signed_req)
       end
@@ -230,8 +230,8 @@ shared_examples MAuth::Client::AuthenticatorBase do
       it 'logs when the mauth app uuid is not provided in the request' do
         allow(v1_signed_req).to receive(:signature_app_uuid).and_return(nil)
         expect(authenticating_mc.logger).to receive(:info).with(
-          'Mauth-client attempting to authenticate request from app with mauth app' \
-          ' uuid [none provided] to app with mauth app uuid authenticator using version MWS.'
+          'Mauth-client attempting to authenticate request from app with mauth app ' \
+          'uuid [none provided] to app with mauth app uuid authenticator using version MWS.'
         )
         authenticating_mc.authentic?(v1_signed_req) rescue nil
       end
@@ -256,8 +256,8 @@ shared_examples MAuth::Client::AuthenticatorBase do
       signed_request.headers['MCC-Authentication'] = ''
       expect { authenticating_mc.authenticate!(signed_request) }.to raise_error(
         MAuth::MAuthNotPresent,
-        'Authentication Failed. No mAuth signature present; X-MWS-Authentication' \
-        ' header is blank, MCC-Authentication header is blank.'
+        'Authentication Failed. No mAuth signature present; X-MWS-Authentication ' \
+        'header is blank, MCC-Authentication header is blank.'
       )
     end
   end

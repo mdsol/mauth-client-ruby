@@ -1,4 +1,4 @@
-## v6.4.0
+## v6.5.0
 - Support Ruby 3.2.
 - Drop support for Ruby < 2.7.0.
 

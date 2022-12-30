@@ -86,14 +86,14 @@ describe MAuth::Client do
 
     it 'has logger option specified' do
       Dir.chdir('spec/config_root') do
-        logger = ::Logger.new(StringIO.new)
+        logger = Logger.new(StringIO.new)
         expect(MAuth::Client.default_config(logger: logger)['logger']).to eq(logger)
       end
     end
 
     it 'has Rails.logger specified' do
       Dir.chdir('spec/config_root') do
-        logger = ::Logger.new(StringIO.new)
+        logger = Logger.new(StringIO.new)
         with_rails(logger: logger) do
           expect(MAuth::Client.default_config['logger']).to eq(logger)
         end

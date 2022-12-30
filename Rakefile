@@ -48,7 +48,7 @@ task :benchmark do # rubocop:disable Metrics/BlockLength
   authenticating_mc = MAuth::Client.new(mauth_baseurl: 'http://whatever', mauth_api_version: 'v1')
 
   stubs = Faraday::Adapter::Test::Stubs.new
-  test_faraday = ::Faraday.new do |builder|
+  test_faraday = Faraday.new do |builder|
     builder.adapter(:test, stubs)
   end
   stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }

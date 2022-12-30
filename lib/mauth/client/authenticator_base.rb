@@ -63,9 +63,9 @@ module MAuth
         object_app_uuid = object.signature_app_uuid || '[none provided]'
         object_token = object.signature_token || '[none provided]'
         logger.info(
-          'Mauth-client attempting to authenticate request from app with mauth' \
-          " app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid}" \
-          " using version #{object_token}."
+          'Mauth-client attempting to authenticate request from app with mauth ' \
+          "app uuid #{object_app_uuid} to app with mauth app uuid #{client_app_uuid} " \
+          "using version #{object_token}."
         )
       end
 
