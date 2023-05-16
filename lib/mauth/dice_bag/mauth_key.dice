@@ -1,1 +1,0 @@
-<%= ensure_is_private_key(configured.mauth_private_key! || generate_private_key.to_s) %>

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module MAuth
-  VERSION = '6.4.3'
+  VERSION = '7.0.0'
 end

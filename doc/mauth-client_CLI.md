@@ -8,17 +8,7 @@ The MAuth-Client CLI is part of the MAuth Client gem, refer to [the README](../R
 
 ## Configuration
 
-The CLI is configured with a [mauth.yml](./mauth.yml.md) file - see its page for instructions.
-
-The MAuth-Client CLI tool looks for the configuration file in several places:
-
-- if an environment variable `MAUTH_CONFIG_YML` points to an existing file, mauth-client will use that file if it exists.
-- if you have a file `~/.mauth_config.yml` then it will use that. This is useful if you have your own mauth key.
-- if you are in a directory relative to which a config/mauth.yml exists, it will use that. This is useful if you are working in a project which uses mauth and has a key configured.
-- if you are in a directory in which a file mauth.yml exists, it will use that.
-
-mauth.yml is expected to contain, at the top level, an environment key or keys.
-mauth-client checks environment variables `RAILS_ENV` and `RACK_ENV` to determine the environment, and defaults to 'development' if none of these are set.
+The CLI is configured with the [MAuth environment variables](../README.md#Configuration) - see the readme doc for instructions.
 
 ## Usage
 

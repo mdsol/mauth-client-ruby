@@ -1,3 +1,9 @@
+## v7.0.0
+- Remove dice_bag and set configuration through environment variables directly.
+- Support Ruby 3.2.
+
+See [UPGRADE_GUIDE.md](UPGRADE_GUIDE.md#upgrading-to-700) for migration.
+
 ## v6.4.3
 - Force Rack > 2.2.3 to resolve [CVE-2022-30123](https://github.com/advisories/GHSA-wq4h-7r42-5hrr).
 
