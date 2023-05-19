@@ -22,7 +22,7 @@ describe MAuth::Client::RemoteRequestAuthenticator do
   describe '#authentic?' do
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
     let(:test_faraday) do
-      ::Faraday.new do |builder|
+      Faraday.new do |builder|
         builder.adapter(:test, stubs)
       end
     end
@@ -39,7 +39,7 @@ describe MAuth::Client::RemoteRequestAuthenticator do
     before do
       expect(authenticating_mc).to be_kind_of(MAuth::Client::RemoteRequestAuthenticator)
       stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }
-      allow(::Faraday).to receive(:new).and_return(test_faraday)
+      allow(Faraday).to receive(:new).and_return(test_faraday)
     end
 
     include_examples MAuth::Client::AuthenticatorBase

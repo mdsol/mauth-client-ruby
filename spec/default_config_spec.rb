@@ -26,7 +26,7 @@ describe MAuth::Client do
     end
 
     it 'has Rails.logger specified' do
-      logger = ::Logger.new(StringIO.new)
+      logger = Logger.new(StringIO.new)
       with_rails(logger: logger) do
         expect(MAuth::Client.default_config['logger']).to eq(logger)
       end

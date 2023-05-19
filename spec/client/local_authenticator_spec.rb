@@ -22,7 +22,7 @@ describe MAuth::Client::LocalAuthenticator do
       )
     end
     let(:test_faraday) do
-      ::Faraday.new do |builder|
+      Faraday.new do |builder|
         builder.adapter(:test, stubs) do |stub|
           stub.get("/mauth/v1/security_tokens/#{app_uuid}.json") do
             [200, {}, JSON.generate({ 'security_token' => { 'public_key_str' => signing_key.public_key.to_s } })]
@@ -34,7 +34,7 @@ describe MAuth::Client::LocalAuthenticator do
 
     before do
       expect(authenticating_mc).to be_kind_of(MAuth::Client::LocalAuthenticator)
-      allow(::Faraday).to receive(:new).and_return(test_faraday)
+      allow(Faraday).to receive(:new).and_return(test_faraday)
     end
 
     include_examples MAuth::Client::AuthenticatorBase
