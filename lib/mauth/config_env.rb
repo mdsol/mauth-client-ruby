@@ -37,7 +37,7 @@ module MAuth
       def validate!
         errors = []
         errors << 'The MAUTH_URL environment variable must be set' if env[:mauth_url].nil?
-        errors << 'The MAUTH_APP_UUID environment variable must be set' if env[:app_uuid].nil?
+        errors << 'The MAUTH_APP_UUID environment variable must be set' if env[:mauth_app_uuid].nil?
         errors << 'The MAUTH_PRIVATE_KEY environment variable must be set' if env[:mauth_private_key].nil?
         return if errors.empty?
 
