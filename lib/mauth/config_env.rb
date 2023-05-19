@@ -10,10 +10,10 @@ module MAuth
       'MAUTH_APP_UUID' => nil,
       'MAUTH_PRIVATE_KEY' => nil,
       'MAUTH_PRIVATE_KEY_FILE' => 'config/mauth_key',
-      'V2_ONLY_AUTHENTICATE' => false,
-      'V2_ONLY_SIGN_REQUESTS' => false,
-      'DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE' => false,
-      'V1_ONLY_SIGN_REQUESTS' => true
+      'MAUTH_V2_ONLY_AUTHENTICATE' => false,
+      'MAUTH_V2_ONLY_SIGN_REQUESTS' => false,
+      'MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE' => false,
+      'MAUTH_V1_ONLY_SIGN_REQUESTS' => true
     }.freeze
 
     class << self
@@ -25,10 +25,10 @@ module MAuth
           'mauth_api_version' => env[:mauth_api_version],
           'app_uuid' => env[:mauth_app_uuid] || 'fb17460e-9868-11e1-8399-0090f5ccb4d3',
           'private_key' => private_key || generate_private_key,
-          'v2_only_authenticate' => env[:v2_only_authenticate],
-          'v2_only_sign_requests' => env[:v2_only_sign_requests],
-          'disable_fallback_to_v1_on_v2_failure' => env[:disable_fallback_to_v1_on_v2_failure],
-          'v1_only_sign_requests' => env[:v1_only_sign_requests]
+          'v2_only_authenticate' => env[:mauth_v2_only_authenticate],
+          'v2_only_sign_requests' => env[:mauth_v2_only_sign_requests],
+          'disable_fallback_to_v1_on_v2_failure' => env[:mauth_disable_fallback_to_v1_on_v2_failure],
+          'v1_only_sign_requests' => env[:mauth_v1_only_sign_requests]
         }
       end
 

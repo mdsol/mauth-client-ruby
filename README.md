@@ -44,17 +44,17 @@ Configuration is set through environment variables:
 - `MAUTH_API_VERSION`
   - Required for authentication but not for signing. only `v1` exists as of this writing. Defaults to `v1`.
 
-- `V2_ONLY_SIGN_REQUESTS`
+- `MAUTH_V2_ONLY_SIGN_REQUESTS`
   - If true, all outgoing requests will be signed with only the V2 protocol. Defaults to false.
 
-- `V2_ONLY_AUTHENTICATE`
+- `MAUTH_V2_ONLY_AUTHENTICATE`
   - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected. Defaults to false.
 
-- `DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE`
+- `MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE`
   - If true, any incoming V2 requests that fail authentication will not fall back to V1 authentication. Defaults to false.
 
-- `V1_ONLY_SIGN_REQUESTS`
-  - If true, all outgoing requests will be signed with only the V1 protocol. Defaults to true. Note, cannot be `true` if `V2_ONLY_SIGN_REQUESTS` is also `true`.
+- `MAUTH_V1_ONLY_SIGN_REQUESTS`
+  - If true, all outgoing requests will be signed with only the V1 protocol. Defaults to true. Note, cannot be `true` if `MAUTH_V2_ONLY_SIGN_REQUESTS` is also `true`.
 
 
 This is simply loaded and passed to either middleware or directly to a MAuth::Client instance.

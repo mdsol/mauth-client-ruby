@@ -1,5 +1,6 @@
 ## v7.0.0
 - Remove dice_bag and set configuration through environment variables directly.
+- Rename the `V2_ONLY_SIGN_REQUESTS`, `V2_ONLY_AUTHENTICATE`, `DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE` and `V1_ONLY_SIGN_REQUESTS` environment variables.
 - Support Ruby 3.2.
 
 See [UPGRADE_GUIDE.md](UPGRADE_GUIDE.md#upgrading-to-700) for migration.

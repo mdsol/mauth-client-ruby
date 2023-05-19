@@ -19,10 +19,10 @@ describe MAuth::ConfigEnv do
         allow(ENV)
           .to receive(:fetch).with('MAUTH_APP_UUID', anything).and_return('9d10623d-7ee6-4088-91cf-fe2c660a98bc')
         allow(ENV).to receive(:fetch).with('MAUTH_PRIVATE_KEY', anything).and_return('configured key')
-        allow(ENV).to receive(:fetch).with('V2_ONLY_AUTHENTICATE', anything).and_return('true')
-        allow(ENV).to receive(:fetch).with('V2_ONLY_SIGN_REQUESTS', anything).and_return('true')
-        allow(ENV).to receive(:fetch).with('DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE', anything).and_return('true')
-        allow(ENV).to receive(:fetch).with('V1_ONLY_SIGN_REQUESTS', anything).and_return('false')
+        allow(ENV).to receive(:fetch).with('MAUTH_V2_ONLY_AUTHENTICATE', anything).and_return('true')
+        allow(ENV).to receive(:fetch).with('MAUTH_V2_ONLY_SIGN_REQUESTS', anything).and_return('true')
+        allow(ENV).to receive(:fetch).with('MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE', anything).and_return('true')
+        allow(ENV).to receive(:fetch).with('MAUTH_V1_ONLY_SIGN_REQUESTS', anything).and_return('false')
       end
 
       it 'returns the processed config' do
