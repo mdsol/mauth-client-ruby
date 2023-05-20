@@ -8,9 +8,7 @@ require 'yaml'
 require 'mauth/core_ext'
 require 'mauth/autoload'
 require 'mauth/version'
-require 'mauth/client/authenticator_base'
-require 'mauth/client/local_authenticator'
-require 'mauth/client/remote_authenticator'
+require 'mauth/client/authenticator'
 require 'mauth/client/signer'
 require 'mauth/config_env'
 require 'mauth/errors'
@@ -31,7 +29,7 @@ module MAuth
     AUTH_HEADER_DELIMITER = ';'
     RACK_ENV_APP_UUID_KEY = 'mauth.app_uuid'
 
-    include AuthenticatorBase
+    include Authenticator
     include Signer
 
     # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in
@@ -62,18 +60,13 @@ module MAuth
 
     # new client with the given App UUID and public key. config may include the following (all
     # config keys may be strings or symbols):
-    # - private_key - required for signing and for authenticating responses. may be omitted if
-    #   only remote authentication of requests is being performed (with
-    #   MAuth::Rack::RequestAuthenticator). may be given as a string or a OpenSSL::PKey::RSA
-    #   instance.
+    # - private_key - required for signing and for authenticating responses.
+    #   may be given as a string or a OpenSSL::PKey::RSA instance.
     # - app_uuid - required in the same circumstances where a private_key is required
-    # - mauth_baseurl - required. needed for local authentication to retrieve public keys; needed
-    #   for remote authentication for hopefully obvious reasons.
+    # - mauth_baseurl - required. needed to retrieve public keys.
     # - mauth_api_version - required. only 'v1' exists / is supported as of this writing.
     # - logger - a Logger to which any useful information will be written. if this is omitted and
     #   Rails.logger exists, that will be used.
-    # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or
-    #   RemoteRequestAuthenticator will be used as appropriate.
     def initialize(config = {})
       # stringify symbol keys
       given_config = config.stringify_symbol_keys
@@ -115,25 +108,13 @@ module MAuth
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
       @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.casecmp('true').zero?
       @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.casecmp('true').zero?
-      @config['disable_fallback_to_v1_on_v2_failure'] =
-        given_config['disable_fallback_to_v1_on_v2_failure'].to_s.casecmp('true').zero?
       @config['v1_only_sign_requests'] = given_config['v1_only_sign_requests'].to_s.casecmp('true').zero?
-
       if @config['v2_only_sign_requests'] && @config['v1_only_sign_requests']
         raise MAuth::Client::ConfigurationError, 'v2_only_sign_requests and v1_only_sign_requests may not both be true'
       end
 
-      # if 'authenticator' was given, don't override that - including if it was given as nil / false
-      if given_config.key?('authenticator')
-        @config['authenticator'] = given_config['authenticator']
-      elsif client_app_uuid && private_key
-        @config['authenticator'] = LocalAuthenticator
-      # MAuth::Client can authenticate locally if it's provided a client_app_uuid and private_key
-      else
-        # otherwise, it will authenticate remotely (requests only)
-        @config['authenticator'] = RemoteRequestAuthenticator
-      end
-      extend @config['authenticator'] if @config['authenticator']
+      @config['disable_fallback_to_v1_on_v2_failure'] =
+        given_config['disable_fallback_to_v1_on_v2_failure'].to_s.casecmp('true').zero?
     end
 
     def logger

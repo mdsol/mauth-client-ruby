@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-shared_examples MAuth::Client::AuthenticatorBase do
+shared_examples MAuth::Client::Authenticator do
   context 'when v2 and v1 headers are present on the object to authenticate' do
     it 'authenticates with v2' do
       signed_request = client.signed(request)
@@ -201,16 +201,14 @@ shared_examples MAuth::Client::AuthenticatorBase do
 
     [Faraday::ConnectionFailed, Faraday::TimeoutError].each do |error_klass|
       it "raises UnableToAuthenticate if mauth is unreachable with #{error_klass.name}" do
-        allow(test_faraday).to receive(:get).and_raise(error_klass.new('')) # for the local authenticator
-        allow(test_faraday).to receive(:post).and_raise(error_klass.new('')) # for the remote authenticator
+        allow(test_faraday).to receive(:get).and_raise(error_klass.new(''))
         expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
       end
     end
 
     it 'raises UnableToAuthenticate if mauth errors' do
       stubs.instance_eval { @stack.clear } # HAX
-      stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [500, {}, []] } # for the local authenticator
-      stubs.post('/mauth/v1/authentication_tickets.json') { [500, {}, []] } # for the remote authenticator
+      stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") { [500, {}, []] }
       expect { authenticating_mc.authentic?(v1_signed_req) }.to raise_error(MAuth::UnableToAuthenticateError)
     end
 

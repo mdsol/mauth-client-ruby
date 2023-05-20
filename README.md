@@ -30,7 +30,7 @@ $ gem install mauth-client
 Configuration is set through environment variables:
 
 - `MAUTH_PRIVATE_KEY`
-  - Required for signing and for authenticating responses. May be omitted if only remote authentication of requests is being performed.
+  - Required for signing and for authenticating responses.
 
 - `MAUTH_PRIVATE_KEY_FILE`
   - May be used instead of `MAUTH_PRIVATE_KEY`, mauth-client will load the file instead.
@@ -39,7 +39,7 @@ Configuration is set through environment variables:
   - Required in the same circumstances where a `private_key` is required.
 
 - `MAUTH_URL`
-  - Required for authentication but not for signing. Needed for local authentication to retrieve public keys and for remote authentication. Usually this is `https://mauth.imedidata.com` for production.
+  - Required for authentication but not for signing. Needed to retrieve public keys. Usually this is `https://mauth.imedidata.com` for production.
 
 - `MAUTH_API_VERSION`
   - Required for authentication but not for signing. only `v1` exists as of this writing. Defaults to `v1`.
@@ -69,11 +69,6 @@ documentation for [MAuth::Client.default_config](lib/mauth/client.rb) for detail
 
 The `private_key` and `app_uuid` enable local authentication (see section [Local Authentication](#local-authentication) below).
 They’ll only work if the `app_uuid` has been stored in MAuth with a public key corresponding to the `private_key`.
-
-If you do not have an `app_uuid` and keypair registered with the mauth service, you can use mauth's remote request authentication by omitting those fields.
-MAuth-Client will make a call to MAuth for every request in order to authenticate remotely.
-Remote authentication therefore requires more time than local authentication.
-You will not be able to sign your responses without an `app_uuid` and a private key, so `MAuth::Rack::ResponseSigner` cannot be used.
 
 The `mauth_baseurl` and `mauth_api_version` are required.
 These tell the MAuth-Client where and how to communicate with the MAuth service.
