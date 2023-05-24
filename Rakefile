@@ -40,18 +40,26 @@ end
 
 desc 'Runs benchmarks for the library.'
 task :benchmark do # rubocop:disable Metrics/BlockLength
+  private_key = OpenSSL::PKey::RSA.generate(2048)
+  public_key = private_key.public_key
+  app_uuid = SecureRandom.uuid
+
   mc = MAuth::Client.new(
-    private_key: OpenSSL::PKey::RSA.generate(2048),
-    app_uuid: SecureRandom.uuid,
-    v2_only_sign_requests: false
+    private_key: private_key,
+    app_uuid: app_uuid,
+    v2_only_sign_requests: false,
+    mauth_baseurl: 'http://whatever',
+    mauth_api_version: 'v1'
   )
-  authenticating_mc = MAuth::Client.new(mauth_baseurl: 'http://whatever', mauth_api_version: 'v1')
 
   stubs = Faraday::Adapter::Test::Stubs.new
-  test_faraday = ::Faraday.new do |builder|
+  test_faraday = Faraday.new do |builder|
     builder.adapter(:test, stubs)
   end
   stubs.post('/mauth/v1/authentication_tickets.json') { [204, {}, []] }
+  stubs.get("/mauth/v1/security_tokens/#{app_uuid}.json") do
+    [200, {}, JSON.generate({ 'security_token' => { 'public_key_str' => public_key.to_s } })]
+  end
   allow(Faraday).to receive(:new).and_return(test_faraday)
 
   short_body = 'Somewhere in La Mancha, in a place I do not care to remember'
@@ -101,13 +109,13 @@ task :benchmark do # rubocop:disable Metrics/BlockLength
   puts "i/s means the number of signatures of a message per second.\n\n\n"
 
   Benchmark.ips do |bm|
-    bm.report('v1-authenticate-short') { authenticating_mc.authentic?(v1_short_signed_request) }
-    bm.report('v2-authenticate-short') { authenticating_mc.authentic?(v2_short_signed_request) }
-    bm.report('v2-authenticate-qs') { authenticating_mc.authentic?(v2_qs_signed_request) }
-    bm.report('v1-authenticate-average') { authenticating_mc.authentic?(v1_average_signed_request) }
-    bm.report('v2-authenticate-average') { authenticating_mc.authentic?(v2_average_signed_request) }
-    bm.report('v1-authenticate-huge') { authenticating_mc.authentic?(v1_huge_signed_request) }
-    bm.report('v2-authenticate-huge') { authenticating_mc.authentic?(v2_huge_signed_request) }
+    bm.report('v1-authenticate-short') { mc.authentic?(v1_short_signed_request) }
+    bm.report('v2-authenticate-short') { mc.authentic?(v2_short_signed_request) }
+    bm.report('v2-authenticate-qs') { mc.authentic?(v2_qs_signed_request) }
+    bm.report('v1-authenticate-average') { mc.authentic?(v1_average_signed_request) }
+    bm.report('v2-authenticate-average') { mc.authentic?(v2_average_signed_request) }
+    bm.report('v1-authenticate-huge') { mc.authentic?(v1_huge_signed_request) }
+    bm.report('v2-authenticate-huge') { mc.authentic?(v2_huge_signed_request) }
     bm.compare!
   end
 

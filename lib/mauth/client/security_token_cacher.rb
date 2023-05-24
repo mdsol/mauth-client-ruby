@@ -5,7 +5,7 @@ require 'mauth/faraday'
 
 module MAuth
   class Client
-    module LocalAuthenticator
+    module Authenticator
       class SecurityTokenCacher
         def initialize(mauth_client)
           @mauth_client = mauth_client

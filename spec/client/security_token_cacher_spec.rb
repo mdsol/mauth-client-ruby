@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'faraday'
 require 'mauth/client'
 
-describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
+describe MAuth::Client::Authenticator::SecurityTokenCacher do
   subject { described_class.new(client) }
   let(:client) do
     MAuth::Client.new(

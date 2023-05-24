@@ -53,31 +53,9 @@ end
 opt_parser.parse!
 abort(opt_parser.help) unless (2..3).cover?(ARGV.size)
 
-# FIND MAUTH CONFIG
-
-possible_mauth_config_files = [
-  # whoops, I called this MAUTH_CONFIG_YML in one place and MAUTH_CONFIG_YAML in another. supporting both for now.
-  ENV['MAUTH_CONFIG_YML'],
-  ENV['MAUTH_CONFIG_YAML'],
-  '~/.mauth_config.yml',
-  './config/mauth.yml',
-  './mauth.yml'
-].compact
-
-mauth_config_yml = possible_mauth_config_files.detect do |filename|
-  File.exist?(File.expand_path(filename))
-end
-unless mauth_config_yml
-  message = 'could not find mauth config. giving up. please place a mauth config in one of the standard places, ' \
-            'or point the MAUTH_CONFIG_YML environment variable at an existing one. standard places are:' +
-            possible_mauth_config_files.map { |f| "\n\t#{f}" }.join
-  abort message
-end
-
-mauth_config = MAuth::Client.default_config(mauth_config_yml: File.expand_path(mauth_config_yml))
-
 # INSTANTIATE MAUTH CLIENT
 
+mauth_config = MAuth::ConfigEnv.load
 logger = Logger.new($stderr)
 mauth_client = MAuth::Client.new(mauth_config.merge('logger' => logger))
 

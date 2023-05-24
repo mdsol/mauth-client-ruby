@@ -16,7 +16,7 @@ describe MAuth::Client do
 
     require 'logger'
     config_pieces = {
-      logger: ::Logger.new($stderr),
+      logger: Logger.new($stderr),
       mauth_baseurl: 'https://mauth.imedidata.net',
       mauth_api_version: 'v1'
     }
@@ -35,20 +35,20 @@ describe MAuth::Client do
 
     it 'logs to Rails.logger if it can' do
       Object.const_set(:Rails, Object.new)
-      def (::Rails).logger
+      def (Rails).logger
         @logger ||= Logger.new($stderr)
       end
-      expect(::Rails.logger).to eq(MAuth::Client.new.logger)
+      expect(Rails.logger).to eq(MAuth::Client.new.logger)
       Object.send(:remove_const, 'Rails')
     end
 
     it 'builds a logger if Rails is defined, but Rails.logger is nil' do
       Object.const_set(:Rails, Object.new)
-      def (::Rails).logger
+      def (Rails).logger
         nil
       end
       logger = double('logger')
-      allow(::Logger).to receive(:new).with(anything).and_return(logger)
+      allow(Logger).to receive(:new).with(anything).and_return(logger)
       expect(logger).to eq(MAuth::Client.new.logger)
       Object.send(:remove_const, 'Rails')
     end

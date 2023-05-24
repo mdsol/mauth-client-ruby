@@ -7,12 +7,10 @@ require 'json'
 require 'yaml'
 require 'mauth/core_ext'
 require 'mauth/autoload'
-require 'mauth/dice_bag/mauth_templates'
 require 'mauth/version'
-require 'mauth/client/authenticator_base'
-require 'mauth/client/local_authenticator'
-require 'mauth/client/remote_authenticator'
+require 'mauth/client/authenticator'
 require 'mauth/client/signer'
+require 'mauth/config_env'
 require 'mauth/errors'
 
 module MAuth
@@ -31,66 +29,22 @@ module MAuth
     AUTH_HEADER_DELIMITER = ';'
     RACK_ENV_APP_UUID_KEY = 'mauth.app_uuid'
 
-    include AuthenticatorBase
+    include Authenticator
     include Signer
 
     # returns a configuration (to be passed to MAuth::Client.new) which is configured from information stored in
     # standard places. all of which is overridable by options in case some defaults do not apply.
     #
     # options (may be symbols or strings) - any or all may be omitted where your usage conforms to the defaults.
-    # - root: the path relative to which this method looks for configuration yaml files. defaults to Rails.root
-    #   if ::Rails is defined, otherwise ENV['RAILS_ROOT'], ENV['RACK_ROOT'], ENV['APP_ROOT'], or '.'
-    # - environment: the environment, pertaining to top-level keys of the configuration yaml files. by default,
-    #   tries Rails.environment, ENV['RAILS_ENV'], and ENV['RACK_ENV'], and falls back to 'development' if none
-    #   of these are set.
-    # - mauth_config - MAuth configuration. defaults to load this from a yaml file (see mauth_config_yml option)
-    #   which is assumed to be keyed with the environment at the root. if this is specified, no yaml file is
-    #   loaded, and the given config is passed through with any other defaults applied. at the moment, the only
-    #   other default is to set the logger.
-    # - mauth_config_yml - specifies where a mauth configuration yaml file can be found. by default checks
-    #   ENV['MAUTH_CONFIG_YML'] or a file 'config/mauth.yml' relative to the root.
+    # - mauth_config - MAuth configuration. defaults to load this from environment variables. if this is specified,
+    #   no environment variable is loaded, and the given config is passed through with any other defaults applied.
+    #   at the moment, the only other default is to set the logger.
     # - logger - by default checks ::Rails.logger
     def self.default_config(options = {})
       options = options.stringify_symbol_keys
 
-      # find the app_root (relative to which we look for yaml files). note that this
-      # is different than MAuth::Client.root, the root of the mauth-client library.
-      app_root = options['root'] || begin
-        if Object.const_defined?(:Rails) && ::Rails.respond_to?(:root) && ::Rails.root
-          Rails.root
-        else
-          ENV['RAILS_ROOT'] || ENV['RACK_ROOT'] || ENV['APP_ROOT'] || '.'
-        end
-      end
-
-      # find the environment (with which yaml files are keyed)
-      env = options['environment'] || begin
-        if Object.const_defined?(:Rails) && ::Rails.respond_to?(:environment)
-          Rails.environment
-        else
-          ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
-        end
-      end
-
-      # find mauth config, given on options, or in a file at
-      # ENV['MAUTH_CONFIG_YML'] or config/mauth.yml in the app_root
-      mauth_config = options['mauth_config'] || begin
-        mauth_config_yml = options['mauth_config_yml']
-        mauth_config_yml ||= ENV['MAUTH_CONFIG_YML']
-        default_loc = 'config/mauth.yml'
-        default_yml = File.join(app_root, default_loc)
-        mauth_config_yml ||= default_yml if File.exist?(default_yml)
-        if mauth_config_yml && File.exist?(mauth_config_yml)
-          whole_config = ConfigFile.load(mauth_config_yml)
-          errmessage = "#{mauth_config_yml} config has no key #{env} - it has keys #{whole_config.keys.inspect}"
-          whole_config[env] || raise(MAuth::Client::ConfigurationError, errmessage)
-        else
-          raise MAuth::Client::ConfigurationError,
-            'could not find mauth config yaml file. this file may be ' \
-            "placed in #{default_loc}, specified with the mauth_config_yml option, or specified with the " \
-            'MAUTH_CONFIG_YML environment variable.'
-        end
-      end
+      # find mauth config
+      mauth_config = options['mauth_config'] || ConfigEnv.load
 
       unless mauth_config.key?('logger')
         # the logger. Rails.logger if it exists, otherwise, no logger
@@ -106,18 +60,13 @@ module MAuth
 
     # new client with the given App UUID and public key. config may include the following (all
     # config keys may be strings or symbols):
-    # - private_key - required for signing and for authenticating responses. may be omitted if
-    #   only remote authentication of requests is being performed (with
-    #   MAuth::Rack::RequestAuthenticator). may be given as a string or a OpenSSL::PKey::RSA
-    #   instance.
+    # - private_key - required for signing and for authenticating responses.
+    #   may be given as a string or a OpenSSL::PKey::RSA instance.
     # - app_uuid - required in the same circumstances where a private_key is required
-    # - mauth_baseurl - required. needed for local authentication to retrieve public keys; needed
-    #   for remote authentication for hopefully obvious reasons.
+    # - mauth_baseurl - required. needed to retrieve public keys.
     # - mauth_api_version - required. only 'v1' exists / is supported as of this writing.
     # - logger - a Logger to which any useful information will be written. if this is omitted and
     #   Rails.logger exists, that will be used.
-    # - authenticator - this pretty much never needs to be specified. LocalAuthenticator or
-    #   RemoteRequestAuthenticator will be used as appropriate.
     def initialize(config = {})
       # stringify symbol keys
       given_config = config.stringify_symbol_keys
@@ -159,25 +108,13 @@ module MAuth
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
       @config['v2_only_authenticate'] = given_config['v2_only_authenticate'].to_s.casecmp('true').zero?
       @config['v2_only_sign_requests'] = given_config['v2_only_sign_requests'].to_s.casecmp('true').zero?
-      @config['disable_fallback_to_v1_on_v2_failure'] =
-        given_config['disable_fallback_to_v1_on_v2_failure'].to_s.casecmp('true').zero?
       @config['v1_only_sign_requests'] = given_config['v1_only_sign_requests'].to_s.casecmp('true').zero?
-
       if @config['v2_only_sign_requests'] && @config['v1_only_sign_requests']
         raise MAuth::Client::ConfigurationError, 'v2_only_sign_requests and v1_only_sign_requests may not both be true'
       end
 
-      # if 'authenticator' was given, don't override that - including if it was given as nil / false
-      if given_config.key?('authenticator')
-        @config['authenticator'] = given_config['authenticator']
-      elsif client_app_uuid && private_key
-        @config['authenticator'] = LocalAuthenticator
-      # MAuth::Client can authenticate locally if it's provided a client_app_uuid and private_key
-      else
-        # otherwise, it will authenticate remotely (requests only)
-        @config['authenticator'] = RemoteRequestAuthenticator
-      end
-      extend @config['authenticator'] if @config['authenticator']
+      @config['disable_fallback_to_v1_on_v2_failure'] =
+        given_config['disable_fallback_to_v1_on_v2_failure'].to_s.casecmp('true').zero?
     end
 
     def logger
@@ -244,29 +181,6 @@ module MAuth
         hash[(key.to_sym rescue key) || key] = hash.delete(key)
       end
       hash
-    end
-  end
-
-  module ConfigFile
-    GITHUB_URL = 'https://github.com/mdsol/mauth-client-ruby'
-    @config = {}
-
-    def self.load(path)
-      unless File.exist?(path)
-        raise "File #{path} not found. Please visit #{GITHUB_URL} for details."
-      end
-
-      @config[path] ||= yaml_safe_load_file(path)
-      unless @config[path]
-        raise "File #{path} does not contain proper YAML information. Visit #{GITHUB_URL} for details."
-      end
-
-      @config[path]
-    end
-
-    def self.yaml_safe_load_file(path)
-      yml_data = File.read(path)
-      YAML.safe_load(yml_data, aliases: true)
     end
   end
 end

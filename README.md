@@ -27,26 +27,50 @@ $ gem install mauth-client
 
 ## Configuration
 
-MAuth is typically configured by a yaml file, [mauth.yml](doc/mauth.yml.md) - see its page for more documentation.
+Configuration is set through environment variables:
+
+- `MAUTH_PRIVATE_KEY`
+  - Required for signing and for authenticating responses.
+
+- `MAUTH_PRIVATE_KEY_FILE`
+  - May be used instead of `MAUTH_PRIVATE_KEY`, mauth-client will load the file instead.
+
+- `MAUTH_APP_UUID`
+  - Required in the same circumstances where a `private_key` is required.
+
+- `MAUTH_URL`
+  - Required for authentication but not for signing. Needed to retrieve public keys. Usually this is `https://mauth.imedidata.com` for production.
+
+- `MAUTH_API_VERSION`
+  - Required for authentication but not for signing. only `v1` exists as of this writing. Defaults to `v1`.
+
+- `MAUTH_V2_ONLY_SIGN_REQUESTS`
+  - If true, all outgoing requests will be signed with only the V2 protocol. Defaults to false.
+
+- `MAUTH_V2_ONLY_AUTHENTICATE`
+  - If true, any incoming request or incoming response that does not use the V2 protocol will be rejected. Defaults to false.
+
+- `MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE`
+  - If true, any incoming V2 requests that fail authentication will not fall back to V1 authentication. Defaults to false.
+
+- `MAUTH_V1_ONLY_SIGN_REQUESTS`
+  - If true, all outgoing requests will be signed with only the V1 protocol. Defaults to true. Note, cannot be `true` if `MAUTH_V2_ONLY_SIGN_REQUESTS` is also `true`.
+
+
 This is simply loaded and passed to either middleware or directly to a MAuth::Client instance.
 See the documentation for [MAuth::Client#initialize](lib/mauth/client.rb) for more details of what it accepts. Usually you will want:
 
 ```ruby
-mauth_config = MAuth::Client.default_config
+MAUTH_CONF = MAuth::Client.default_config
 ```
 
 The `.default_config` method takes a number of options to tweak its expectations regarding defaults. See the
 documentation for [MAuth::Client.default_config](lib/mauth/client.rb) for details.
 
-The `private_key` and `app_uuid` (which go in mauth.yml) enable local authentication (see section [Local Authentication](#local-authentication) below).
-They’ll only work if the `app_uuid` has been stored in MAuth with a public key corresponding to the `private_key` in mauth.yml.
+The `private_key` and `app_uuid` enable local authentication (see section [Local Authentication](#local-authentication) below).
+They’ll only work if the `app_uuid` has been stored in MAuth with a public key corresponding to the `private_key`.
 
-If you do not have an `app_uuid` and keypair registered with the mauth service, you can use mauth's remote request authentication by omitting those fields.
-MAuth-Client will make a call to MAuth for every request in order to authenticate remotely.
-Remote authentication therefore requires more time than local authentication.
-You will not be able to sign your responses without an `app_uuid` and a private key, so `MAuth::Rack::ResponseSigner` cannot be used.
-
-The `mauth_baseurl` and `mauth_api_version` are required in mauth.yml.
+The `mauth_baseurl` and `mauth_api_version` are required.
 These tell the MAuth-Client where and how to communicate with the MAuth service.
 
 The `v2_only_sign_requests` and `v2_only_authenticate` flags were added to facilitate conversion from the MAuth V1 protocol to the MAuth
@@ -56,6 +80,15 @@ V2 protocol. By default both of these flags are false. See [Protocol Versions](#
 |-------|------------------------------------|--------------------------------------------------------------------------------------|
 | true  | requests are signed with only V2   | requests and responses are authenticated with only V2                                |
 | false | requests are signed with V1 and V2 | requests and responses are authenticated with the highest available protocol version |
+
+### Generating keys
+
+To generate a private key (`mauth_key`) and its public counterpart (`mauth_key.pub`) run:
+
+```
+openssl genrsa -out mauth_key 2048
+openssl rsa -in mauth_key -pubout -out mauth_key.pub
+```
 
 ## Rack Middleware Usage
 
@@ -76,20 +109,20 @@ If used, this should come before the `MAuth::Rack::RequestAuthenticator` middlew
 The ResponseSigner can be used ONLY if you have an `app_uuid` and `private_key` specified in your mauth configuration.
 
 ```ruby
-config.middleware.use MAuth::Rack::ResponseSigner, mauth_config
+config.middleware.use MAuth::Rack::ResponseSigner, MAUTH_CONF
 ```
 
 Then request authentication:
 
 ```ruby
-config.middleware.use MAuth::Rack::RequestAuthenticator, mauth_config
+config.middleware.use MAuth::Rack::RequestAuthenticator, MAUTH_CONF
 ```
 
 However, assuming you have a route `/app_status`, you probably want to skip request authentication for that.
 There is a middleware (`RequestAuthenticatorNoAppStatus`) to make that easier:
 
 ```ruby
-config.middleware.use MAuth::Rack::RequestAuthenticatorNoAppStatus, mauth_config
+config.middleware.use MAuth::Rack::RequestAuthenticatorNoAppStatus, MAUTH_CONF
 ```
 
 You may want to configure other conditions in which to bypass MAuth authentication.
@@ -101,10 +134,10 @@ If omitted, all incoming requests will be authenticated.
 Here are a few example `:should_authenticate_check` procs:
 
 ```ruby
-mauth_config[:should_authenticate_check] = proc do |env|
+MAUTH_CONF[:should_authenticate_check] = proc do |env|
   env['REQUEST_METHOD'] == 'GET'
 end
-config.middleware.use MAuth::Rack::RequestAuthenticator, mauth_config
+config.middleware.use MAuth::Rack::RequestAuthenticator, MAUTH_CONF
 ```
 
 Above, env is a hash of request parameters; this hash is generated by Rack.
@@ -114,16 +147,16 @@ The above proc will force the middleware to authenticate only GET requests.
 Another example:
 
 ```ruby
-mauth_config[:should_authenticate_check] = proc do |env|
+MAUTH_CONF[:should_authenticate_check] = proc do |env|
   env['PATH_INFO'] == '/studies.json'
 end
-config.middleware.use MAuth::Rack::RequestAuthenticator, mauth_config
+config.middleware.use MAuth::Rack::RequestAuthenticator, MAUTH_CONF
 ```
 
 The above proc will force the rack middleware to authenticate only requests to the "/studies.json" path.
 To authenticate a group of related URIs, considered matching `env['PATH_INFO']` with one or more regular expressions.
 
-The configuration passed to the middlewares in the above examples (`mauth_config`) is used create a new instance of `MAuth::Client`.
+The configuration passed to the middlewares in the above examples (`MAUTH_CONF`) is used create a new instance of `MAuth::Client`.
 If you are managing an MAuth::Client of your own for some reason, you can pass that in on the key `:mauth_client => your_client`, and omit any other MAuth::Client configuration.
 `:should_authenticate_check` is handled by the middleware and should still be specified alongside `:mauth_client`, if you are using it.
 
@@ -144,23 +177,39 @@ If the middleware is unable to authenticate the request because MAuth is unavail
 Putting all this together, here are typical examples (in rails you would put that code in an initializer):
 
 ```ruby
-mauth_config = MAuth::Client.default_config
 require 'mauth/rack'
-config.middleware.use MAuth::Rack::ResponseSigner, mauth_config
-config.middleware.use MAuth::Rack:: RequestAuthenticatorNoAppStatus, mauth_config
+
+MAUTH_CONF = MAuth::Client.default_config
+
+# ResponseSigner OPTIONAL; only use if you are registered in mauth service
+Rails.application.config.middleware.insert_after Rack::Runtime, MAuth::Rack::ResponseSigner, MAUTH_CONF
+if Rails.env.test? || Rails.env.development?
+  require 'mauth/fake/rack'
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticationFaker, MAUTH_CONF
+else
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticatorNoAppStatus, MAUTH_CONF
+end
 ```
 
 With `:should_authenticate_check`:
 
 ```ruby
-mauth_config = MAuth::Client.default_config
 require 'mauth/rack'
-config.middleware.use MAuth::Rack::ResponseSigner, mauth_config
+
+MAUTH_CONF = MAuth::Client.default_config
 # authenticate all requests which pass the some_condition_of check and aren't /app_status with MAuth
-mauth_config[:should_authenticate_check] = proc do |env|
+MAUTH_CONF[:should_authenticate_check] = proc do |env|
   some_condition_of(env)
 end
-config.middleware.use MAuth::Rack:: RequestAuthenticatorNoAppStatus, mauth_config
+
+# ResponseSigner OPTIONAL; only use if you are registered in mauth service
+Rails.application.config.middleware.insert_after Rack::Runtime, MAuth::Rack::ResponseSigner, MAUTH_CONF
+if Rails.env.test? || Rails.env.development?
+  require 'mauth/fake/rack'
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticationFaker, MAUTH_CONF
+else
+  Rails.application.config.middleware.insert_after MAuth::Rack::ResponseSigner, MAuth::Rack::RequestAuthenticatorNoAppStatus, MAUTH_CONF
+end
 ```
 
 ## Fake middleware
@@ -175,7 +224,7 @@ This example code may augment the above examples to disable authentication in te
 ```ruby
 require 'mauth/fake/rack'
 authenticator = Rails.env != 'test' ? MAuth::Rack::RequestAuthenticator : MAuth::Rack::RequestAuthenticationFaker
-config.middleware.use authenticator, mauth_config
+config.middleware.use authenticator, MAUTH_CONF
 ```
 
 ## Faraday Middleware Usage
@@ -185,8 +234,8 @@ Building your connection will look like:
 
 ```ruby
 Faraday.new(some_args) do |builder|
-  builder.use MAuth::Faraday::RequestSigner, mauth_config
-  builder.use MAuth::Faraday::ResponseAuthenticator, mauth_config
+  builder.use MAuth::Faraday::RequestSigner, MAUTH_CONF
+  builder.use MAuth::Faraday::ResponseAuthenticator, MAUTH_CONF
   builder.adapter Faraday.default_adapter
 end
 ```
@@ -196,7 +245,7 @@ As with the rack middleware, this means it will be right next to the HTTP adapte
 
 Only use the `MAuth::Faraday::ResponseAuthenticator` middleware if you are expecting the service you are communicating with to sign its responses (all services which are aware of MAuth _should_ be doing this).
 
-`mauth_config` is the same as in Rack middleware, and as with the Rack middleware is used to initialize a `MAuth::Client` instance.
+`MAUTH_CONF` is the same as in Rack middleware, and as with the Rack middleware is used to initialize a `MAuth::Client` instance.
 Also as with the Rack middleware, you can pass in a `MAuth::Client` instance you are using yourself on the `:mauth_client` key, and omit any other configuration.
 
 Behavior is likewise similar to rack: if a `private_key` and `app_uuid` are specified, then ResponseAuthenticator will authenticate locally (see [Local Authentication](#local-authentication) below); if not, then it will go to the

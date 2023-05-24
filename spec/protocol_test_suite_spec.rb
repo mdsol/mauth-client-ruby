@@ -54,7 +54,7 @@ describe 'MAuth Client passes the protocol test suite' do
         let(:case_dir) { case_dir.to_s }
 
         context 'signing' do
-          unless /binary-body/.match?(case_dir)
+          unless case_dir.include?('binary-body')
             it 'generates the corect string to sign' do
               elements = faraday_req.string_to_sign_v1(signing_info).split("\n")
               expected_elements = expected_str_to_sign.split("\n")
@@ -95,7 +95,7 @@ describe 'MAuth Client passes the protocol test suite' do
         context case_dir.to_s do
           let(:case_dir) { case_dir.to_s }
 
-          unless /authentication-only/.match?(case_dir)
+          unless case_dir.include?('authentication-only')
             context 'signing' do
               it 'generates the corect string to sign' do
                 elements = faraday_req.string_to_sign_v2(signing_info).split("\n")

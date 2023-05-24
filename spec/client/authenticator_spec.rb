@@ -4,9 +4,9 @@ require 'spec_helper'
 require 'faraday'
 require 'mauth/client'
 require_relative '../support/shared_contexts/client'
-require_relative '../support/shared_examples/authenticator_base'
+require_relative '../support/shared_examples/authenticator'
 
-describe MAuth::Client::LocalAuthenticator do
+describe MAuth::Client::Authenticator do
   include_context 'client'
 
   describe '#authentic?' do
@@ -22,7 +22,7 @@ describe MAuth::Client::LocalAuthenticator do
       )
     end
     let(:test_faraday) do
-      ::Faraday.new do |builder|
+      Faraday.new do |builder|
         builder.adapter(:test, stubs) do |stub|
           stub.get("/mauth/v1/security_tokens/#{app_uuid}.json") do
             [200, {}, JSON.generate({ 'security_token' => { 'public_key_str' => signing_key.public_key.to_s } })]
@@ -33,11 +33,11 @@ describe MAuth::Client::LocalAuthenticator do
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
 
     before do
-      expect(authenticating_mc).to be_kind_of(MAuth::Client::LocalAuthenticator)
-      allow(::Faraday).to receive(:new).and_return(test_faraday)
+      expect(authenticating_mc).to be_kind_of(MAuth::Client::Authenticator)
+      allow(Faraday).to receive(:new).and_return(test_faraday)
     end
 
-    include_examples MAuth::Client::AuthenticatorBase
+    include_examples MAuth::Client::Authenticator
 
     context 'when authenticating with v1' do
       it 'considers an authentically-signed request to be authentic' do
@@ -260,7 +260,7 @@ describe MAuth::Client::LocalAuthenticator do
     end
   end
 
-  describe MAuth::Client::LocalAuthenticator::SecurityTokenCacher do
+  describe MAuth::Client::Authenticator::SecurityTokenCacher do
     describe '#signed_mauth_connection' do
       it 'properly sets the timeouts on the faraday connection' do
         config = {
@@ -269,7 +269,7 @@ describe MAuth::Client::LocalAuthenticator do
           'mauth_baseurl' => 'https://mauth.imedidata.net'
         }
         mc = MAuth::Client.new(config)
-        connection = MAuth::Client::LocalAuthenticator::SecurityTokenCacher.new(mc).send(:signed_mauth_connection)
+        connection = MAuth::Client::Authenticator::SecurityTokenCacher.new(mc).send(:signed_mauth_connection)
         expect(connection.options[:timeout]).to eq('23')
         expect(connection.options[:open_timeout]).to eq('18')
       end

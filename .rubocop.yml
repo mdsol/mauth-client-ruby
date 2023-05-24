@@ -5,7 +5,6 @@ require:
   - rubocop-performance
 
 AllCops:
-  TargetRubyVersion: 2.6
   Exclude:
     - gemfiles/**/*
 
@@ -20,7 +19,7 @@ Layout/FirstHashElementIndentation:
 
 Layout/LineLength:
   Exclude:
-    - spec/client/local_authenticator_spec.rb
+    - spec/client/authenticator_spec.rb
 
 Lint/MissingSuper:
   Exclude:
@@ -31,12 +30,16 @@ Lint/MissingSuper:
 Metrics/AbcSize:
   Exclude:
     - lib/mauth/client.rb
-    - lib/mauth/client/local_authenticator.rb
+    - lib/mauth/client/authenticator.rb
     - lib/mauth/proxy.rb
 
 Metrics/MethodLength:
   Exclude:
     - lib/mauth/client.rb
+
+Metrics/ModuleLength:
+  Exclude:
+    - lib/mauth/client/authenticator.rb
 
 Naming/FileName:
   Exclude:

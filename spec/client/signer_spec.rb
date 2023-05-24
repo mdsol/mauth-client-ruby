@@ -118,7 +118,7 @@ describe MAuth::Client::Signer do
 
       it 'handles newlines appropriately' do
         signature = client.signature_v1(string_to_sign)
-        expect(signature !~ /\n/).to be(true)
+        expect(!signature.include?("\n")).to be(true)
       end
     end
 
@@ -130,7 +130,7 @@ describe MAuth::Client::Signer do
 
       it 'handles newlines appropriately' do
         signature = client.signature_v2(string_to_sign)
-        expect(signature !~ /\n/).to be(true)
+        expect(!signature.include?("\n")).to be(true)
       end
 
       it 'calls `sign` with an OpenSSL SHA512 digest' do
