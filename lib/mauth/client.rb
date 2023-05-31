@@ -61,7 +61,7 @@ module MAuth
 
     # new client with the given App UUID and public key. config may include the following (all
     # config keys may be strings or symbols):
-    # - private_key - required for signing and for authenticating responses.
+    # - private_key - required for signing and for authentication.
     #   may be given as a string or a OpenSSL::PKey::RSA instance.
     # - app_uuid - required in the same circumstances where a private_key is required
     # - mauth_baseurl - required. needed to retrieve public keys.
@@ -103,7 +103,7 @@ module MAuth
         end
       end
 
-      request_config = { timeout: 10, open_timeout: 10 }
+      request_config = { timeout: 10, open_timeout: 3 }
       request_config.merge!(symbolize_keys(given_config['faraday_options'])) if given_config['faraday_options']
       @config['faraday_options'] = { request: request_config } || {}
       @config['ssl_certs_path'] = given_config['ssl_certs_path'] if given_config['ssl_certs_path']
@@ -116,6 +116,7 @@ module MAuth
 
       @config['disable_fallback_to_v1_on_v2_failure'] =
         given_config['disable_fallback_to_v1_on_v2_failure'].to_s.casecmp('true').zero?
+      @config['use_rails_cache'] = given_config['use_rails_cache']
     end
 
     def logger
@@ -164,6 +165,10 @@ module MAuth
 
     def assert_private_key(err)
       raise err unless private_key
+    end
+
+    def cache_store
+      Rails.cache if @config['use_rails_cache'] && Object.const_defined?(:Rails) && ::Rails.respond_to?(:cache)
     end
 
     private

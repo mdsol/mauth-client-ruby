@@ -13,7 +13,8 @@ module MAuth
       'MAUTH_V2_ONLY_AUTHENTICATE' => false,
       'MAUTH_V2_ONLY_SIGN_REQUESTS' => false,
       'MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE' => false,
-      'MAUTH_V1_ONLY_SIGN_REQUESTS' => true
+      'MAUTH_V1_ONLY_SIGN_REQUESTS' => true,
+      'MAUTH_USE_RAILS_CACHE' => false
     }.freeze
 
     class << self
@@ -28,7 +29,8 @@ module MAuth
           'v2_only_authenticate' => env[:mauth_v2_only_authenticate],
           'v2_only_sign_requests' => env[:mauth_v2_only_sign_requests],
           'disable_fallback_to_v1_on_v2_failure' => env[:mauth_disable_fallback_to_v1_on_v2_failure],
-          'v1_only_sign_requests' => env[:mauth_v1_only_sign_requests]
+          'v1_only_sign_requests' => env[:mauth_v1_only_sign_requests],
+          'use_rails_cache' => env[:mauth_use_rails_cache]
         }
       end
 

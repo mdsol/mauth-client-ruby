@@ -23,6 +23,7 @@ describe MAuth::ConfigEnv do
         allow(ENV).to receive(:fetch).with('MAUTH_V2_ONLY_SIGN_REQUESTS', anything).and_return('true')
         allow(ENV).to receive(:fetch).with('MAUTH_DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE', anything).and_return('true')
         allow(ENV).to receive(:fetch).with('MAUTH_V1_ONLY_SIGN_REQUESTS', anything).and_return('false')
+        allow(ENV).to receive(:fetch).with('MAUTH_USE_RAILS_CACHE', anything).and_return('true')
       end
 
       it 'returns the processed config' do
@@ -34,6 +35,7 @@ describe MAuth::ConfigEnv do
         expect(config['v2_only_sign_requests']).to be true
         expect(config['disable_fallback_to_v1_on_v2_failure']).to be true
         expect(config['v1_only_sign_requests']).to be false
+        expect(config['use_rails_cache']).to be true
       end
     end
 
@@ -49,6 +51,7 @@ describe MAuth::ConfigEnv do
         expect(config['v2_only_sign_requests']).to be false
         expect(config['disable_fallback_to_v1_on_v2_failure']).to be false
         expect(config['v1_only_sign_requests']).to be true
+        expect(config['use_rails_cache']).to be false
       end
     end
 
