@@ -1,5 +1,9 @@
-## v7.0.1
+## v7.1.0
 - Add MAuth::PrivateKeyHelper.load method to process RSA private keys.
+- Update Faraday configuration in SecurityTokenCacher:
+  - Add the `MAUTH_USE_RAILS_CACHE` environment variable to make `Rails.cache` usable to cache public keys.
+  - Shorten timeout for connection, add retries, and use persistent HTTP connections.
+- Drop support for Faraday < 1.9.
 
 ## v7.0.0
 - Remove dice_bag and set configuration through environment variables directly.

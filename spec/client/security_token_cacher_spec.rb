@@ -11,9 +11,11 @@ describe MAuth::Client::Authenticator::SecurityTokenCacher do
       mauth_baseurl: 'http://whatever',
       mauth_api_version: 'v1',
       private_key: OpenSSL::PKey::RSA.generate(2048),
-      app_uuid: 'authenticator'
+      app_uuid: 'authenticator',
+      use_rails_cache: use_rails_cache
     )
   end
+  let(:use_rails_cache) { false }
 
   describe '#get' do
     let(:service_app_uuid) { '077dcb2b-f476-4069-adf4-f75c15018d65' }
@@ -139,6 +141,21 @@ describe MAuth::Client::Authenticator::SecurityTokenCacher do
         expect(subject.get(service_app_uuid)).to eq(security_token)
         Timecop.freeze(Time.now + 301)
         expect(subject.get(service_app_uuid)).to be_empty
+      end
+
+      context 'with Rails.cache' do
+        let(:use_rails_cache) { true }
+        let(:rails_cache) { double(read: nil, write: nil, delete: nil) }
+
+        before do
+          stub_const('Rails', double(cache: rails_cache, logger: Logger.new($stderr)))
+        end
+
+        it 'uses Rails.cache' do
+          expect(rails_cache).to receive(:read)
+          expect(rails_cache).to receive(:write)
+          expect(subject.get(service_app_uuid)).to eq(security_token)
+        end
       end
     end
   end

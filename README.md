@@ -30,7 +30,7 @@ $ gem install mauth-client
 Configuration is set through environment variables:
 
 - `MAUTH_PRIVATE_KEY`
-  - Required for signing and for authenticating responses.
+  - Required for signing and for authentication.
 
 - `MAUTH_PRIVATE_KEY_FILE`
   - May be used instead of `MAUTH_PRIVATE_KEY`, mauth-client will load the file instead.
@@ -56,6 +56,8 @@ Configuration is set through environment variables:
 - `MAUTH_V1_ONLY_SIGN_REQUESTS`
   - If true, all outgoing requests will be signed with only the V1 protocol. Defaults to true. Note, cannot be `true` if `MAUTH_V2_ONLY_SIGN_REQUESTS` is also `true`.
 
+- `MAUTH_USE_RAILS_CACHE`
+  - If true, `Rails.cache` is used to cache public keys for authentication.
 
 This is simply loaded and passed to either middleware or directly to a MAuth::Client instance.
 See the documentation for [MAuth::Client#initialize](lib/mauth/client.rb) for more details of what it accepts. Usually you will want:
@@ -67,10 +69,10 @@ MAUTH_CONF = MAuth::Client.default_config
 The `.default_config` method takes a number of options to tweak its expectations regarding defaults. See the
 documentation for [MAuth::Client.default_config](lib/mauth/client.rb) for details.
 
-The `private_key` and `app_uuid` enable local authentication (see section [Local Authentication](#local-authentication) below).
+The `private_key` and `app_uuid` are required for signing and for authentication.
 They’ll only work if the `app_uuid` has been stored in MAuth with a public key corresponding to the `private_key`.
 
-The `mauth_baseurl` and `mauth_api_version` are required.
+The `mauth_baseurl` and `mauth_api_version` are required for authentication.
 These tell the MAuth-Client where and how to communicate with the MAuth service.
 
 The `v2_only_sign_requests` and `v2_only_authenticate` flags were added to facilitate conversion from the MAuth V1 protocol to the MAuth
@@ -248,9 +250,7 @@ Only use the `MAuth::Faraday::ResponseAuthenticator` middleware if you are expec
 `MAUTH_CONF` is the same as in Rack middleware, and as with the Rack middleware is used to initialize a `MAuth::Client` instance.
 Also as with the Rack middleware, you can pass in a `MAuth::Client` instance you are using yourself on the `:mauth_client` key, and omit any other configuration.
 
-Behavior is likewise similar to rack: if a `private_key` and `app_uuid` are specified, then ResponseAuthenticator will authenticate locally (see [Local Authentication](#local-authentication) below); if not, then it will go to the
-mauth service to authenticate.
-`MAuth::Faraday::RequestSigner` cannot be used without a `private_key` and `app_uuid`.
+Both `MAuth::Faraday::ResponseAuthenticator` and `MAuth::Faraday::RequestSigner` cannot be used without a `private_key` and `app_uuid`.
 
 If a response which does not appear to be authentic is received by the `MAuth::Faraday::ResponseAuthenticator` middleware, a `MAuth::InauthenticError` will be raised.
 
@@ -271,18 +271,6 @@ require 'mauth/request_and_response'
 request = MAuth::Request.new(verb: my_verb, request_url: my_request_url, body: my_body, query_string: my_query_string)
 ```
 `mauth_client.signed_headers(request)` will then return mauth headers which you can apply to your request.
-
-## Local Authentication
-
-When doing local authentication, the MAuth-Client will periodically fetch and cache public keys from MAuth.
-Each public key will be cached locally for 60 seconds.
-Applications which connect frequently to the app will benefit most from this caching strategy.
-When fetching public keys from MAuth, the following rules apply:
-
-1. If MAuth returns the public key for a given `app_uuid`, MAuth-Client will refresh its local cache with this new public key.
-2. If MAuth cannot find the public key for a given `app_uuid` (i.e. returns a 404 status code), MAuth-Client will remove the corresponding public key from its local cache and authentication of any message from the application with this public key will fail as a consequence.
-3. If the request to MAuth times out or MAuth returns a 500 status code, the requested public key will not be removed from local MAuth-Client cache (if it exists there in the first place).
-   The cached version will continue to be used for local authentication until MAuth::Client is able to again communicate with MAuth.
 
 ## Warning
 
