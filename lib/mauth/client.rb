@@ -12,6 +12,7 @@ require 'mauth/client/authenticator'
 require 'mauth/client/signer'
 require 'mauth/config_env'
 require 'mauth/errors'
+require 'mauth/private_key_helper'
 
 module MAuth
   # does operations which require a private key and corresponding app uuid. this is primarily:
@@ -80,7 +81,7 @@ module MAuth
         when nil
           nil
         when String
-          OpenSSL::PKey::RSA.new(given_config['private_key'])
+          PrivateKeyHelper.load(given_config['private_key'])
         when OpenSSL::PKey::RSA
           given_config['private_key']
         else

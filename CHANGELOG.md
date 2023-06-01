@@ -1,3 +1,6 @@
+## v7.0.1
+- Add MAuth::PrivateKeyHelper.load method to process RSA private keys.
+
 ## v7.0.0
 - Remove dice_bag and set configuration through environment variables directly.
 - Rename the `V2_ONLY_SIGN_REQUESTS`, `V2_ONLY_AUTHENTICATE`, `DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE` and `V1_ONLY_SIGN_REQUESTS` environment variables.

@@ -24,7 +24,7 @@ module MAuth
           'mauth_baseurl' => env[:mauth_url] || 'http://localhost:7000',
           'mauth_api_version' => env[:mauth_api_version],
           'app_uuid' => env[:mauth_app_uuid] || 'fb17460e-9868-11e1-8399-0090f5ccb4d3',
-          'private_key' => private_key || generate_private_key,
+          'private_key' => private_key || PrivateKeyHelper.generate.to_s,
           'v2_only_authenticate' => env[:mauth_v2_only_authenticate],
           'v2_only_sign_requests' => env[:mauth_v2_only_sign_requests],
           'disable_fallback_to_v1_on_v2_failure' => env[:mauth_disable_fallback_to_v1_on_v2_failure],
@@ -73,11 +73,6 @@ module MAuth
         return nil unless env[:mauth_private_key_file] && File.readable?(env[:mauth_private_key_file])
 
         File.read(env[:mauth_private_key_file])
-      end
-
-      def generate_private_key
-        require 'openssl'
-        OpenSSL::PKey::RSA.generate(2048).to_s
       end
     end
   end
