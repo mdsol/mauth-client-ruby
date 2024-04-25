@@ -4,7 +4,8 @@
   "include-v-in-tag": true,
   "packages": {
     ".": {
-      "package-name": "mauth-client"
+      "package-name": "mauth-client",
+      "version-file": "lib/mauth/version.rb"
     }
   }
 }
