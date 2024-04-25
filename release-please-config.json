@@ -1,0 +1,10 @@
+{
+  "release-type": "ruby",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "packages": {
+    ".": {
+      "package-name": "mauth-client"
+    }
+  }
+}

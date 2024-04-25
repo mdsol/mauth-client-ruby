@@ -1,0 +1,17 @@
+name: FOSSA License Check
+
+on:
+  push:
+    # branches:
+    #   - master
+  pull_request:
+
+jobs:
+  fossa-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mdsol/fossa_ci_scripts@main
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+          FOSSA_FAIL_BUILD: false
