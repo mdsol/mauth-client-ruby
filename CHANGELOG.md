@@ -5,6 +5,13 @@
   - Shorten timeout for connection, add retries, and use persistent HTTP connections.
 - Drop support for Faraday < 1.9.
 
+## [7.2.0](https://github.com/mdsol/mauth-client-ruby/compare/v7.1.0...v7.2.0) (2024-04-25)
+
+
+### Features
+
+* Support Ruby 3.3 ([245bb06](https://github.com/mdsol/mauth-client-ruby/commit/245bb06d8abb86bd6a4b557b84bc9d0898254a95))
+
 ## v7.0.0
 - Remove dice_bag and set configuration through environment variables directly.
 - Rename the `V2_ONLY_SIGN_REQUESTS`, `V2_ONLY_AUTHENTICATE`, `DISABLE_FALLBACK_TO_V1_ON_V2_FAILURE` and `V1_ONLY_SIGN_REQUESTS` environment variables.
