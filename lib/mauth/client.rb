@@ -97,9 +97,7 @@ module MAuth
           Rails.logger
         else
           require 'logger'
-          is_win = RUBY_PLATFORM =~ /mswin|windows|mingw32|cygwin/i
-          null_device = is_win ? 'NUL' : '/dev/null'
-          ::Logger.new(File.open(null_device, File::WRONLY))
+          ::Logger.new(File.open(File::NULL, File::WRONLY))
         end
       end
 
@@ -183,7 +181,7 @@ module MAuth
 
     # Changes all keys in the top level of the hash to symbols.  Does not affect nested hashes inside this one.
     def symbolize_keys(hash)
-      hash.keys.each do |key| # rubocop:disable Style/HashEachMethods
+      hash.keys.each do |key|
         hash[(key.to_sym rescue key) || key] = hash.delete(key)
       end
       hash
