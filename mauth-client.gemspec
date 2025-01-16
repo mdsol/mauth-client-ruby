@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'addressable', '~> 2.0'
+  spec.add_dependency 'base64', '~> 0.2'
   spec.add_dependency 'coderay', '~> 1.0'
   spec.add_dependency 'faraday', '>= 1.9', '< 3.0'
   spec.add_dependency 'faraday-http-cache', '>= 2.0', '< 3.0'
