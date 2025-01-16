@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.0](https://github.com/mdsol/mauth-client-ruby/compare/v7.2.0...v7.3.0) (2025-01-16)
+
+
+### Features
+
+* Support ruby 3.4 ([97f0f32](https://github.com/mdsol/mauth-client-ruby/commit/97f0f3211d5da8c92fc0ab6bbf44c6ad6929c807))
+
 ## [7.2.0](https://github.com/mdsol/mauth-client-ruby/compare/v7.1.0...v7.2.0) (2024-04-25)
 
 
