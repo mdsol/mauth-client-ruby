@@ -10,7 +10,7 @@ jobs:
   fossa-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: mdsol/fossa_ci_scripts@main
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
